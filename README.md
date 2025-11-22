@@ -13,6 +13,7 @@ like SSH access.
 - Extract firmware images (SquashFS rootfs)
 - Create custom firmware with modifications
 - Enable SSH: `root/snapmaker` and `lava/snapmaker`
+- Enable DHCP on USB ethernet adapters
 
 ## Pre-builts
 
