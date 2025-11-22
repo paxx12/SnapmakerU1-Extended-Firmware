@@ -30,6 +30,17 @@ like SSH access.
 
 Revert: flash stock firmware from [Snapmaker's site](https://wiki.snapmaker.com/en/snapmaker_u1/firmware/release_notes).
 
+## Persistence of data
+
+By default the Snapmaker firmware wipes all user changes on every reboot.
+This makes it bulletproof.
+
+If for some reason you want to persist system-level changes to `/etc` (e.g., SSH passwords
+or authorized keys), create the file with `touch /oem/.debug`.
+Remove it with `rm /oem/.debug` and reboot to restore a pristine system.
+
+The `/home/lava/printer_data` directory persists with and without `/oem/.debug`.
+
 ## License
 
 See individual tool directories for licensing information.
