@@ -14,6 +14,7 @@ like SSH access.
 - Create custom firmware with modifications
 - Enable SSH: `root/snapmaker` and `lava/snapmaker`
 - Enable DHCP on USB ethernet adapters
+- Disable WiFi power saving
 
 ## Pre-builts
 

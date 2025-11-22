@@ -1,0 +1,11 @@
+--- a/etc/network/interfaces
++++ b/etc/network/interfaces
+@@ -6,6 +6,8 @@
+ auto wlan0
+ iface wlan0 inet dhcp
+   pre-up /etc/network/nfs_check
++  post-up iw dev wlan0 set power_save off
++  post-down iw dev wlan0 set power_save on
+   wait-delay 15
+ 
+ source-directory /etc/network/interfaces.d
