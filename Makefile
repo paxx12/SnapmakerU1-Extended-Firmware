@@ -5,15 +5,20 @@ all: tools
 # ================= Build Tools =================
 
 DEBUG_FIRMWARE_FILE := firmware/firmware_debug.bin
-CUSTOM_FIRMWARE_FILE := firmware/firmware_custom.bin
+BASIC_FIRMWARE_FILE := firmware/firmware_basic.bin
+EXTENDED_FIRMWARE_FILE := firmware/firmware_extended.bin
 
 $(DEBUG_FIRMWARE_FILE): firmware/$(FIRMWARE_FILE) tools
 	./scripts/enable_debug_misc.sh $< tmp/debug $@
 
-$(CUSTOM_FIRMWARE_FILE): firmware/$(FIRMWARE_FILE) tools
-	./scripts/create_custom_firmware.sh $< tmp/custom $@
+$(BASIC_FIRMWARE_FILE): firmware/$(FIRMWARE_FILE) tools
+	./scripts/create_firmware.sh $< tmp/basic $@ overlays/basic overlays/camera-native
 
-custom_firmware: $(CUSTOM_FIRMWARE_FILE)
+$(EXTENDED_FIRMWARE_FILE): firmware/$(FIRMWARE_FILE) tools
+	./scripts/create_firmware.sh $< tmp/extended $@ overlays/basic overlays/camera-new
+
+basic_firmware: $(BASIC_FIRMWARE_FILE)
+extended_firmware: $(EXTENDED_FIRMWARE_FILE)
 debug_firmware: $(DEBUG_FIRMWARE_FILE)
 extract_firmware: firmware/$(FIRMWARE_FILE) tools
 	./scripts/extract_squashfs.sh $< tmp/extracted

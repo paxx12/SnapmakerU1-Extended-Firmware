@@ -10,7 +10,7 @@ on:
 
 jobs:
   custom-firmware-build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -31,19 +31,30 @@ jobs:
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
 
     - name: Install build dependencies
-      run:
-        sudo apt-get update -y && sudo apt-get install -y build-essential cmake gcc-aarch64-linux-gnu
+      run: |
+        sudo apt-get update -y &&
+        sudo apt-get install -y build-essential cmake \
+          gcc-aarch64-linux-gnu pkg-config squashfs-tools git-core \
+          bc libssl-dev
 
     - name: Download firmware
       run: make firmware
 
-    - name: Build with Custom
-      run: make custom_firmware CUSTOM_FIRMWARE_FILE=firmware_custom.bin
+    - name: Build with Basic firmware
+      run: make basic_firmware BASIC_FIRMWARE_FILE=firmware_basic.bin
+
+    - name: Build with Extended firmware
+      run: make extended_firmware EXTENDED_FIRMWARE_FILE=firmware_extended.bin
 
     - name: Clear Kernel Git Repo
       run: git -C tmp/kernel/ clean -fdx
 
     - uses: actions/upload-artifact@v4
       with:
-        name: custom-build
-        path: firmware_custom.bin
+        name: basic-build
+        path: firmware_basic.bin
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: extended-build
+        path: firmware_extended.bin

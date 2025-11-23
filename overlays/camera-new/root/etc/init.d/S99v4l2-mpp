@@ -1,0 +1,60 @@
+#!/bin/sh
+
+[ ! -e /oem/.camera-native ] || exit 0
+
+CMD_CAPTURE=/usr/local/bin/capture-mipi-mpp
+CMD_CAPTURE_ARGS="--device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mpp-jpeg.sock --mjpeg-sock /tmp/capture-mpp-mjpeg.sock --h264-sock /tmp/capture-mpp-h264.sock"
+
+CMD_HTTP=/usr/local/bin/stream-http.py
+CMD_HTTP_ARGS="--jpeg-sock /tmp/capture-mpp-jpeg.sock --mjpeg-sock /tmp/capture-mpp-mjpeg.sock --h264-sock /tmp/capture-mpp-h264.sock --bind 127.0.0.1"
+
+CMD_MQTT=/usr/local/bin/stream-mqtt.py
+CMD_MQTT_ARGS="--jpeg-sock /tmp/capture-mpp-jpeg.sock --publish-dir /home/lava/printer_data/camera"
+
+start() {
+    printf "Starting capture-mipi-mpp: "
+    start-stop-daemon -S -b -q -m -p /var/run/capture-mipi-mpp.pid -x $CMD_CAPTURE -- $CMD_CAPTURE_ARGS
+    echo "OK"
+
+    printf "Starting stream-http: "
+    start-stop-daemon -S -b -q -m -p /var/run/stream-http.pid -c lava -x /usr/bin/python3 -- $CMD_HTTP $CMD_HTTP_ARGS
+    echo "OK"
+
+    printf "Starting stream-mqtt: "
+    start-stop-daemon -S -b -q -m -p /var/run/stream-mqtt.pid -c lava -x /usr/bin/python3 -- $CMD_MQTT $CMD_MQTT_ARGS
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping stream-mqtt: "
+    start-stop-daemon -K -q -p /var/run/stream-mqtt.pid
+    echo "OK"
+
+    printf "Stopping stream-http: "
+    start-stop-daemon -K -q -p /var/run/stream-http.pid
+    echo "OK"
+
+    printf "Stopping capture-mipi-mpp: "
+    start-stop-daemon -K -q -p /var/run/capture-mipi-mpp.pid
+    echo "OK"
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

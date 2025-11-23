@@ -1,0 +1,11 @@
+--- a/etc/init.d/S99camera_service
++++ b/etc/init.d/S99camera_service
+@@ -3,6 +3,8 @@
+ # Start/stop camera_service process
+ #
+ 
++[ -e /oem/.camera-native ] || exit 0
++
+ log()
+ {
+ 	logger -p user.info -t "camera[$$]" -- "$1"

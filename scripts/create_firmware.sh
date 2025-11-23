@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [[ $# -ne 3 ]]; then
-  echo "Usage: $0 <upgrade.bin> <temp-dir> <output.bin>"
+if [[ $# -lt 3 ]]; then
+  echo "Usage: $0 <upgrade.bin> <temp-dir> <output.bin> [overlays...]"
   exit 1
 fi
 
@@ -11,6 +11,7 @@ IN_FIRMWARE="$(realpath "$1")"
 TEMP_DIR="$(realpath -m "$2")"
 OUT_FIRMWARE="$(realpath -m "$3")"
 ROOT_DIR="$(realpath "$(dirname "$0")/..")"
+shift 3
 
 rm -rf "$TEMP_DIR"
 
@@ -23,16 +24,27 @@ unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
 echo ">> Add kernel modules to rootfs..."
 "$ROOT_DIR/scripts/helpers/compile_kernel_modules.sh" "$TEMP_DIR/rootfs/info/config-6.1" "$ROOT_DIR/tmp/kernel" "$TEMP_DIR/rootfs/lib/modules/"
 
-echo ">> Applying custom patches..."
-for patchfile in "$ROOT_DIR/custom/patches/"*.patch; do
-  echo "[+] Applying patch: $(basename "$patchfile")"
-  patch -d "$TEMP_DIR/rootfs" -p1 < "$patchfile"
-done
+for overlay; do
+  echo ">> Applying overlay $overlay..."
+  if [[ -d "$overlay/patches/" ]]; then
+    for patchfile in "$overlay/patches/"*.patch; do
+      echo "[+] Applying patch: $(basename "$patchfile")"
+      patch -d "$TEMP_DIR/rootfs" -p1 < "$patchfile"
+    done
+  fi
 
-if [[ -d "$ROOT_DIR/custom/root/" ]]; then
-  echo ">> Copying custom files..."
-  cp -rv "$ROOT_DIR/custom/root/." "$TEMP_DIR/rootfs/"
-fi
+  if [[ -d "$overlay/scripts/" ]]; then
+    for scriptfile in "$overlay/scripts/"*.sh; do
+      echo "[+] Running script: $(basename "$scriptfile")"
+      ./"$scriptfile" "$TEMP_DIR/rootfs"
+    done
+  fi
+
+  if [[ -d "$overlay/root/" ]]; then
+    echo ">> Copying custom files..."
+    cp -rv "$overlay/root/." "$TEMP_DIR/rootfs/"
+  fi
+done
 
 echo ">> Create squash filesystem..."
 mksquashfs "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs-v2.img" -comp gzip

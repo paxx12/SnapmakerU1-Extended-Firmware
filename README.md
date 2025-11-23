@@ -8,22 +8,42 @@ This project provides utilities to work with Snapmaker U1 firmware images.
 It enables creating custom firmware builds, and enabling debug features,
 like SSH access.
 
-## Features
+## Firmware Variants
 
-- Extract firmware images (SquashFS rootfs)
-- Create custom firmware with modifications
+| Variant | Description |
+|---------|-------------|
+| **Basic** | SSH, USB ethernet, native camera (~1Hz in Fluidd) |
+| **Extended** | Basic + new camera stack with HW-accelerated streams |
+
+### Common Features
+
 - Enable SSH: `root/snapmaker` and `lava/snapmaker`
 - Enable DHCP on USB ethernet adapters
 - Disable WiFi power saving
-- Expose camera feed in Fluidd (~1Hz)
+
+### Extended Camera
+
+The extended firmware replaces the native camera with a hardware-accelerated
+stack using the Rockchip MPP/VPU.
+
+Camera endpoints available at `http://<ip>/webcam/`:
+
+| Endpoint | Description |
+|----------|-------------|
+| `/webcam/snapshot.jpg` | JPEG snapshot |
+| `/webcam/stream.mjpg` | MJPEG stream (~15fps) |
+| `/webcam/stream.h264` | H264 stream (raw) |
+| `/webcam/player` | H264 web player |
+
+Fluidd automatically picks up the webcam configuration.
 
 ## Pre-builts
 
 1. Go to [Actions](https://github.com/paxx12/SnapmakerU1/actions/workflows/build.yaml). You need GitHub account.
-1. Download latest artifact for latest build.
+1. Download `basic-build` or `extended-build` artifact.
 1. Unpack the `.zip`
 1. Put the `.bin` file onto USB device (FAT32/exFAT format).
-1. Go to `About > Firmware version > Local Update > Select firmware_custom.bin`
+1. Go to `About > Firmware version > Local Update > Select the .bin file`
 1. Connect using `ssh root@<ip>` with `snapmaker` password.
 
 **This will void your warranty, but you get SSH access.**

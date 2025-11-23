@@ -1,0 +1,12 @@
+--- a/home/lava/origin_printer_data/config/moonraker.conf
++++ b/home/lava/origin_printer_data/config/moonraker.conf
+@@ -46,3 +46,9 @@
+ mqtt_protocol: v5
+ status_interval: 2
+ default_qos: 1
++
++[webcam case]
++service: iframe
++stream_url: /webcam/player
++snapshot_url: /webcam/snapshot.jpg
++aspect_ratio: 16:9
