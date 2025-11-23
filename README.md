@@ -30,12 +30,19 @@ Camera endpoints available at `http://<ip>/webcam/`:
 
 | Endpoint | Description |
 |----------|-------------|
-| `/webcam/snapshot.jpg` | JPEG snapshot |
-| `/webcam/stream.mjpg` | MJPEG stream (~15fps) |
-| `/webcam/stream.h264` | H264 stream (raw) |
-| `/webcam/player` | H264 web player |
+| `/webcam/snapshot.jpg` | Built-in: JPEG snapshot |
+| `/webcam/stream.mjpg` | Built-in: MJPEG stream (~15fps) |
+| `/webcam/stream.h264` | Built-in: H264 stream (raw) |
+| `/webcam/player` | Built-in: H264 web player |
+| `/webcam2/snapshot.jpg` | USB: JPEG snapshot |
+| `/webcam2/stream.mjpg` | USB: MJPEG stream (~15fps) |
+| `/webcam2/stream.h264` | USB: H264 stream (raw) |
+| `/webcam2/player` | USB: H264 web player |
 
 Fluidd automatically picks up the webcam configuration.
+
+If USB camera is connected it will be exposed under `/webcam2/`.
+Requires reboot.
 
 ## Pre-builts
 

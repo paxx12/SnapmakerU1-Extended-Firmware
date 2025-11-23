@@ -1,0 +1,62 @@
+#!/bin/sh
+
+[ ! -e /oem/.camera-native ] || exit 0
+
+CMD_CAPTURE=/usr/local/bin/capture-usb-mpp
+CMD_CAPTURE_ARGS="--device /dev/video18 --jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock"
+
+CMD_HTTP=/usr/local/bin/stream-http.py
+CMD_HTTP_ARGS="--jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock --bind 127.0.0.1 --port 8081"
+
+start() {
+    if [ ! -e /dev/video18 ]; then
+        echo "USB camera device /dev/video18 not found, not starting."
+        return
+    fi
+
+    printf "Starting capture-usb-mpp: "
+    start-stop-daemon -S -b -q -m -p /var/run/capture-usb-mpp.pid -x $CMD_CAPTURE -- $CMD_CAPTURE_ARGS
+    echo "OK"
+
+    printf "Starting stream-http: "
+    start-stop-daemon -S -b -q -m -p /var/run/stream-usb-http.pid -c lava -x /usr/bin/python3 -- $CMD_HTTP $CMD_HTTP_ARGS
+    echo "OK"
+
+    printf "Starting stream-mqtt: "
+    start-stop-daemon -S -b -q -m -p /var/run/stream-usb-mqtt.pid -c lava -x /usr/bin/python3 -- $CMD_MQTT $CMD_MQTT_ARGS
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping stream-mqtt: "
+    start-stop-daemon -K -q -p /var/run/stream-usb-mqtt.pid
+    echo "OK"
+
+    printf "Stopping stream-http: "
+    start-stop-daemon -K -q -p /var/run/stream-usb-http.pid
+    echo "OK"
+
+    printf "Stopping capture-usb-mpp: "
+    start-stop-daemon -K -q -p /var/run/capture-usb-mpp.pid
+    echo "OK"
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
