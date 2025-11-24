@@ -12,7 +12,8 @@ set -eo pipefail
 TARGET_DIR="$ROOT_DIR/tmp/v4l2-mpp"
 
 if [[ ! -d "$TARGET_DIR" ]]; then
-  git clone https://github.com/paxx12/v4l2-mpp.git "$TARGET_DIR"
+  git clone https://github.com/paxx12/v4l2-mpp.git "$TARGET_DIR" --recursive
+  git -C "$TARGET_DIR" checkout 3ab6a4b1933496f52ff883301de1b34371881538
 fi
 
 echo ">> Compiling MPP library..."

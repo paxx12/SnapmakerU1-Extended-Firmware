@@ -21,17 +21,9 @@ start() {
     printf "Starting stream-http: "
     start-stop-daemon -S -b -q -m -p /var/run/stream-usb-http.pid -c lava -x /usr/bin/python3 -- $CMD_HTTP $CMD_HTTP_ARGS
     echo "OK"
-
-    printf "Starting stream-mqtt: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-usb-mqtt.pid -c lava -x /usr/bin/python3 -- $CMD_MQTT $CMD_MQTT_ARGS
-    echo "OK"
 }
 
 stop() {
-    printf "Stopping stream-mqtt: "
-    start-stop-daemon -K -q -p /var/run/stream-usb-mqtt.pid
-    echo "OK"
-
     printf "Stopping stream-http: "
     start-stop-daemon -K -q -p /var/run/stream-usb-http.pid
     echo "OK"

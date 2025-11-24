@@ -14,6 +14,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
 
     - name: Load values vars.mk
       run: cat vars.mk >> "$GITHUB_ENV"
