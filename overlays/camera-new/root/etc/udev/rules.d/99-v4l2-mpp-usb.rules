@@ -1,0 +1,2 @@
+KERNEL=="video19", SUBSYSTEM=="video4linux", ACTION=="add",  RUN+="/bin/sh -c 'sleep 2; /etc/init.d/S99v4l2-mpp-usb start'"
+KERNEL=="video19", SUBSYSTEM=="video4linux", ACTION=="remove", RUN+="/etc/init.d/S99v4l2-mpp-usb stop"
