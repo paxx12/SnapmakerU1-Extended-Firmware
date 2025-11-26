@@ -6,7 +6,7 @@
  default_qos: 1
 +[timelapse]
 +[webcam case]
-+service: webrtc-camerastreamer
-+stream_url: /webcam/webrtc
++service: iframe
++stream_url: /webcam/player
 +snapshot_url: /webcam/snapshot.jpg
 +aspect_ratio: 16:9
