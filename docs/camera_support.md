@@ -27,10 +27,11 @@ Access USB camera at:
 http://<printer-ip>/webcam2/
 ```
 
-## Disabling Native Camera
+## Enable Snapmaker's Camera Stack
 
-The native camera is enabled by default in extended firmware.
-To disable it, create:
+Only one Camera Stack can be operational at the given moment.
+Thus Snapmaker's Camera Stack is disabled by default in extended firmware.
+To enable it, create:
 
 ```bash
 touch /oem/.camera-native
