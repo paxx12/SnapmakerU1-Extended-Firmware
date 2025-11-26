@@ -69,7 +69,7 @@ jobs:
         updateOnlyUnreleased: true
         generateReleaseNotes: true
         prerelease: true
-        bodyFile: RELEASE
+        bodyFile: RELEASE.md
         artifacts: "U1_*.bin"
 
     - name: Save Firmwares Cache
