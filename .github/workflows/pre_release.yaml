@@ -8,30 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-skip:
-    runs-on: ubuntu-24.04-arm
-    outputs:
-      skip: ${{ steps.check.outputs.skip }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-    - name: Check commit title
-      id: check
-      run: |
-        commit_title=$(git log -1 --format=%s)
-        if [[ "$commit_title" == *"[skip]"* ]]; then
-          echo "skip=true" >> $GITHUB_OUTPUT
-          echo "Skipping workflow - commit title contains [skip]"
-        else
-          echo "skip=false" >> $GITHUB_OUTPUT
-        fi
-
   custom-firmware-build:
-    needs: check-skip
-    if: needs.check-skip.outputs.skip != 'true'
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
