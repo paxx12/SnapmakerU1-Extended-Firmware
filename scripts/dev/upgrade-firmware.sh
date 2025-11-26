@@ -5,9 +5,13 @@ if [[ $# -ne 2 ]]; then
   exit 1
 fi
 
+SSH_HOST="$1"
+PROFILE="$2"
+shift 2
+
 set -xe
 
-rm -f "firmware/firmware_$2.bin"
-make "${2}_firmware"
-scp "tmp/$2/update.img" "$1:/tmp/"
-ssh "$1" /home/lava/bin/systemUpgrade.sh upgrade soc /tmp/update.img
+rm -rf "firmware/firmware_$PROFILE.bin" "tmp/firmware"
+make build OUTPUT_FILE=firmware/firmware_$PROFILE.bin PROFILE="$PROFILE"
+scp "tmp/firmware/update.img" "$SSH_HOST:/tmp/"
+ssh "$SSH_HOST" /home/lava/bin/systemUpgrade.sh upgrade soc /tmp/update.img

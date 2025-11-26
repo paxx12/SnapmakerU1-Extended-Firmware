@@ -17,7 +17,7 @@ ifeq (,$(OVERLAYS))
 	@echo "No overlays specified. Set PROFILE variable to 'basic' or 'extended'."
 	@exit 1
 endif
-	./scripts/create_firmware.sh $< tmp/extended $@ $(addprefix overlays/,$(OVERLAYS))
+	./scripts/create_firmware.sh $< tmp/firmware $@ $(addprefix overlays/,$(OVERLAYS))
 
 .PHONY: build
 build: $(OUTPUT_FILE)
