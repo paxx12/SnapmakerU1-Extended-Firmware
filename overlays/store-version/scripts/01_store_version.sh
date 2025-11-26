@@ -11,5 +11,5 @@ if [[ -n "$GIT_VERSION" ]]; then
   ABBRV=$(git describe --abbrev --always)
 
   # 0.9.0-paxx12-1-gabcdef0
-  echo -n "${GIT_VERSION#v}-${ABBRV}" > "$ROOTFS_DIR/etc/CUSTOM_VERSION"
+  echo "${GIT_VERSION#v}-${ABBRV}" > "$ROOTFS_DIR/etc/CUSTOM_VERSION"
 fi

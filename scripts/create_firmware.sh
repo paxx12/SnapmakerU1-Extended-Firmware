@@ -22,6 +22,11 @@ echo ">> Extracting squashfs from rootfs.img..."
 unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
 
 for overlay; do
+  if [[ ! -d "$overlay" ]]; then
+    echo "!! Overlay directory '$overlay' does not exist, skipping."
+    exit 1
+  fi
+
   echo ">> Applying overlay $overlay..."
   if [[ -d "$overlay/patches/" ]]; then
     for patchfile in "$overlay/patches/"*.patch; do

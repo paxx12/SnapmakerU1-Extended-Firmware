@@ -45,31 +45,44 @@ The build system supports two profiles:
 
 ## Overlays
 
-- `basic` - SSH access, USB ethernet support
-- `kernel-modules` - Required kernel modules
-- `camera-native` - Extensions to camera stack (integration in `fluidd`, ~1hz)
-- `camera-new` - Hardware-accelerated camera stack (MPP/VPU)
-- `fluidd-upgrade` - Upgrade fluidd with timelapse plugin
+### Core Overlays
+
+- `store-version` - Store firmware version information
+- `kernel-modules` - Compile and install required kernel modules
+
+### Feature Overlays
+
+- `enable-ssh` - Enable SSH access
+- `enable-usb-eth-hotplug` - USB ethernet adapter hot-plug support
+- `disable-wlan-power-save` - Disable WLAN power saving
+- `enable-native-camera-fluidd` - Native camera integration in Fluidd (~1Hz)
+- `camera-v4l2-mpp` - Hardware-accelerated camera stack (MPP/VPU)
+- `stub-fluidd-timelapse` - Stub timelapse component for Moonraker
+- `fluidd-upgrade` - Upgrade Fluidd to v1.35.0 with timelapse plugin
 
 ## Project Structure
 
 ```
 .
-├── .github/            Automated release builds
-├── overlays/           Profile overlay directories
-│   ├── basic/          SSH, USB ethernet, udev rules
-│   ├── kernel-modules/ Kernel module compilation
-│   ├── camera-native/  Extensions to camera stack
-│   ├── camera-new/     Hardware-accelerated camera (MPP/VPU)
-│   └── fluidd-upgrade/ Fluidd upgrade
-├── firmware/           Downloaded and generated firmware files
-├── scripts/            Build and modification scripts
-├── tmp/                Temporary build artifacts
-├── tools/              Firmware manipulation tools
-│   ├── rk2918_tools/   Rockchip image tools
-│   └── upfile/         Firmware unpacking tool
-├── Makefile            Build configuration
-└── vars.mk             Firmware version and kernel configuration
+├── .github/                     Automated release builds
+├── overlays/                    Profile overlay directories
+│   ├── store-version/           Store firmware version
+│   ├── kernel-modules/          Kernel module compilation
+│   ├── enable-ssh/              SSH access configuration
+│   ├── enable-usb-eth-hotplug/  USB ethernet hot-plug
+│   ├── disable-wlan-power-save/ Disable WLAN power saving
+│   ├── enable-native-camera-fluidd/ Native camera for Fluidd
+│   ├── camera-v4l2-mpp/         Hardware-accelerated camera (MPP/VPU)
+│   ├── stub-fluidd-timelapse/   Timelapse stub
+│   └── fluidd-upgrade/          Fluidd upgrade
+├── firmware/                    Downloaded and generated firmware files
+├── scripts/                     Build and modification scripts
+├── tmp/                         Temporary build artifacts
+├── tools/                       Firmware manipulation tools
+│   ├── rk2918_tools/            Rockchip image tools
+│   └── upfile/                  Firmware unpacking tool
+├── Makefile                     Build configuration
+└── vars.mk                      Firmware version and kernel configuration
 ```
 
 ## Configuration

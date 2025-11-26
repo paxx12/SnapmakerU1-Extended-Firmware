@@ -7,9 +7,12 @@ all: tools
 OUTPUT_FILE := firmware/firmware.bin
 
 ifeq (basic,$(PROFILE))
-OVERLAYS += basic kernel-modules camera-native
+OVERLAYS += store-version kernel-modules
+OVERLAYS += enable-ssh enable-usb-eth-hotplug disable-wlan-power-save
 else ifeq (extended,$(PROFILE))
-OVERLAYS += basic kernel-modules camera-new fluidd-upgrade
+OVERLAYS += store-version kernel-modules
+OVERLAYS += enable-ssh enable-usb-eth-hotplug disable-wlan-power-save
+OVERLAYS += stub-fluidd-timelapse camera-v4l2-mpp fluidd-upgrade
 endif
 
 $(OUTPUT_FILE): firmware/$(FIRMWARE_FILE) tools
