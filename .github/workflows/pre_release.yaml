@@ -61,13 +61,15 @@ jobs:
     - name: Clear Kernel Git Repo
       run: sudo git -C tmp/kernel/ clean -fdx
 
+    - name: Generate Changelog
+      run: make changelog >> RELEASE.md
+
     - name: 'Release debian files'
       uses: ncipollo/release-action@v1
       with:
         tag: "v${{ env.GIT_VERSION }}"
         allowUpdates: false
         updateOnlyUnreleased: true
-        generateReleaseNotes: true
         prerelease: true
         bodyFile: RELEASE.md
         artifacts: "U1_*.bin"
