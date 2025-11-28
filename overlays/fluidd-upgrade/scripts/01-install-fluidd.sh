@@ -11,9 +11,9 @@ set -eo pipefail
 
 TARGET_DIR="$ROOT_DIR/tmp"
 
-VERSION=v1.35.0
+VERSION=v1.35.1
 URL=https://github.com/fluidd-core/fluidd/releases/download/$VERSION/fluidd.zip
-SHA256=07c557159c440009a197e0978d9a74c432b88e222a48723bf8e4578ddddb0025
+SHA256=5b8b525d9c65b2dfa83b238ee8fded105d1b34e3b73862aed10411bf977bb8f0
 FILENAME=fluidd-$VERSION.zip
 
 if [[ ! -f "$TARGET_DIR/$FILENAME" ]]; then
