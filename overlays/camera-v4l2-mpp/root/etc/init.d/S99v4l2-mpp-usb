@@ -22,7 +22,7 @@ start() {
     echo "OK"
 
     printf "Starting stream-webrtc: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-usb-webrtc.pid -x $CMD_WEBRTC -- $CMD_WEBRTC_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/stream-usb-webrtc.pid -c lava -x $CMD_WEBRTC -- $CMD_WEBRTC_ARGS
     echo "OK"
 
     printf "Starting stream-http: "

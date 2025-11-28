@@ -2,6 +2,11 @@
 
 [ ! -e /oem/.camera-native ] || exit 0
 
+# Create temporary directory for timelapse files
+umask 0022
+mkdir -p /userdata/.tmp_timelapse
+chown -R lava:lava /userdata/.tmp_timelapse
+
 CMD_CAPTURE=/usr/local/bin/capture-mipi-mpp
 CMD_CAPTURE_ARGS="--device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock"
 
@@ -11,6 +16,7 @@ CMD_WEBRTC_ARGS="--h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capt
 CMD_HTTP=/usr/local/bin/stream-http.py
 CMD_HTTP_ARGS="--jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock --bind 127.0.0.1"
 
+# Differently to Snapmaker, run as user lava, instead of the root user
 CMD_SNAP_MQTT=/usr/local/bin/stream-snap-mqtt.py
 CMD_SNAP_MQTT_ARGS="--jpeg-sock /tmp/capture-mipi-jpeg.sock --publish-dir /home/lava/printer_data/camera"
 
@@ -25,7 +31,7 @@ start() {
     echo "OK"
 
     printf "Starting stream-webrtc: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-webrtc.pid -x $CMD_WEBRTC -- $CMD_WEBRTC_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-webrtc.pid -c lava -x $CMD_WEBRTC -- $CMD_WEBRTC_ARGS
     echo "OK"
 
     printf "Starting stream-http: "
