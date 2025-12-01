@@ -35,7 +35,7 @@ jobs:
         sudo apt-get update -y &&
         sudo apt-get install -y build-essential cmake \
           gcc-aarch64-linux-gnu pkg-config squashfs-tools git-core \
-          bc libssl-dev
+          bc libssl-dev dos2unix
 
     - name: Set GIT_VERSION
       shell: bash

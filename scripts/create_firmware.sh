@@ -33,6 +33,13 @@ for overlay; do
   fi
 
   echo ">> Applying overlay $overlay..."
+  if [[ -d "$overlay/pre-scripts/" ]]; then
+    for scriptfile in "$overlay/pre-scripts/"*.sh; do
+      echo "[+] Running pre-scripts: $(basename "$scriptfile")"
+      ./"$scriptfile" "$TEMP_DIR/rootfs"
+    done
+  fi
+
   if [[ -d "$overlay/patches/" ]]; then
     for patchfile in "$overlay/patches/"*.patch; do
       echo "[+] Applying patch: $(basename "$patchfile")"

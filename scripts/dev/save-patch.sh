@@ -18,9 +18,8 @@ shift 2
 
 mkdir -p "overlays/$OVERLAY_NAME/patches"
 
+cd tmp/extracted
+
 for patch_file; do
-  diff \
-    --label "a/$patch_file" \
-    --label "b/$patch_file" \
-    -uNr tmp/extracted/{rootfs.original,rootfs}/"$patch_file"
-done > "overlays/$OVERLAY_NAME/patches/$PATCH_NAME.patch"
+  diff -uNr {rootfs.original,rootfs}/"$patch_file"
+done > "../../overlays/$OVERLAY_NAME/patches/$PATCH_NAME.patch"
