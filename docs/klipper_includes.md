@@ -54,8 +54,20 @@ aspect_ratio: 16:9
 - All `.cfg` files in the `klipper/` folder are automatically included.
 - All `.cfg` files in the `moonraker/` folder are automatically included.
 - Configuration files persist across reboots.
+- Placeholder files (`00_keep.cfg`) are automatically created in both folders with helpful comments.
+- Do not modify or remove the `00_keep.cfg` placeholder files.
 - Test changes carefully to avoid breaking the printer configuration.
 - Invalid configuration will prevent Klipper/Moonraker from starting.
-- If you break Moonraker, the printer will not connect to WiFi next time.
-  To recover, connected Ethernet adapter or rollback to Basic firmware
-  and remove the added Moonraker configs.
+
+## Recovery from Moonraker Issues
+
+If you break Moonraker with an invalid configuration, the printer will not connect to WiFi on next boot.
+
+To recover:
+
+1. Create an empty file named `moonraker-recover.txt` on a USB stick
+2. Insert the USB stick into the printer
+3. Restart the printer
+4. The Moonraker configuration folder will be backed up to `moonraker.bak`
+5. Moonraker will start with a fresh configuration
+6. Remove the USB stick and the `moonraker-recover.txt` file will be automatically deleted
