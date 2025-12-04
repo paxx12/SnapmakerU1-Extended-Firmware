@@ -28,6 +28,7 @@ All basic firmware features plus:
 
 - [Camera Support](docs/camera_support.md) - Hardware-accelerated camera stack (Rockchip MPP/VPU)
 - [USB Camera Support](docs/camera_support.md) - Support for external USB cameras
+- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
 - WebRTC low-latency streaming
 - Fluidd v1.35.0 with timelapse plugin
 
@@ -42,6 +43,7 @@ Known issues:
 - [SSH Access](docs/ssh_access.md) - How to access the printer via SSH
 - [USB Ethernet](docs/usb_ethernet.md) - USB ethernet adapter configuration
 - [Camera Support](docs/camera_support.md) - Camera features and WebRTC streaming
+- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
 - [Data Persistence](docs/data_persistence.md) - Persistent storage configuration
 
 ## Dependent projects
