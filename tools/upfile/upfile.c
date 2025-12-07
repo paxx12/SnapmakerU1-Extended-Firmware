@@ -86,7 +86,13 @@ static int info(const char *infile, const char *outdir, void (*file_fnc)(const c
     file_fnc("UPFILE_BUILD_DATE", header.build_date, trim_right(header.build_date, sizeof(header.build_date)));
   }
 
-  for (uint8_t i = 0; i < be_to_host16(header.files); i++) {
+  uint16_t files = be_to_host16(header.files);
+  if (files > 1024) { /* sanity guard to avoid runaway loops on corrupt files */
+    fprintf(stderr, "Unreasonable file count: %u\n", files);
+    goto error;
+  }
+
+  for (uint16_t i = 0; i < files; i++) {
     UPFILE_ENTRY entry;
     if (fseek(fp, sizeof(UPFILE_HEADER) + i * sizeof(UPFILE_ENTRY), SEEK_SET) != 0) {
       perror("fseek");
