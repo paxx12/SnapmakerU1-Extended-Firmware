@@ -195,12 +195,7 @@ static void print_hex(const uint8_t *data, size_t size) {
 }
 
 static size_t trim_right(char *str, size_t max_len) {
-  /* Bound the search to the provided buffer size to avoid over-read when
-   * the input isn't NUL-terminated. */
   size_t len = strnlen(str, max_len);
-  if (len == max_len) {
-    str[max_len - 1] = '\0';
-  }
   while (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r' || str[len - 1] == ' ' || str[len - 1] == '\t')) {
     str[len - 1] = '\0';
     len--;
