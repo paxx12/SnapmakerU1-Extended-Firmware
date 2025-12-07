@@ -88,8 +88,8 @@ static int info(const char *infile, const char *outdir, void (*file_fnc)(const c
   }
 
   uint16_t files = be_to_host16(header.files);
-  if (files >= UPFILE_FILE_COUNT) {
-    fprintf(stderr, "Unknown files found: %u\n", files);
+  if (files > UPFILE_FILE_COUNT) {
+    fprintf(stderr, "Too many files found: %u\n", files);
     goto error;
   }
 
