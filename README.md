@@ -51,6 +51,12 @@ Known issues:
 - [v4l2-mpp](https://github.com/paxx12/v4l2-mpp) - Custom project built to provide
   Hardware-accelerated camera stack
 
+## Support
+
+If you find this project useful and would like to support its development, you can:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)
+
 ## License
 
 See individual tool directories for licensing information.
