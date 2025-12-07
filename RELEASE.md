@@ -18,3 +18,8 @@ Quick steps:
 1. Download `.bin` from the [Snapmaker U1 Wiki](https://wiki.snapmaker.com/en/snapmaker_u1/firmware/release_notes).
 2. Follow the same as for install.
 
+## Support
+
+If you find this project useful and would like to support its development, you can:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)
