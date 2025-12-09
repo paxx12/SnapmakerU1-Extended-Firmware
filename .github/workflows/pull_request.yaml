@@ -1,4 +1,10 @@
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - .github/workflows/*.yaml
   pull_request:
   workflow_dispatch:
 
@@ -69,6 +75,7 @@ jobs:
 
     - name: Comment PR with artifact links
       uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
       with:
         script: |
           const body = `✅ Build artifacts ready: [Download builds](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
