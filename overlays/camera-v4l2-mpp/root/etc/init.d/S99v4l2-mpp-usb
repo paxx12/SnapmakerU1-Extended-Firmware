@@ -2,7 +2,7 @@
 
 [ ! -e /oem/.camera-native ] || exit 0
 
-CMD_CAPTURE=/usr/local/bin/capture-usb-mpp
+CMD_CAPTURE=/usr/local/bin/capture-v4l2-jpeg-mpp
 CMD_CAPTURE_ARGS="--device /dev/video18 --jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock"
 
 CMD_WEBRTC=/usr/local/bin/stream-webrtc

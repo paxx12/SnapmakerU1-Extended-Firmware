@@ -7,7 +7,7 @@ umask 0022
 mkdir -p /userdata/.tmp_timelapse
 chown -R lava:lava /userdata/.tmp_timelapse
 
-CMD_CAPTURE=/usr/local/bin/capture-mipi-mpp
+CMD_CAPTURE=/usr/local/bin/capture-v4l2-raw-mpp
 CMD_CAPTURE_ARGS="--device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock"
 
 CMD_WEBRTC=/usr/local/bin/stream-webrtc
