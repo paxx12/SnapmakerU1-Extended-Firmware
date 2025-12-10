@@ -1,0 +1,140 @@
+diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py rootfs/home/lava/klipper/klippy/extras/fm175xx_reader.py
+--- rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py	2025-11-06 05:01:19.000000000 +0100
++++ rootfs/home/lava/klipper/klippy/extras/fm175xx_reader.py	2025-12-01 23:11:18.401585041 +0100
+@@ -120,7 +120,15 @@
+ 
+ # RFID card type
+ FM175XX_MIFARE_CARD_TYPE_UNKNOWN        = 0xFF  # unknown type
+-FM175XX_MIFARE_CARD_TYPE_M1             = 0x08  # M1
++FM175XX_MIFARE_CARD_TYPE_M1             = 0x08  # M1 (ISO 14443A)
++FM175XX_MIFARE_CARD_TYPE_NTAG           = 0x00  # NTAG (ISO 14443A, same SAK as Ultralight)
+ 
++# About NTAG215 Card
++FM175XX_NTAG215_TOTAL_PAGES             = 135
++FM175XX_NTAG215_USER_START_PAGE         = 4
++FM175XX_NTAG215_USER_END_PAGE           = 129
++FM175XX_NTAG215_BYTES_PER_PAGE          = 4
++FM175XX_NTAG215_TOTAL_SIZE              = 540
++
+ # About M1 Card
+ # EEPROM
+@@ -584,8 +592,22 @@
+             if (result.out_param.bytes_recved == 2):
+                 self.__picc_a.ATQA[0] = result.out_param.recv_buff[0]
+                 self.__picc_a.ATQA[1] = result.out_param.recv_buff[1]
++                logging.info("ATQA: 0x%02X 0x%02X", self.__picc_a.ATQA[0], self.__picc_a.ATQA[1])
+             else:
+                 ret = FM175XX_CARD_COMM_ERR
++        else:
++            logging.info("Wakeup failed with error %d, trying REQA instead", ret)
++            cmd.send_buff[0] = FM175XX_RF_CMD_REQA
++            cmd.timeout = 10
++            result = self.__command_exe(cmd)
++            ret = result.err_code
++            if (result.err_code == FM175XX_OK):
++                if (result.out_param.bytes_recved == 2):
++                    self.__picc_a.ATQA[0] = result.out_param.recv_buff[0]
++                    self.__picc_a.ATQA[1] = result.out_param.recv_buff[1]
++                    logging.info("ATQA (via REQA): 0x%02X 0x%02X", self.__picc_a.ATQA[0], self.__picc_a.ATQA[1])
++                else:
++                    ret = FM175XX_CARD_COMM_ERR
+ 
+         return ret
+ 
+@@ -844,6 +866,60 @@
+ 
+         return ret
+ 
++    # Reader-A: NTAG/Ultralight, read a page (4 bytes)
++    def __reader_a_ntag_page_read(self, page:int) -> Fm175xxReturnVal:
++        outbuf = [0] * 2
++        inbuf = [0] * 16
++        cmd = Fm175xxCmdMetaData()
++        ret = Fm175xxReturnVal()
++
++        cmd.send_crc_en = FM175XX_SET
++        cmd.recv_crc_en = FM175XX_SET
++        cmd.send_buff = outbuf
++        cmd.recv_buff = inbuf
++        cmd.send_buff[0] = 0x30
++        cmd.send_buff[1] = page
++        cmd.bytes_to_send = 2
++        cmd.bits_to_send = 0
++        cmd.bits_to_recv = 0
++        cmd.bytes_to_recv = 16
++        cmd.timeout = 10
++        cmd.cmd = FM175XX_CMD_TRANSCEIVE
++        result = self.__command_exe(cmd)
++        ret.err_code = result.err_code
++
++        if (FM175XX_OK == result.err_code):
++            if (result.out_param.bytes_recved == 16):
++                ret.out_param = result.out_param.recv_buff[0:16]
++            else:
++                ret.err_code = FM175XX_CARD_COMM_ERR
++
++        return ret
++
++    # Reader-A: NTAG215, read all data
++    def __reader_a_ntag215_read_all_data(self, retry_times = 3) -> Fm175xxReturnVal:
++        ret = Fm175xxReturnVal()
++        card_data_tmp = [0] * FM175XX_NTAG215_TOTAL_SIZE
++
++        for page_no in range(0, FM175XX_NTAG215_TOTAL_PAGES, 4):
++            result = Fm175xxReturnVal()
++            for retry in range(retry_times):
++                result = self.__reader_a_ntag_page_read(page_no)
++                if (result.err_code == FM175XX_OK):
++                    break
++            if (result.err_code != FM175XX_OK):
++                ret.err_code = FM175XX_CARD_READ_ERR
++                return ret
++
++            area = page_no * FM175XX_NTAG215_BYTES_PER_PAGE
++            bytes_to_copy = min(16, FM175XX_NTAG215_TOTAL_SIZE - area)
++            if bytes_to_copy > 0:
++                card_data_tmp[area : area + bytes_to_copy] = result.out_param[0 : bytes_to_copy]
++
++        ret.err_code = FM175XX_OK
++        ret.out_param = card_data_tmp
++        return ret
++
+     # Reader-A: M1, read all data
+     def __reader_a_m1_read_all_data(self, uid:list, auth_mode:int, auth_key:list, retry_times = 3) -> Fm175xxReturnVal:
+         ret = Fm175xxReturnVal()
+@@ -967,6 +1043,7 @@
+                         # M1 card
+                         if (FM175XX_MIFARE_CARD_TYPE_M1 == self.__picc_a.SAK[0]):
+                             card_type = FM175XX_MIFARE_CARD_TYPE_M1
++                            logging.info("M1 card detected (SAK=0x%02X)", self.__picc_a.SAK[0])
+                             ret = self.__reader_a_m1_read_all_data(self.__picc_a.UID,
+                                                                    FM175XX_M1_CARD_AUTH_MODE_A,
+                                                                    self._hkdf_key_a,
+@@ -983,6 +1060,27 @@
+                                     self.__self_test_success_cnt += 1
+                                     if (self.__card_info_deal_cb != None):
+                                         self.__card_info_deal_cb(ch, card_op, card_op_result, card_type, card_data)
++                        # NTAG/Ultralight card (SAK = 0x00)
++                        elif (FM175XX_MIFARE_CARD_TYPE_NTAG == self.__picc_a.SAK[self.__picc_a.CASCADE_LEVEL]):
++                            logging.info("NTAG/Ultralight card detected (SAK=0x%02X)", self.__picc_a.SAK[self.__picc_a.CASCADE_LEVEL])
++                            card_type = FM175XX_MIFARE_CARD_TYPE_NTAG
++                            ret = self.__reader_a_ntag215_read_all_data(retry_times_3)
++                            if (FM175XX_OK != ret.err_code):
++                                card_op_result = FM175XX_CARD_READ_ERR
++                            else:
++                                logging.info("NTAG read successful, %d bytes", len(ret.out_param))
++                                card_data = ret.out_param[0:FM175XX_NTAG215_TOTAL_SIZE]
++                                card_op_result = FM175XX_OK
++
++                                if (self.__self_test_stage != FM175XX_SELF_TEST_STAGE_DOING):
++                                    self.__card_info_read_flag &= ~(1 << ch) & 0xFFFFFFFF
++                                else:
++                                    self.__self_test_success_cnt += 1
++                                    if (self.__card_info_deal_cb != None):
++                                        self.__card_info_deal_cb(ch, card_op, card_op_result, card_type, card_data)
++                        else:
++                            logging.warning("Unknown card type: SAK[0]=0x%02X, SAK[CASCADE_LEVEL]=0x%02X",
++                                          self.__picc_a.SAK[0], self.__picc_a.SAK[self.__picc_a.CASCADE_LEVEL])
+                         break
+ 
+                     # halt a card
