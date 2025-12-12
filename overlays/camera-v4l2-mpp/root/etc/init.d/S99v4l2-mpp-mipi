@@ -2,13 +2,27 @@
 
 [ ! -e /oem/.camera-native ] || exit 0
 
-# Create temporary directory for timelapse files
+LOG_DIR=/home/lava/printer_data/logs
+LOG_CAPTURE=$LOG_DIR/capture-mipi.log
+LOG_WEBRTC=$LOG_DIR/stream-webrtc-mipi.log
+LOG_HTTP=$LOG_DIR/stream-http-mipi.log
+LOG_SNAP_MQTT=$LOG_DIR/stream-snap-mqtt-mipi.log
+
 umask 0022
 mkdir -p /userdata/.tmp_timelapse
 chown -R lava:lava /userdata/.tmp_timelapse
 
+mkdir -p $LOG_DIR
+chown -R lava:lava $LOG_DIR
+
+rotate_log() {
+    if [ -f "$1" ]; then
+        mv "$1" "$1.old"
+    fi
+}
+
 CMD_CAPTURE=/usr/local/bin/capture-v4l2-raw-mpp
-CMD_CAPTURE_ARGS="--device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock"
+CMD_CAPTURE_ARGS="--device /dev/video11 --format nv12 --retry 3 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock"
 
 CMD_WEBRTC=/usr/local/bin/stream-webrtc
 CMD_WEBRTC_ARGS="--h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock"
@@ -26,20 +40,29 @@ start() {
         return
     fi
 
+    rotate_log "$LOG_CAPTURE"
+    rotate_log "$LOG_WEBRTC"
+    rotate_log "$LOG_HTTP"
+    rotate_log "$LOG_SNAP_MQTT"
+
     printf "Starting capture-mipi-mpp: "
-    start-stop-daemon -S -b -q -m -p /var/run/capture-mipi-mpp.pid -x $CMD_CAPTURE -- $CMD_CAPTURE_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/capture-mipi-mpp.pid \
+        --startas /bin/sh -- -c "exec $CMD_CAPTURE $CMD_CAPTURE_ARGS >> $LOG_CAPTURE 2>&1"
     echo "OK"
 
     printf "Starting stream-webrtc: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-webrtc.pid -c lava -x $CMD_WEBRTC -- $CMD_WEBRTC_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-webrtc.pid -c lava \
+        --startas /bin/sh -- -c "exec $CMD_WEBRTC $CMD_WEBRTC_ARGS >> $LOG_WEBRTC 2>&1"
     echo "OK"
 
     printf "Starting stream-http: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-http.pid -c lava -x /usr/bin/python3 -- $CMD_HTTP $CMD_HTTP_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-http.pid -c lava \
+        --startas /bin/sh -- -c "exec /usr/bin/python3 $CMD_HTTP $CMD_HTTP_ARGS >> $LOG_HTTP 2>&1"
     echo "OK"
 
     printf "Starting stream-snap-mqtt: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-snap-mqtt.pid -c lava -x /usr/bin/python3 -- $CMD_SNAP_MQTT $CMD_SNAP_MQTT_ARGS
+    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-snap-mqtt.pid -c lava \
+        --startas /bin/sh -- -c "exec /usr/bin/python3 $CMD_SNAP_MQTT $CMD_SNAP_MQTT_ARGS >> $LOG_SNAP_MQTT 2>&1"
     echo "OK"
 }
 
