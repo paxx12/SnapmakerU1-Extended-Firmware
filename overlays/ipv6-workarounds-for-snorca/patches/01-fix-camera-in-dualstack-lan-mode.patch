@@ -1,0 +1,37 @@
+diff -uNr rootfs.original/home/lava/moonraker/moonraker/components/machine.py rootfs/home/lava/moonraker/moonraker/components/machine.py
+--- rootfs.original/home/lava/moonraker/moonraker/components/machine.py
++++ rootfs/home/lava/moonraker/moonraker/components/machine.py
+@@ -378,6 +378,33 @@
+             "moonraker": self.unit_name,
+             "klipper": kconn.unit_name
+         }
++
++        # Filter IPv6 addresses for MQTT clients (Snapmaker Orca) in dual-stack
++        # environments to work around bug where Orca prefers IPv6 for camera
++        # but fails to handle it correctly
++        transport = web_request.get_subscribable()
++        if transport is not None and transport.transport_type.name == "MQTT":
++            if "network" in sys_info:
++                has_ipv4 = False
++                has_ipv6 = False
++
++                # Check if we have both IPv4 and IPv6 (dual-stack)
++                for iface, iface_info in sys_info["network"].items():
++                    for addr_info in iface_info.get("ip_addresses", []):
++                        if addr_info["family"] == "ipv4" and not addr_info.get("is_link_local", False):
++                            has_ipv4 = True
++                        elif addr_info["family"] == "ipv6" and not addr_info.get("is_link_local", False):
++                            has_ipv6 = True
++
++                # If dual-stack, remove non-link-local IPv6 addresses
++                if has_ipv4 and has_ipv6:
++                    for iface, iface_info in sys_info["network"].items():
++                        filtered_addrs = [
++                            addr for addr in iface_info.get("ip_addresses", [])
++                            if addr["family"] != "ipv6" or addr.get("is_link_local", False)
++                        ]
++                        iface_info["ip_addresses"] = filtered_addrs
++
+         return {"system_info": sys_info}
+ 
+     async def _set_sudo_password(
