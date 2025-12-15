@@ -1,2 +1,0 @@
-KERNEL=="eth0", SUBSYSTEM=="net", ACTION=="add", RUN+="/bin/sh -c 'PATH=\"/usr/bin:/usr/sbin\" /usr/sbin/ifup -f eth0'"
-KERNEL=="eth0", SUBSYSTEM=="net", ACTION=="remove", RUN+="/bin/sh -c 'PATH=\"/usr/bin:/usr/sbin\" /usr/sbin/ifdown -f eth0'"

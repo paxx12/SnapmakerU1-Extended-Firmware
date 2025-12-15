@@ -55,7 +55,6 @@ The build system supports two profiles:
 ### Feature Overlays
 
 - `enable-ssh` - Enable SSH access
-- `enable-usb-eth-hotplug` - USB ethernet adapter hot-plug support
 - `disable-wlan-power-save` - Disable WLAN power saving
 - `enable-native-camera-fluidd` - Native camera integration in Fluidd (~1Hz)
 - `camera-v4l2-mpp` - Hardware-accelerated camera stack (MPP/VPU)
@@ -71,7 +70,6 @@ The build system supports two profiles:
 │   ├── store-version/           Store firmware version
 │   ├── kernel-modules/          Kernel module compilation
 │   ├── enable-ssh/              SSH access configuration
-│   ├── enable-usb-eth-hotplug/  USB ethernet hot-plug
 │   ├── disable-wlan-power-save/ Disable WLAN power saving
 │   ├── enable-native-camera-fluidd/ Native camera for Fluidd
 │   ├── camera-v4l2-mpp/         Hardware-accelerated camera (MPP/VPU)
