@@ -20,11 +20,36 @@ shift 3
 
 rm -rf "$TEMP_DIR"
 
+check_perms() {
+  local file="$1"
+  local expected_uid="$2"
+  local expected_gid="$3"
+
+  if [[ ! -e "$file" ]]; then
+    echo "Error: $file does not exist for ownership check."
+    exit 1
+  fi
+
+  local actual_uid=$(stat -c '%u' "$file")
+  local actual_gid=$(stat -c '%g' "$file")
+
+  if [[ "$actual_uid" != "$expected_uid" ]] || [[ "$actual_gid" != "$expected_gid" ]]; then
+    echo "Error: $file should be $expected_uid:$expected_gid, got $actual_uid:$actual_gid"
+    echo "This system does not properly preserve file ownership in squashfs operations."
+    exit 1
+  fi
+}
+
 echo ">> Unpacking firmware..."
 "$ROOT_DIR/scripts/helpers/unpack_firmware.sh" "$IN_FIRMWARE" "$TEMP_DIR"
 
 echo ">> Extracting squashfs from rootfs.img..."
 unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
+
+echo ">> Verifying ownership preservation..."
+check_perms "$TEMP_DIR/rootfs/etc/passwd" 0 0
+check_perms "$TEMP_DIR/rootfs/home/lava/bin/gui" 1000 1000
+echo "   Ownership check passed"
 
 for overlay; do
   if [[ ! -d "$overlay" ]]; then
@@ -59,6 +84,13 @@ for overlay; do
     cp -rv "$overlay/root/." "$TEMP_DIR/rootfs/"
   fi
 done
+
+echo ">> Checking for non-ARM binaries in rootfs..."
+if FILES=$(find "$TEMP_DIR/rootfs" -type f -exec file {} + | grep "ELF" | grep -v "ARM"); then
+  echo "!! Error: Found non-ARM binaries in the rootfs:"
+  echo "$FILES"
+  exit 1
+fi
 
 echo ">> Create squash filesystem..."
 mksquashfs "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs-v2.img" -comp gzip
