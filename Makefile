@@ -8,11 +8,11 @@ OUTPUT_FILE := firmware/firmware.bin
 
 ifeq (basic,$(PROFILE))
 OVERLAYS += store-version kernel-modules
-OVERLAYS += enable-ssh disable-wlan-power-save disable-ipv6
+OVERLAYS += enable-ssh disable-wlan-power-save
 OVERLAYS += enable-native-camera-fluidd
 else ifeq (extended,$(PROFILE))
 OVERLAYS += store-version kernel-modules
-OVERLAYS += enable-ssh disable-wlan-power-save disable-ipv6
+OVERLAYS += enable-ssh disable-wlan-power-save
 OVERLAYS += stub-fluidd-timelapse camera-v4l2-mpp fluidd-upgrade
 OVERLAYS += rfid-support
 OVERLAYS += enable-klipper-includes enable-moonraker-apprise
