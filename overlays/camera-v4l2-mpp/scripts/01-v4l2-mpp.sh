@@ -3,7 +3,7 @@
 ROOT_DIR="$(realpath "$(dirname "$0")/../../..")"
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=1824108a5294999fd018ae0256feae2d052b7164
+GIT_SHA=6c5a3ea7c3b0d245e0d0edfc00f3e4f185a19597
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <rootfs-dir>"
@@ -21,6 +21,14 @@ if [[ ! -d "$TARGET_DIR" ]]; then
     git -C "$TARGET_DIR" checkout "$GIT_SHA"
   fi
 fi
+
+echo ">> Setting up cross-compilation environment..."
+export CROSS_COMPILE=aarch64-linux-gnu-
+export CC="${CROSS_COMPILE}gcc"
+export CXX="${CROSS_COMPILE}g++"
+export AR="${CROSS_COMPILE}ar"
+export RANLIB="${CROSS_COMPILE}ranlib"
+export STRIP="${CROSS_COMPILE}strip"
 
 echo ">> Compiling dependencies..."
 make -C "$TARGET_DIR" deps
