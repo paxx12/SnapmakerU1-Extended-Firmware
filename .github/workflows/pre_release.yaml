@@ -30,13 +30,6 @@ jobs:
         path: tmp/kernel/
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
 
-    - name: Install build dependencies
-      run: |
-        sudo apt-get update -y &&
-        sudo apt-get install -y build-essential cmake \
-          gcc-aarch64-linux-gnu pkg-config squashfs-tools git-core \
-          bc libssl-dev dos2unix
-
     - name: Set GIT_VERSION
       shell: bash
       run: |
@@ -44,16 +37,16 @@ jobs:
         echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
 
     - name: Download firmware
-      run: make firmware
+      run: ./dev.sh make firmware
 
     - name: Build with Basic firmware
-      run: sudo GIT_VERSION=${{ env.GIT_VERSION }} make build PROFILE=basic OUTPUT_FILE=U1_basic_${{ env.GIT_VERSION }}_upgrade.bin
+      run: ./dev.sh make build PROFILE=basic OUTPUT_FILE=U1_basic_${{ env.GIT_VERSION }}_upgrade.bin
 
     - name: Build with Extended firmware
-      run: sudo GIT_VERSION=${{ env.GIT_VERSION }} make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
+      run: ./dev.sh make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
 
     - name: Clear Kernel Git Repo
-      run: sudo git -C tmp/kernel/ clean -fdx
+      run: ./dev.sh git -C tmp/kernel/ clean -fdx
 
     - name: Generate Changelog
       run: make changelog >> RELEASE.md
