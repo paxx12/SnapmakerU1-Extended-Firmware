@@ -2,7 +2,16 @@
 
 ## Prerequisites
 
-- Linux build environment
+### Option 1: Docker (Recommended)
+
+- Docker installed on your system
+- Use `./dev.sh` script for containerized builds
+
+The `dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
+
+### Option 2: Native Build
+
+- Linux build environment (ARM64 or with cross-compilation support)
 - `make`
 - `wget`
 - `squashfs-tools`
@@ -12,10 +21,39 @@
 - `git-core`
 - `bc`
 - `libssl-dev`
-
-Prefer to run builds in a dockerized environment.
+- `dos2unix`
+- `build-essential`
 
 ## Quick Start
+
+### Using Docker (Recommended)
+
+Build tools and download firmware:
+
+```bash
+./dev.sh make tools
+./dev.sh make firmware
+```
+
+Build basic firmware:
+
+```bash
+./dev.sh sudo make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
+```
+
+Build extended firmware:
+
+```bash
+./dev.sh sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended.bin
+```
+
+Open a shell in the development environment:
+
+```bash
+./dev.sh bash
+```
+
+### Native Build
 
 Build tools and download firmware:
 
