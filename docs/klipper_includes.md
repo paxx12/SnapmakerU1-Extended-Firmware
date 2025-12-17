@@ -8,8 +8,8 @@ The `enable-klipper-includes` overlay adds support for custom Klipper and Moonra
 
 This overlay modifies the default Klipper and Moonraker configurations to include user-defined configuration files from specific directories:
 
-- Klipper includes from: `klipper/*.cfg`
-- Moonraker includes from: `moonraker/*.cfg`
+- Klipper includes from: `extended/klipper/*.cfg`
+- Moonraker includes from: `extended/moonraker/*.cfg`
 
 ## Usage
 
@@ -51,23 +51,22 @@ aspect_ratio: 16:9
 
 ## Important Notes
 
-- All `.cfg` files in the `klipper/` folder are automatically included.
-- All `.cfg` files in the `moonraker/` folder are automatically included.
-- Configuration files persist across reboots.
-- Placeholder files (`00_keep.cfg`) are automatically created in both folders with helpful comments.
-- Do not modify or remove the `00_keep.cfg` placeholder files.
-- Test changes carefully to avoid breaking the printer configuration.
-- Invalid configuration will prevent Klipper/Moonraker from starting.
+- All `.cfg` files in the `extended/klipper/` folder are automatically included
+- All `.cfg` files in the `extended/moonraker/` folder are automatically included
+- Configuration files persist across reboots
+- Do not modify or remove the `00_keep.cfg` placeholder files
+- Test changes carefully to avoid breaking the printer configuration
+- Invalid configuration will prevent Klipper/Moonraker from starting
 
-## Recovery from Moonraker Issues
+## Recovery from Extended Firmware Configuration Issues
 
 If you break Moonraker with an invalid configuration, the printer will not connect to WiFi on next boot.
 
 To recover:
 
-1. Create an empty file named `moonraker-recover.txt` on a USB stick
+1. Create an empty file named `extended-recover.txt` on a USB stick
 2. Insert the USB stick into the printer
 3. Restart the printer
-4. The Moonraker configuration folder will be backed up to `moonraker.bak`
-5. Moonraker will start with a fresh configuration
-6. Remove the USB stick and the `moonraker-recover.txt` file will be automatically deleted
+4. The configuration folder will be backed up to `extended.bak`
+5. The printer will start with a fresh configuration
+6. Remove the USB stick and the `extended-recover.txt` file will be automatically deleted

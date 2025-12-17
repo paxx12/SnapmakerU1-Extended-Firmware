@@ -1,10 +1,9 @@
 diff -uNr rootfs.original/home/lava/origin_printer_data/config/moonraker.conf rootfs/home/lava/origin_printer_data/config/moonraker.conf
 --- rootfs.original/home/lava/origin_printer_data/config/moonraker.conf	2025-11-06 05:00:27.000000000 +0100
 +++ rootfs/home/lava/origin_printer_data/config/moonraker.conf	2025-12-04 10:32:47.613494428 +0100
-@@ -46,3 +46,6 @@
+@@ -46,3 +46,5 @@
  mqtt_protocol: v5
  status_interval: 2
  default_qos: 1
 +
-+[include /home/lava/moonraker-config/*.cfg]
-+[include moonraker/*.cfg]
++[include extended/moonraker/*.cfg]

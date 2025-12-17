@@ -1,7 +1,7 @@
 diff -uNr rootfs.original/home/lava/origin_printer_data/config/printer.cfg rootfs/home/lava/origin_printer_data/config/printer.cfg
 --- rootfs.original/home/lava/origin_printer_data/config/printer.cfg	2025-11-06 05:01:19.000000000 +0100
 +++ rootfs/home/lava/origin_printer_data/config/printer.cfg	2025-12-04 10:31:52.832922872 +0100
-@@ -1258,4 +1258,7 @@
+@@ -1258,4 +1258,6 @@
  #*# max_x = 240.0
  #*# min_y = 20.0
  #*# max_y = 240.0
@@ -9,5 +9,4 @@ diff -uNr rootfs.original/home/lava/origin_printer_data/config/printer.cfg rootf
 \ No newline at end of file
 +#*#
 +
-+[include /home/lava/klipper-config/*.cfg]
-+[include klipper/*.cfg]
++[include extended/klipper/*.cfg]

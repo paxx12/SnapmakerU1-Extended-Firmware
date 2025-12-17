@@ -26,6 +26,7 @@ and the [release notes](https://github.com/paxx12/SnapmakerU1/releases/latest).
 
 All basic firmware features plus:
 
+- [Extended Configuration](docs/extended_config.md) - Customize firmware behavior via config file
 - [Camera Support](docs/camera_support.md) - Hardware-accelerated camera stack (Rockchip MPP/VPU)
 - [USB Camera Support](docs/camera_support.md) - Support for external USB cameras
 - [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
@@ -43,6 +44,7 @@ Known issues:
 - [Installation Guide](docs/install.md) - How to install custom firmware
 - [Building from Source](docs/development.md) - Development guide for building custom firmware
 - [SSH Access](docs/ssh_access.md) - How to access the printer via SSH
+- [Extended Configuration](docs/extended_config.md) - Customize firmware behavior via config file
 - [Camera Support](docs/camera_support.md) - Camera features and WebRTC streaming
 - [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
 - [RFID Filament Tag Support](docs/rfid_support.md) - RFID filament tag usage and programming

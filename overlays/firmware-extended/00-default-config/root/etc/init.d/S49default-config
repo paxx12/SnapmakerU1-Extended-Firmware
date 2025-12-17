@@ -1,0 +1,32 @@
+#!/bin/sh
+
+start() {
+    if [ -f /mnt/udisk/extended-recover.txt ]; then
+        if [ -d /home/lava/printer_data/config/extended ]; then
+            mkdir -p /home/lava/printer_data/config/extended.bak
+            mv -r /home/lava/printer_data/config/extended/. /home/lava/printer_data/config/extended.bak
+        fi
+        rm -f /mnt/udisk/extended-recover.txt
+    fi
+
+    mkdir -p /home/lava/printer_data/config
+    cp -rn /home/lava/default-config/. /home/lava/printer_data/config/
+    chown -R lava:lava /home/lava/printer_data/config
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        ;;
+    restart|reload)
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
