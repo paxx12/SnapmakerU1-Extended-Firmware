@@ -1,0 +1,11 @@
+# To add USB camera to Moonraker and all of its clients (Fluidd), simply rename this file to 03_usb_camera.cfg
+
+# USB camera using WebRTC
+[webcam usb]
+enabled: true
+service: webrtc-camerastreamer
+stream_url: /webcam2/webrtc
+snapshot_url: /webcam2/snapshot.jpg
+aspect_ratio: 16:9
+target_fps: 15
+target_fps_idle: 1

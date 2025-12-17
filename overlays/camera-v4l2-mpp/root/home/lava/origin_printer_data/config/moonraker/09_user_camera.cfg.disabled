@@ -1,0 +1,41 @@
+# To customize camera streams:
+# 1. Rename this file to 09_user_camera.cfg using Fluidd web interface or SSH shell.
+# 2. Enable stream types that you want by changing "enabled" to true.
+#    Enabling multiple stream types will add multiple cameras to Fluidd and other clients.
+# 3. Feel free to adjust other parameters as needed.
+
+
+# Default Internal camera using WebRTC
+# This webcam must be named "case" to override default settings from 02_default_internal_camera.cfg
+# Enabling this camera and modifying its settings here will override default settings from 02_default_internal_camera.cfg
+[webcam case]
+enabled: false
+service: webrtc-camerastreamer
+stream_url: /webcam/webrtc
+snapshot_url: /webcam/snapshot.jpg
+aspect_ratio: 16:9
+target_fps: 15
+target_fps_idle: 1
+
+# Internal camera using MJPEG-adaptive, enable by setting "enabled: true"
+[webcam mjpeg]
+enabled: false
+service: mjpegstreamer-adaptive
+stream_url: /webcam/stream.mjpg
+snapshot_url: /webcam/snapshot.jpg
+aspect_ratio: 16:9
+target_fps: 15
+target_fps_idle: 1
+
+# Internal camera using h264 embedded player, enable by setting "enabled: true"
+[webcam h264]
+enabled: false
+service: iframe
+stream_url: /webcam/player
+snapshot_url: /webcam/snapshot.jpg
+aspect_ratio: 16:9
+target_fps: 15
+target_fps_idle: 1
+
+# More stream types and parameters can be added using syntax from official Moonraker documentation.
+# https://moonraker.readthedocs.io/en/latest/configuration/#webcam

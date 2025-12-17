@@ -1,9 +1,0 @@
-# 1. Rename this file to `09_usb_camera.cfg` to enable USB camera
-# 2. Restart Moonraker
-
-# Enable USB camera using WebRTC
-[webcam usb]
-service: webrtc-camerastreamer
-stream_url: /webcam2/webrtc
-snapshot_url: /webcam2/snapshot.jpg
-aspect_ratio: 16:9

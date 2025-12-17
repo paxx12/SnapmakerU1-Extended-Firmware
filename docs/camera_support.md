@@ -10,6 +10,7 @@ The extended firmware includes hardware-accelerated camera support.
 - v4l2-mpp: MIPI CSI and USB camera support
 - WebRTC low-latency streaming
 - Hot-plug detection for USB cameras
+- Ability to select different stream types (WebRTC, MJPEG-adaptive, h264 iframe...)
 
 ## Accessing Cameras
 
@@ -29,52 +30,39 @@ Access USB camera at:
 http://<printer-ip>/webcam2/
 ```
 
-You need to add USB camera in Fluidd. Use the following
-settings for the best performance:
+You need to add USB camera to Fluidd. Use the following settings for the best performance:
 
 <img src="images/usb_cam.png" alt="Fluidd USB camera" width="300"/>
 
-## Change Internal Camera Stream Type
-
-By default the internal camera stream uses WebRTC for low-latency streaming.
-Not all apps/integrations support WebRTC.
-To switch internal camera to MJPEG or h264 stream, simply rename existing preset files using either Fluidd or SSH interface:
-
-<details>
-<summary>Click to expand Fluidd instructions</summary>
+Alternatively, you can add USB camera to Moonraker configuration which also makes it available in Fluidd and all other Moonraker clients:
 
 1. In web browser go to Fluidd Configuration editor at `http://<printer-ip>/#/configure`
-2. Enter `moonraker` directory and right-click on the preset files to rename them
-    - Disable WebRTC stream to prevent having multiple cameras in Fluidd:
-      - Rename `02_webrtc_internal_camera.cfg` to `02_webrtc_internal_camera.cfg.disabled`
-    - Enable mjpg-adaptive stream:
-      - Rename `03_mjpg_internal_camera.cfg.disabled` to `03_mjpg_internal_camera.cfg`
-    - Enable h264 stream:
-      - Rename `04_h264_internal_camera.cfg.disabled` to `04_h264_internal_camera.cfg`
+2. Enter `moonraker` directory and right-click on `03_usb_camera.cfg.disabled` and rename it to `03_usb_camera.cfg`
+5. Restart Moonraker service or printer for changes to take effect.
 
-</details>
+## Change Internal Camera Stream Type
 
-<details>
-<summary>Click to expand SSH instructions</summary>
+By default the internal "case" camera streams in WebRTC format for low-latency and high-quality video.
+Some apps don't support WebRTC (Mobileraker, Homeassistant...), so you may want to switch the default stream type to MJPEG or h264 instead. Or you can have multiple stream types enabled at the same time and client apps can choose the one that works for them.
+To do that, simply rename the existing `09_user_camera.cfg.disabled` to `09_user_camera.cfg`. You can do that from Fluidd web interface:
 
-```bash
-# Disable WebRTC stream to prevent having multiple cameras in Fluidd
-cd /home/lava/printer_data/config/moonraker/
-mv 02_webrtc_internal_camera.cfg 02_webrtc_internal_camera.cfg.disabled
+1. In web browser go to Fluidd Configuration editor at `http://<printer-ip>/#/configure`
+2. Enter `moonraker` directory, right-click on `09_user_camera.cfg.disabled` and rename it to `09_user_camera.cfg`
+    That file contains a section which disables default WebRTC stream:
 
-# Enable mjpg-adaptive stream
-cd /home/lava/printer_data/config/moonraker/
-mv 03_mjpg_internal_camera.cfg.disabled 03_mjpg_internal_camera.cfg
+    ```ini
+    [webcam case]
+    enabled: false
+    ```
 
-# Enable h264 stream
-cd /home/lava/printer_data/config/moonraker/
-mv 04_h264_internal_camera.cfg.disabled 04_h264_internal_camera.cfg
+    If you prefer to keep the WebRTC stream enabled, simply toggle it to `enabled: true` and modify its settings as needed.
 
-# Restart moonraker to apply changes
-/etc/init.d/S61moonraker restart
-```
+3. Edit any other webcam sections to enable other stream types and configure their settings.
+   Refer to [09_user_camera.cfg.disabled](../overlays/camera-v4l2-mpp/root/home/lava/origin_printer_data/config/moonraker/09_user_camera.cfg.disabled) content for examples.
+4. Save the changes
+5. Restart Moonraker service or printer for changes to take effect.
 
-</details>
+Refer to official [Moonraker documentation](https://moonraker.readthedocs.io/en/latest/configuration/#webcam) for more details on available webcam settings.
 
 ## Switch to Snapmaker's Original Camera Stack
 

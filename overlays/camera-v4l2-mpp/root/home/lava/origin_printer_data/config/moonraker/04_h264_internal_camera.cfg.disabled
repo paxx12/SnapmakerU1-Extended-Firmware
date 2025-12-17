@@ -1,9 +1,0 @@
-# 1. Rename this file to `04_h264_internal_camera.cfg to enable h264 stream using embedded player
-# 2. Restart Moonraker
-
-# Enable h264 embedded player for internal camera
-[webcam h264]
-service: iframe
-stream_url: /webcam/player
-snapshot_url: /webcam/snapshot.jpg
-aspect_ratio: 16:9

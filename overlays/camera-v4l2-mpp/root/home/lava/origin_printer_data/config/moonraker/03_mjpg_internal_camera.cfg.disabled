@@ -1,9 +1,0 @@
-# 1. Rename this file to `03_mjpg_internal_camera.cfg` to enable mjpeg-adaptive stream for internal camera
-# 2. Restart Moonraker
-
-# Enable mjpeg-adaptive stream for internal camera
-[webcam mjpeg]
-service: mjpegstreamer-adaptive
-stream_url: /webcam/stream.mjpg
-snapshot_url: /webcam/snapshot.jpg
-aspect_ratio: 16:9
