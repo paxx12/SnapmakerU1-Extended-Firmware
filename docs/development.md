@@ -38,13 +38,13 @@ Build tools and download firmware:
 Build basic firmware:
 
 ```bash
-./dev.sh sudo make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
+./dev.sh make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
 ```
 
 Build extended firmware:
 
 ```bash
-./dev.sh sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended.bin
+./dev.sh make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended.bin
 ```
 
 Open a shell in the development environment:
@@ -71,7 +71,7 @@ sudo make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
 Build extended firmware:
 
 ```bash
-sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended.bin
+sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended_fluidd.bin
 ```
 
 **Note:** The build process requires root privileges due to squashfs root filesystem operations.
@@ -85,19 +85,31 @@ The build system supports two profiles:
 
 ## Overlays
 
-### Core Overlays
+Overlays are organized into categories based on their scope and build profile. Each overlay is numbered to indicate its application order within its category.
 
-- `store-version` - Store firmware version information
-- `kernel-modules` - Compile and install required kernel modules
+### Directory Structure
 
-### Feature Overlays
+```
+overlays/
+├── common/                          Core overlays applied to all profiles
+└── firmware-${profile}/             Profile-specific firmware overlays
+```
 
-- `enable-ssh` - Enable SSH access
-- `disable-wlan-power-save` - Disable WLAN power saving
-- `enable-native-camera-fluidd` - Native camera integration in Fluidd (~1Hz)
-- `camera-v4l2-mpp` - Hardware-accelerated camera stack (MPP/VPU)
-- `stub-fluidd-timelapse` - Stub timelapse component for Moonraker
-- `fluidd-upgrade` - Upgrade Fluidd to v1.35.0 with timelapse plugin
+### Overlay Structure
+
+Each overlay directory can contain:
+
+- `patches/` - Patch files applied to extracted firmware
+- `root/` - Files copied to firmware root filesystem
+- `scripts/` - Build-time scripts executed during firmware build
+- `pre-scripts/` - Scripts executed before main build process
+
+### Application Order
+
+Overlays are applied in the following order:
+
+1. All overlays from `common/` (in numeric order)
+1. Profile-specific overlays from `firmware-${profile}/` (in numeric order)
 
 ## Project Structure
 
@@ -105,14 +117,8 @@ The build system supports two profiles:
 .
 ├── .github/                     Automated release builds
 ├── overlays/                    Profile overlay directories
-│   ├── store-version/           Store firmware version
-│   ├── kernel-modules/          Kernel module compilation
-│   ├── enable-ssh/              SSH access configuration
-│   ├── disable-wlan-power-save/ Disable WLAN power saving
-│   ├── enable-native-camera-fluidd/ Native camera for Fluidd
-│   ├── camera-v4l2-mpp/         Hardware-accelerated camera (MPP/VPU)
-│   ├── stub-fluidd-timelapse/   Timelapse stub
-│   └── fluidd-upgrade/          Fluidd upgrade
+│   ├── common/                  Core overlays for all profiles
+│   └── firmware-${profile}/     Profile-specific firmware overlays
 ├── firmware/                    Downloaded and generated firmware files
 ├── scripts/                     Build and modification scripts
 ├── tmp/                         Temporary build artifacts

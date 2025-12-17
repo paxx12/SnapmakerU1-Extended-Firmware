@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../..")"
+ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <rootfs-dir>"

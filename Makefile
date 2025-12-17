@@ -6,24 +6,22 @@ all: tools
 
 OUTPUT_FILE := firmware/firmware.bin
 
-ifeq (basic,$(PROFILE))
-OVERLAYS += store-version kernel-modules
-OVERLAYS += enable-ssh disable-wlan-power-save
-OVERLAYS += enable-native-camera-fluidd
-else ifeq (extended,$(PROFILE))
-OVERLAYS += store-version kernel-modules
-OVERLAYS += enable-ssh disable-wlan-power-save
-OVERLAYS += stub-fluidd-timelapse camera-v4l2-mpp fluidd-upgrade
-OVERLAYS += rfid-support
-OVERLAYS += enable-klipper-includes enable-moonraker-apprise
+OVERLAYS += $(wildcard overlays/common/*/)
+ifneq (,$(PROFILE))
+OVERLAYS += $(wildcard overlays/firmware-$(PROFILE)/*/)
 endif
 
+PROFILES := $(patsubst overlays/firmware-%,%,$(wildcard overlays/firmware-*))
+
 $(OUTPUT_FILE): firmware/$(FIRMWARE_FILE) tools
-ifeq (,$(OVERLAYS))
-	@echo "No overlays specified. Set PROFILE variable to 'basic' or 'extended'."
+ifeq (,$(PROFILE))
+	@echo "Please specify a profile using 'make PROFILE=<profile_name>'. Available profiles are: $(PROFILES)."
+	@exit 1
+else ifeq (,$(filter $(PROFILE),$(PROFILES)))
+	@echo "Invalid profile '$(PROFILE)'. Available profiles are: $(PROFILES)."
 	@exit 1
 endif
-	./scripts/create_firmware.sh $< tmp/firmware $@ $(addprefix overlays/,$(OVERLAYS))
+	./scripts/create_firmware.sh $< tmp/firmware $@ $(OVERLAYS)
 
 .PHONY: build
 build: $(OUTPUT_FILE)
@@ -31,6 +29,10 @@ build: $(OUTPUT_FILE)
 .PHONY: extract
 extract: firmware/$(FIRMWARE_FILE) tools
 	./scripts/extract_squashfs.sh $< tmp/extracted
+
+.PHONY: profiles
+profiles:
+	@echo "Available profiles: $(PROFILES)"
 
 # ================= Tools =================
 

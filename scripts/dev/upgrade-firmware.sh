@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ $# -ne 2 ]]; then
-  echo "usage: $0 <user@ip> <basic|extended>"
+  echo "usage: $0 <user@ip> <profile>"
   exit 1
 fi
 

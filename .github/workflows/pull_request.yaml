@@ -50,7 +50,7 @@ jobs:
     - name: Build with Basic firmware
       run: ./dev.sh make build PROFILE=basic OUTPUT_FILE=U1_basic_${{ env.GIT_VERSION }}_upgrade.bin
 
-    - name: Build with Extended firmware
+    - name: Build with Extended Fluidd firmware
       run: ./dev.sh make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
 
     - name: Clear Kernel Git Repo

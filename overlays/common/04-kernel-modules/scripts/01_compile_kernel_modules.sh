@@ -5,7 +5,7 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../..")"
+ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 ROOTFS_DIR="$(realpath "$1")"
 KERNEL_CONFIG="$ROOTFS_DIR/info/config-6.1"
 TEMP_DIR="$ROOT_DIR/tmp/kernel"

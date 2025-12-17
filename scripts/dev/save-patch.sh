@@ -16,7 +16,9 @@ OVERLAY_NAME="$1"
 PATCH_NAME="$2"
 shift 2
 
-mkdir -p "overlays/$OVERLAY_NAME/patches"
+if [[ ! -d "overlays/$OVERLAY_NAME/patches" ]]; then
+  mkdir "overlays/$OVERLAY_NAME/patches"
+fi
 
 cd tmp/extracted
 
