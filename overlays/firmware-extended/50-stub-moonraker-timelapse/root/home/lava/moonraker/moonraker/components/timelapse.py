@@ -18,5 +18,30 @@ class Timelapse:
                                         full_access=True
                                         )
 
+        # required by Mainsail API
+        self.server.register_endpoint(
+            "/machine/timelapse/settings",
+            ["GET", "POST"],
+            self._handle_settings
+        )
+        self.server.register_endpoint(
+            "/machine/timelapse/lastframeinfo",
+            ["GET"],
+            self._handle_lastframeinfo
+        )
+
+    async def _handle_settings(self, web_request: WebRequest) -> Dict[str, Any]:
+        """Return stub timelapse settings."""
+        return {
+            "enabled": False
+        }
+
+    async def _handle_lastframeinfo(self, web_request: WebRequest) -> Dict[str, Any]:
+        """Return stub last frame info."""
+        return {
+            "lastframefile": "",
+            "count": 0
+        }
+
 def load_component(config: ConfigHelper) -> Timelapse:
     return Timelapse(config)

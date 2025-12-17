@@ -46,6 +46,13 @@ After saving, reboot the printer.
 
   * `syslog` - Enable logging to syslog (/var/log/messages)
 
+### [web]
+
+* `frontend` - Web interface selection (only one can be active)
+
+  * `fluidd` (default) - Fluidd web interface
+  * `mainsail` - Mainsail web interface
+
 ## Example Configuration
 
 ```ini
@@ -53,6 +60,10 @@ After saving, reboot the printer.
 stack: paxx12
 # stack: snapmaker
 logs: syslog
+
+[web]
+frontend: fluidd
+# frontend: mainsail
 ```
 
 ## Important Notes
@@ -61,6 +72,7 @@ logs: syslog
 - The file uses INI-style format with sections `[camera]` and `[web]`
 - Lines starting with `#` are comments and ignored
 - Only one camera stack can be active at a time
+- Only one web interface mode can be active at a time
 
 ## Revert back to defaults
 

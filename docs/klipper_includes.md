@@ -13,9 +13,9 @@ This overlay modifies the default Klipper and Moonraker configurations to includ
 
 ## Usage
 
-### Using Fluidd Web Interface
+### Using Fluidd or Mainsail Web Interface
 
-1. Open Fluidd in your web browser (`http://<printer-ip>`)
+1. Open Fluidd or Mainsail in your web browser (`http://<printer-ip>`)
 2. Go to **Configuration** tab
 3. Navigate to the **klipper** folder to create Klipper configuration files (`.cfg`)
 4. Navigate to the **moonraker** folder to create Moonraker configuration files (`.cfg`)
@@ -24,7 +24,7 @@ This overlay modifies the default Klipper and Moonraker configurations to includ
 
 ### Klipper Configuration
 
-In the Fluidd Configuration tab, go to the **klipper** folder and create `.cfg` files with your custom Klipper configuration.
+In the Configuration tab, go to the **klipper** folder and create `.cfg` files with your custom Klipper configuration.
 
 Example `custom-macros.cfg`:
 
@@ -37,7 +37,7 @@ gcode:
 
 ### Moonraker Configuration
 
-In the Fluidd Configuration tab, go to the **moonraker** folder and create `.cfg` files with your custom Moonraker configuration.
+In the Configuration tab, go to the **moonraker** folder and create `.cfg` files with your custom Moonraker configuration.
 
 Example `usb-camera.cfg` for USB camera support:
 

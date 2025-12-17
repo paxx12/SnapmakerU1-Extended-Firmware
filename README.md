@@ -29,11 +29,11 @@ All basic firmware features plus:
 - [Extended Configuration](docs/extended_config.md) - Customize firmware behavior via config file
 - [Camera Support](docs/camera_support.md) - Hardware-accelerated camera stack (Rockchip MPP/VPU)
 - [USB Camera Support](docs/camera_support.md) - Support for external USB cameras
-- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
+- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
 - [RFID Filament Tag Support](docs/rfid_support.md) - NTAG213/215/216 support for OpenPrintTag and OpenSpool formats
 - Moonraker Apprise notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - WebRTC low-latency streaming
-- Fluidd v1.35.0 with timelapse plugin
+- Fluidd or Mainsail (selectable) with timelapse plugin
 
 Known issues:
 
@@ -46,7 +46,8 @@ Known issues:
 - [SSH Access](docs/ssh_access.md) - How to access the printer via SSH
 - [Extended Configuration](docs/extended_config.md) - Customize firmware behavior via config file
 - [Camera Support](docs/camera_support.md) - Camera features and WebRTC streaming
-- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files via Fluidd
+- [Extended Configuration](docs/extended_config.md) - Configure web interface and firmware options
+- [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files
 - [RFID Filament Tag Support](docs/rfid_support.md) - RFID filament tag usage and programming
 - [Data Persistence](docs/data_persistence.md) - Persistent storage configuration
 
