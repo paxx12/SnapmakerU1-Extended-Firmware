@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../..")"
+ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
 GIT_SHA=6c5a3ea7c3b0d245e0d0edfc00f3e4f185a19597
