@@ -34,24 +34,31 @@ settings for the best performance:
 
 ## Switch to Snapmaker's Original Camera Stack
 
-By default, the extended firmware uses a custom hardware-accelerated camera stack.
-If you prefer to use Snapmaker's original camera stack instead, create:
+By default, the extended firmware uses a custom hardware-accelerated camera stack (paxx12).
+If you prefer to use Snapmaker's original camera stack instead, edit `/home/lava/printer_data/config/extended/extended.cfg`:
 
-```bash
-touch /oem/.camera-native
+```ini
+[camera]
+# stack: paxx12
+stack: snapmaker
+logs: syslog
 ```
 
-Note: Only one camera stack can be operational at a time.
+Then reboot the printer.
 
-## Enable Camera Logging
+Note: Only one camera stack can be operational at a time. See [Extended Configuration](extended_config.md) for details.
 
-To enable syslog logging for camera services (useful for debugging), create:
+## Camera Logging
 
-```bash
-touch /oem/.camera-log
+Camera service logging to syslog is controlled by the `logs` setting in `/home/lava/printer_data/config/extended/extended.cfg`:
+
+```ini
+[camera]
+stack: paxx12
+logs: syslog
 ```
 
-This will enable the `--syslog` flag for all camera-related services. Logs will then be available in `/var/log/messages`.
+This enables the `--syslog` flag for all camera-related services. Logs are available in `/var/log/messages`. See [Extended Configuration](extended_config.md) for details.
 
 ## Timelapse Support
 

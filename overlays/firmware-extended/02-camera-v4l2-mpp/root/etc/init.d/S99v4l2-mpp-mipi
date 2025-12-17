@@ -1,15 +1,18 @@
 #!/bin/sh
 
-[ ! -e /oem/.camera-native ] || exit 0
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+CAMERA_STACK=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera stack paxx12)
 
-# Create temporary directory for timelapse files
+[ "$CAMERA_STACK" != "snapmaker" ] || exit 0
+
 umask 0022
 mkdir -p /userdata/.tmp_timelapse
 chown -R lava:lava /userdata/.tmp_timelapse
 
 CMD_FAKE_SERVICE=/usr/local/bin/fake-service
 CMD_FAKE_SERVICE_ARGS="--retry 3"
-if [ -e /oem/.camera-log ]; then
+CAMERA_LOGS=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera logs "")
+if [ "$CAMERA_LOGS" = "syslog" ]; then
     CMD_FAKE_SERVICE_ARGS="$CMD_FAKE_SERVICE_ARGS --syslog"
 fi
 

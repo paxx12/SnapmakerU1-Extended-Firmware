@@ -33,11 +33,34 @@ vi /home/lava/printer_data/config/extended/extended.cfg
 
 After saving, reboot the printer.
 
+## Configuration Options
+
+### [camera]
+
+* `stack` - Camera stack selection (only one can be active)
+
+  * `paxx12` - Hardware-accelerated v4l2-mpp camera stack (WebRTC, timelapse)
+  * `snapmaker` - Native Snapmaker camera service
+
+* `logs` - Camera service logging destination
+
+  * `syslog` - Enable logging to syslog (/var/log/messages)
+
+## Example Configuration
+
+```ini
+[camera]
+stack: paxx12
+# stack: snapmaker
+logs: syslog
+```
+
 ## Important Notes
 
 - After making changes to `extended.cfg`, reboot the printer
 - The file uses INI-style format with sections `[camera]` and `[web]`
 - Lines starting with `#` are comments and ignored
+- Only one camera stack can be active at a time
 
 ## Revert back to defaults
 

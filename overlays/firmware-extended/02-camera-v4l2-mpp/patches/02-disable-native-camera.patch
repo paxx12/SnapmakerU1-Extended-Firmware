@@ -1,10 +1,12 @@
 --- a/etc/init.d/S99camera_service
 +++ b/etc/init.d/S99camera_service
-@@ -3,6 +3,8 @@
+@@ -3,6 +3,10 @@
  # Start/stop camera_service process
  #
- 
-+[ -e /oem/.camera-native ] || exit 0
+
++EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
++CAMERA_STACK=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera stack paxx12)
++[ "$CAMERA_STACK" = "snapmaker" ] || exit 0
 +
  log()
  {
