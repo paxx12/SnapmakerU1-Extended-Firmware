@@ -2,9 +2,16 @@
 
 start() {
     if [ -f /mnt/udisk/extended-recover.txt ]; then
-        if [ -d /home/lava/printer_data/config/extended ]; then
-            mkdir -p /home/lava/printer_data/config/extended.bak
-            mv -r /home/lava/printer_data/config/extended/. /home/lava/printer_data/config/extended.bak
+        EXTENDED_DIR="/home/lava/printer_data/config/extended"
+
+        # Move existing extended config to a backup location
+        # find the next available backup number
+        if [ -d "$EXTENDED_DIR" ]; then
+            BACKUP_NUM=1
+            while [ -d "$EXTENDED_DIR.backup.$BACKUP_NUM" ]; do
+                BACKUP_NUM=$((BACKUP_NUM + 1))
+            done
+            mv "$EXTENDED_DIR" "$EXTENDED_DIR.backup.$BACKUP_NUM"
         fi
         rm -f /mnt/udisk/extended-recover.txt
     fi
