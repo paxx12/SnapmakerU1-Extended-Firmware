@@ -150,12 +150,7 @@ def openspool_parse_payload(payload):
         info['VENDOR'] = data.get('brand', 'Generic')
         info['MANUFACTURER'] = data.get('brand', 'Generic')
 
-        material_type = data.get('type', '').upper()
-        if material_type in filament_protocol.FILAMENT_PROTO_MAIN_TYPE_MAPPING:
-            info['MAIN_TYPE'] = material_type
-        else:
-            info['MAIN_TYPE'] = 'Reserved'
-
+        info['MAIN_TYPE'] = data.get('type', 'PLA').upper()
         info['SUB_TYPE'] = 'Basic'
         info['TRAY'] = 0
 
