@@ -151,7 +151,7 @@ def openspool_parse_payload(payload):
         info['MANUFACTURER'] = data.get('brand', 'Generic')
 
         info['MAIN_TYPE'] = data.get('type', 'PLA').upper()
-        info['SUB_TYPE'] = 'Basic'
+        info['SUB_TYPE'] = data.get('subtype', 'Basic')
         info['TRAY'] = 0
 
         color_hex = data.get('color_hex', 'FFFFFF')

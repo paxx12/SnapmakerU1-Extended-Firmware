@@ -66,6 +66,21 @@ Example payload:
 }
 ```
 
+Using the non-standard OpenSpool `subtype` field it is possible to specify a material subtype:
+
+```json
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "type": "PETG",
+  "subtype": "Rapid",
+  "color_hex": "AFAFAF",
+  "brand": "Elegoo",
+  "min_temp": "230",
+  "max_temp": "260"
+}
+```
+
 **Supported OpenSpool Fields:**
 - `protocol` (required) - Must be "openspool"
 - `version` (required) - Specification version (e.g., "1.0")
@@ -76,6 +91,13 @@ Example payload:
 - `max_temp` (optional) - Maximum nozzle temperature in °C
 - `bed_min_temp` (optional) - Minimum bed temperature in °C
 - `bed_max_temp` (optional) - Maximum bed temperature in °C
+
+**Supported non-standard OpenSpool Fields:**
+- `subtype` (optional, default: "Basic") - Material subtype (e.g. "Rapid", "HF")
+
+## Snapmaker Orca Filament Naming Scheme
+
+In order for Snapmaker Orca to recognize the filement, it must be named according to this naming scheme: `<brand> <type> <subtype>`, e.g. `Generic PLA Basic` and `Elegoo PETG Rapid`.
 
 ## Reading Existing Tags
 
