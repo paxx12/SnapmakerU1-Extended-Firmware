@@ -5,3 +5,5 @@ tools/rk2918_tools/afptool
 tools/rk2918_tools/img_maker
 tools/rk2918_tools/img_unpack
 tools/rk2918_tools/mkkrnlimg
+.serena
+/*.bin

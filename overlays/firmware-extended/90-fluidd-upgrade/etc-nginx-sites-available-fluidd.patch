@@ -1,0 +1,23 @@
+--- a/etc/nginx/sites-available/fluidd
++++ b/etc/nginx/sites-available/fluidd
+@@ -59,6 +59,20 @@
+         proxy_read_timeout 600;
+     }
+ 
++    # Internal auth check endpoint for use by 3rd party services that want to check if user is authenticated with moonraker
++    location = /auth_check {
++        internal;
++        # Forward token query parameter if present (for websocket oneshot tokens)
++        proxy_pass http://apiserver/access/user$is_args$args;
++        proxy_pass_request_body off;
++        proxy_set_header Content-Length "";
++        proxy_set_header X-Original-URI $request_uri;
++        proxy_set_header Authorization $http_authorization;
++        # Forward client IP for oneshot token validation
++        proxy_set_header X-Real-IP $remote_addr;
++        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
++    }
++
+     location /webcam/ {
+         postpone_output 0;
+         proxy_buffering off;

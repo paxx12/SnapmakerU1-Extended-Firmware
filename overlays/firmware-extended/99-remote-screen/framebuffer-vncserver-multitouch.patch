@@ -1,0 +1,48 @@
+--- a/src/touch.c
++++ b/src/touch.c
+@@ -47,16 +47,35 @@ int init_touch(const char *touch_device, int vnc_rotate)
+     // Get the Range of X and Y
+-    if (ioctl(touchfd, EVIOCGABS(ABS_X), &info))
++    // Try multi-touch coordinates first (ABS_MT_POSITION_X/Y)
++    if (ioctl(touchfd, EVIOCGABS(ABS_MT_POSITION_X), &info) == 0)
+     {
+-        error_print("cannot get ABS_X info, %s\n", strerror(errno));
+-        return 0;
++        xmin = info.minimum;
++        xmax = info.maximum;
++        if (ioctl(touchfd, EVIOCGABS(ABS_MT_POSITION_Y), &info))
++        {
++            error_print("cannot get ABS_MT_POSITION_Y, %s\n", strerror(errno));
++            return 0;
++        }
++        ymin = info.minimum;
++        ymax = info.maximum;
++        info_print("Using multi-touch coordinates (ABS_MT_POSITION_X/Y)\n");
+     }
+-    xmin = info.minimum;
+-    xmax = info.maximum;
+-    if (ioctl(touchfd, EVIOCGABS(ABS_Y), &info))
++    // Fall back to single-touch coordinates (ABS_X/Y)
++    else if (ioctl(touchfd, EVIOCGABS(ABS_X), &info) == 0)
+     {
+-        error_print("cannot get ABS_Y, %s\n", strerror(errno));
+-        return 0;
++        xmin = info.minimum;
++        xmax = info.maximum;
++        if (ioctl(touchfd, EVIOCGABS(ABS_Y), &info))
++        {
++            error_print("cannot get ABS_Y, %s\n", strerror(errno));
++            return 0;
++        }
++        ymin = info.minimum;
++        ymax = info.maximum;
++        info_print("Using single-touch coordinates (ABS_X/Y)\n");
++    }
++    else
++    {
++        error_print("cannot get ABS_X or ABS_MT_POSITION_X info, %s\n", strerror(errno));
++        return 0;
+     }
+-    ymin = info.minimum;
+-    ymax = info.maximum;
+     rotate = vnc_rotate;

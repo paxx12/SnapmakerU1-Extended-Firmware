@@ -1,0 +1,80 @@
+#!/bin/sh
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+REMOTE_SCREEN_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" remote_screen enabled false)
+VNC_LISTEN=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" remote_screen vnc_listen 127.0.0.1)
+
+[ "$REMOTE_SCREEN_ENABLED" = "true" ] || exit 0
+
+# framebuffer-vncserver - VNC server for framebuffer
+CMD_VNC="/usr/local/bin/framebuffer-vncserver"
+CMD_VNC_ARGS="-L $VNC_LISTEN -p 5900 -f /dev/fb0 -F 15 -t /dev/input/by-path/platform-ffa10000.i2c-event"
+
+# websockify - WebSocket to TCP proxy for noVNC
+CMD_WEBSOCKIFY="/usr/local/bin/websockify"
+CMD_WEBSOCKIFY_ARGS="--heartbeat 30 --syslog /dev/log --unix-listen /var/run/websockify.sock --unix-listen-mode 0660 127.0.0.1:5900"
+
+start() {
+    if [ ! -e /dev/fb0 ]; then
+        echo "Framebuffer device /dev/fb0 not found, not starting."
+        return 1
+    fi
+
+    printf "Starting framebuffer-vncserver: "
+    # shellcheck disable=SC2086
+    if start-stop-daemon -S -b -q -m -p /var/run/framebuffer-vncserver.pid -c root -x $CMD_VNC -- $CMD_VNC_ARGS; then
+        echo "OK"
+    else
+        echo "FAIL"
+        return 1
+    fi
+
+    printf "Starting websockify: "
+    # shellcheck disable=SC2086
+    if start-stop-daemon -S -b -q -m -p /var/run/websockify.pid -c root:www-data -x $CMD_WEBSOCKIFY -- $CMD_WEBSOCKIFY_ARGS; then
+        echo "OK"
+    else
+        echo "FAIL"
+        # Stop framebuffer-vncserver since websockify failed
+        start-stop-daemon -K -q -p /var/run/framebuffer-vncserver.pid
+        return 1
+    fi
+}
+
+stop() {
+    printf "Stopping websockify: "
+    if start-stop-daemon -K -q -p /var/run/websockify.pid || [ ! -f /var/run/websockify.pid ]; then
+        echo "OK"
+    else
+        echo "FAIL"
+    fi
+    rm -f /var/run/websockify.pid /var/run/websockify.sock
+
+    printf "Stopping framebuffer-vncserver: "
+    if start-stop-daemon -K -q -p /var/run/framebuffer-vncserver.pid || [ ! -f /var/run/framebuffer-vncserver.pid ]; then
+        echo "OK"
+    else
+        echo "FAIL"
+    fi
+    rm -f /var/run/framebuffer-vncserver.pid
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
