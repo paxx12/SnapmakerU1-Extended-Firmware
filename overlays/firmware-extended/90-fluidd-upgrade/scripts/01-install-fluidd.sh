@@ -31,3 +31,6 @@ unzip -o "$TARGET_DIR/$FILENAME" -d "$TARGET_DIR/fluidd-$VERSION"
 echo ">> Installing $FILENAME to target rootfs..."
 rm -rf "$1/home/lava/fluidd"
 cp -r "$TARGET_DIR/fluidd-$VERSION" "$1/home/lava/fluidd"
+
+echo ">> Applying nginx configuration patch..."
+patch -d "$1" -p1 < "$(dirname "$0")/../etc-nginx-sites-available-fluidd.patch"

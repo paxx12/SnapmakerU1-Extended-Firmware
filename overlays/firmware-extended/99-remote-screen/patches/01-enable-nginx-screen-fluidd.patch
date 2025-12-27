@@ -1,6 +1,6 @@
 --- a/etc/nginx/sites-available/fluidd
 +++ b/etc/nginx/sites-available/fluidd
-@@ -94,4 +94,23 @@
+@@ -94,4 +94,25 @@
          error_log off;
          proxy_pass http://mjpgstreamer4/;
      }
@@ -12,10 +12,11 @@
 +
 +    location /screen/ {
 +        alias /home/lava/novnc/;
-+        index vnc.html;
++        index vnc-u1.html;
 +    }
 +
 +    location /screen/websockify {
++        auth_request /auth_check$is_args$args;
 +        proxy_pass http://unix:/var/run/websockify.sock:/;
 +        proxy_http_version 1.1;
 +        proxy_set_header Upgrade $http_upgrade;

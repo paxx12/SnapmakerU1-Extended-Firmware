@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Remote Screen</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+        #screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        #error {
+            color: #f88;
+        }
+    </style>
+    <script type="module" crossorigin="anonymous">
+        import RFB from './core/rfb.js';
+
+        let rfb;
+        
+        function showStatus(msg, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = isError ? `<span id="error">${msg}</span>` : msg;
+            if (!isError) {
+                setTimeout(() => statusEl.style.display = 'none', 3000);
+            }
+        }
+
+        function getJWT() {
+            // Fluidd stores tokens as "user-token-{hash}" where hash is based on the instance
+            // We'll search for this pattern but limit to reasonable matches
+            
+            // First try: instance-specific token (most secure)
+            // Fluidd uses a hash of the hostname for the key
+            const instanceKey = `user-token-${window.location.host.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            let token = localStorage.getItem(instanceKey);
+            if (token) return token;
+            
+            // Second try: search for any Fluidd user-token pattern
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('user-token-')) {
+                    token = localStorage.getItem(key);
+                    if (token) return token;
+                }
+            }
+            
+            return null;
+        }
+
+        async function getOneshotToken() {
+            // Get JWT from localStorage (set by Fluidd/Mainsail) if available
+            const jwt = getJWT();
+            
+            // Build request headers - include JWT only if we have one
+            const headers = {};
+            if (jwt) {
+                headers['Authorization'] = `Bearer ${jwt}`;
+            }
+
+            // Request oneshot token from Moonraker
+            // This will work for both authenticated users and trusted clients
+            const response = await fetch('/access/oneshot_token', {
+                headers: headers
+            });
+
+            if (!response.ok) {
+                // If we get 401, authentication is required but failed
+                if (response.status === 401) {
+                    console.log('Authentication required, redirecting to login...');
+                    window.location.href = '/';
+                    return null;
+                }
+                throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
+            }
+
+            // Parse JSON response - Moonraker returns {"result": "token"}
+            const data = await response.json();
+            return data.result || data;
+        }
+
+        async function connect() {
+            try {
+                showStatus('Authenticating...');
+                const token = await getOneshotToken();
+                
+                // Check if we got redirected (token would be null)
+                if (!token) {
+                    return;
+                }
+                
+                showStatus('Connecting to screen...');
+                
+                // Build WebSocket URL with oneshot token
+                const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/screen/websockify?token=${token}`;
+                
+                rfb = new RFB(document.getElementById('screen'), wsUrl, {
+                    credentials: { password: '' }
+                });
+                
+                rfb.addEventListener('connect', () => {
+                    console.log('VNC connected successfully');
+                    showStatus('Connected');
+                });
+                
+                rfb.addEventListener('disconnect', (e) => {
+                    console.error('VNC disconnected:', e.detail);
+                    const msg = e.detail.clean ? 'Disconnected' : `Connection failed: ${e.detail.reason || 'Unknown error'}`;
+                    showStatus(msg, !e.detail.clean);
+                    rfb = null;
+                });
+                
+                rfb.scaleViewport = true;
+                rfb.resizeSession = false;
+                
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, true);
+                // Retry after 5 seconds on error - VNC server may recover
+                setTimeout(connect, 5000);
+            }
+        }
+
+        // Start connection when page loads
+        window.addEventListener('load', connect);
+    </script>
+</head>
+<body>
+    <div id="status">Initializing...</div>
+    <div id="screen"></div>
+</body>
+</html>

@@ -33,5 +33,6 @@ rm -rf "$1/home/lava/novnc"
 cp -r "$TARGET_DIR/noVNC-${VERSION#v}" "$1/home/lava/novnc"
 cp "$(dirname "$0")/../novnc-defaults.json" "$1/home/lava/novnc/defaults.json"
 cp "$(dirname "$0")/../novnc-mandatory.json" "$1/home/lava/novnc/mandatory.json"
+cp "$(dirname "$0")/../vnc-u1.html" "$1/home/lava/novnc/vnc-u1.html"
 
 echo ">> noVNC installed to /home/lava/novnc"
