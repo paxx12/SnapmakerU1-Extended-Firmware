@@ -74,3 +74,14 @@ jobs:
       with:
         path: tmp/kernel/
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
+
+  synchronize-main-repo:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+    needs: custom-firmware-build
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Push to main repo
+      run: git push origin HEAD:main

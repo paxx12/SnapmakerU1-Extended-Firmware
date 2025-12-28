@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - main
+      - develop
     paths-ignore:
       - '*.md'
       - .github/workflows/*.yaml
@@ -38,8 +38,16 @@ jobs:
         path: tmp/kernel/
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
 
-    - name: Set GIT_VERSION
+    - name: Set GET_VERSION (for branch)
       shell: bash
+      if: github.event_name == 'push'
+      run: |
+        nextVer=$(./scripts/next_version.sh paxx12 test-branch-${{ github.ref_name }})
+        echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
+
+    - name: Set GIT_VERSION (for Pull Request)
+      shell: bash
+      if: github.event_name == 'pull_request'
       run: |
         nextVer=$(./scripts/next_version.sh paxx12 test-pr-${{ github.event.pull_request.number }})
         echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
