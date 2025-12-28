@@ -3,6 +3,7 @@
 import argparse
 import ctypes
 import fcntl
+import hashlib
 import mmap
 import os
 import struct
@@ -96,6 +97,10 @@ class Framebuffer:
         self.height = 0
         self.bpp = 0
         self.line_length = 0
+        self._cache_hash = None
+        self._cache_raw = None
+        self._cache_png = None
+        self._cache_time = 0
         self._open()
 
     def _open(self):
@@ -114,24 +119,29 @@ class Framebuffer:
         self.mm = mmap.mmap(self.fd, size, mmap.MAP_SHARED, mmap.PROT_READ)
         log(f"Framebuffer: {self.width}x{self.height} @ {self.bpp}bpp, line_length={self.line_length}")
 
-    def capture_png(self):
-        if Image is None:
-            return b''
+    def get_snapshot(self, client_etag=None):
         self.mm.seek(0)
+        raw = self.mm.read(self.line_length * self.height)
+        raw_hash = hashlib.md5(raw).hexdigest()[:16]
+        if client_etag and client_etag == raw_hash:
+            return raw_hash, None
+        if raw_hash == self._cache_hash and self._cache_png:
+            return raw_hash, self._cache_png
+        if Image is None:
+            return raw_hash, b''
         if self.bpp == 32:
-            raw = self.mm.read(self.line_length * self.height)
             img = Image.frombytes('RGBA', (self.width, self.height), raw, 'raw', 'BGRA', self.line_length)
             img = img.convert('RGB')
         elif self.bpp == 16:
-            raw = self.mm.read(self.line_length * self.height)
             img = Image.frombytes('RGB', (self.width, self.height), raw, 'raw', 'BGR;16', self.line_length)
         else:
-            raw = self.mm.read(self.line_length * self.height)
             img = Image.frombytes('RGB', (self.width, self.height), raw, 'raw', 'BGR', self.line_length)
-
         buf = BytesIO()
         img.save(buf, 'PNG', compress_level=1)
-        return buf.getvalue()
+        png_data = buf.getvalue()
+        self._cache_hash = raw_hash
+        self._cache_png = png_data
+        return raw_hash, png_data
 
     def close(self):
         if self.mm:
@@ -218,9 +228,20 @@ HTML_INDEX = '''<!DOCTYPE html>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; background: #1a1a1a; overflow: hidden; }
-#container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+#container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
 #screen { max-width: 100%; max-height: 100%; cursor: crosshair; touch-action: none; }
 #status { position: fixed; top: 8px; right: 8px; color: #888; font: 12px monospace; }
+.touch-ring {
+    position: fixed; pointer-events: none;
+    width: 40px; height: 40px; margin: -20px 0 0 -20px;
+    border: 3px solid rgba(255,100,100,0.8);
+    border-radius: 50%; opacity: 1;
+    animation: touch-fade 0.4s ease-out forwards;
+}
+@keyframes touch-fade {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
 </style>
 </head>
 <body>
@@ -232,44 +253,54 @@ html, body { width: 100%; height: 100%; background: #1a1a1a; overflow: hidden; }
 const img = document.getElementById('screen');
 const status = document.getElementById('status');
 let loading = false;
+let etag = '';
 let frameCount = 0;
 let lastFpsTime = performance.now();
 
-function updateImage() {
+async function updateImage() {
     if (loading) return;
     loading = true;
-    const newImg = new Image();
-    newImg.onload = function() {
-        img.src = newImg.src;
-        loading = false;
-        frameCount++;
-        const now = performance.now();
-        if (now - lastFpsTime >= 1000) {
-            status.textContent = frameCount + ' fps';
-            frameCount = 0;
-            lastFpsTime = now;
+    try {
+        const headers = {};
+        if (etag) headers['If-None-Match'] = etag;
+        const resp = await fetch('snapshot', { headers: headers });
+        if (resp.status === 200) {
+            const newEtag = resp.headers.get('ETag');
+            if (newEtag) etag = newEtag;
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const oldUrl = img.src;
+            img.src = url;
+            if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+            frameCount++;
+        } else if (resp.status === 204) {
+            etag = resp.headers.get('ETag') || etag;
         }
-    };
-    newImg.onerror = function() {
-        loading = false;
-    };
-    newImg.src = 'snapshot?t=' + Date.now();
+    } catch (e) {}
+    loading = false;
+    const now = performance.now();
+    if (now - lastFpsTime >= 1000) {
+        status.textContent = frameCount + ' fps';
+        frameCount = 0;
+        lastFpsTime = now;
+    }
 }
 
-setInterval(updateImage, 500);
+setInterval(updateImage, 100);
 
-function getImageCoords(e) {
+function showTouchRing(clientX, clientY) {
+    const ring = document.createElement('div');
+    ring.className = 'touch-ring';
+    ring.style.left = clientX + 'px';
+    ring.style.top = clientY + 'px';
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 400);
+}
+
+function getImageCoords(clientX, clientY) {
     const rect = img.getBoundingClientRect();
     const scaleX = img.naturalWidth / rect.width;
     const scaleY = img.naturalHeight / rect.height;
-    let clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
     const x = Math.round((clientX - rect.left) * scaleX);
     const y = Math.round((clientY - rect.top) * scaleY);
     return { x: x, y: y };
@@ -282,22 +313,22 @@ function sendTouch(x, y) {
         .catch(e => console.error('Touch error:', e));
 }
 
+function handleTouch(clientX, clientY) {
+    showTouchRing(clientX, clientY);
+    const coords = getImageCoords(clientX, clientY);
+    sendTouch(coords.x, coords.y);
+}
+
 img.addEventListener('click', function(e) {
     e.preventDefault();
-    const coords = getImageCoords(e);
-    sendTouch(coords.x, coords.y);
+    handleTouch(e.clientX, e.clientY);
 });
 
 img.addEventListener('touchend', function(e) {
     if (e.changedTouches && e.changedTouches.length > 0) {
         e.preventDefault();
         const touch = e.changedTouches[0];
-        const rect = img.getBoundingClientRect();
-        const scaleX = img.naturalWidth / rect.width;
-        const scaleY = img.naturalHeight / rect.height;
-        const x = Math.round((touch.clientX - rect.left) * scaleX);
-        const y = Math.round((touch.clientY - rect.top) * scaleY);
-        sendTouch(x, y);
+        handleTouch(touch.clientX, touch.clientY);
     }
 });
 
@@ -312,7 +343,7 @@ class ScreenHandler(BaseHTTPRequestHandler):
     touch_input = None
 
     def log_message(self, format, *args):
-        log(f"HTTP {self.address_string()} - {format % args}")
+        pass
 
     def do_GET(self):
         path = urlparse(self.path).path
@@ -340,11 +371,19 @@ class ScreenHandler(BaseHTTPRequestHandler):
 
     def handle_snapshot(self):
         try:
-            png_data = self.framebuffer.capture_png()
+            client_etag = self.headers.get('If-None-Match', '').strip('"')
+            etag, png_data = self.framebuffer.get_snapshot(client_etag)
+            if png_data is None:
+                self.send_response(204)
+                self.send_header('ETag', f'"{etag}"')
+                self.end_headers()
+                return
+            log(f"Snapshot: {len(png_data)} bytes, etag={etag}")
             self.send_response(200)
             self.send_header('Content-Type', 'image/png')
             self.send_header('Content-Length', len(png_data))
-            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('ETag', f'"{etag}"')
+            self.send_header('Cache-Control', 'no-cache')
             self.end_headers()
             self.wfile.write(png_data)
         except Exception as e:
