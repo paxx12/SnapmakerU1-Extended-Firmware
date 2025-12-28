@@ -1,0 +1,27 @@
+--- a/etc/nginx/sites-available/fluidd
++++ b/etc/nginx/sites-available/fluidd
+@@ -109,3 +109,23 @@
+         proxy_pass http://mjpgstreamer4/;
+     }
++
++    # Remote screen access via noVNC
++    location = /screen {
++        return 301 /screen/;
++    }
++
++    location /screen/ {
++        alias /home/lava/novnc/;
++        index vnc-u1.html;
++    }
++
++    location /screen/websockify {
++        auth_request /auth_check$is_args$args;
++        proxy_pass http://unix:/var/run/websockify.sock:/;
++        proxy_http_version 1.1;
++        proxy_set_header Upgrade $http_upgrade;
++        proxy_set_header Connection $connection_upgrade;
++        proxy_set_header Host $host;
++        proxy_read_timeout 86400;
++    }
+ }
+

@@ -35,6 +35,7 @@ All basic firmware features plus:
 - Moonraker Apprise notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - WebRTC low-latency streaming
 - Fluidd or Mainsail (selectable) with timelapse plugin
+- [Remote Screen](docs/remote_screen.md) - View printer screen remotely via web browser
 
 Known issues:
 
@@ -51,6 +52,7 @@ Known issues:
 - [Klipper and Moonraker Custom Includes](docs/klipper_includes.md) - Add custom configuration files
 - [RFID Filament Tag Support](docs/rfid_support.md) - RFID filament tag usage and programming
 - [Data Persistence](docs/data_persistence.md) - Persistent storage configuration
+- [Remote Screen](docs/remote_screen.md) - Access printer screen remotely via web browser
 
 ## Dependent projects
 

@@ -1,5 +1,6 @@
 FROM debian:trixie
 
+#hadolint ignore=DL3008
 RUN apt-get update -y && \
     apt-get install -y \
       build-essential \
@@ -18,13 +19,15 @@ RUN apt-get update -y && \
       g++-aarch64-linux-gnu \
       gcc-aarch64-linux-gnu \
       file \
-    && git config --global --add safe.directory '*' \
-    && rm -rf /var/lib/apt/lists/*
+      && git config --global --add safe.directory '*' \
+      && rm -rf /var/lib/apt/lists/*
 
+#hadolint ignore=DL3008
 RUN dpkg --add-architecture arm64 && \
-    apt-get update -y && \
-    apt-get install -y \
+      apt-get update -y && \
+      apt-get install -y \
       libssl-dev:arm64 \
+      libvncserver-dev:arm64 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace

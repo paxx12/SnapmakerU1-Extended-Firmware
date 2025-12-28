@@ -1,0 +1,19 @@
+{
+  "logging": "warn",
+  "host": "",
+  "port": 0,
+  "encrypt": false,
+  "password": "", 
+  "view_clip": false,
+  "resize": "off",
+  "quality": 4,
+  "compression": 4,
+  "shared": true,
+  "bell": "on",
+  "view_only": false,
+  "show_dot": false,
+  "tap_delay": 50,
+  "repeaterID": "",
+  "reconnect": false,
+  "reconnect_delay": 5000
+}

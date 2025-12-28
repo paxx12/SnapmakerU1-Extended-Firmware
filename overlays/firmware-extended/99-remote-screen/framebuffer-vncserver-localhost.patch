@@ -1,0 +1,62 @@
+diff --git a/src/framebuffer-vncserver.c b/src/framebuffer-vncserver.c
+index b62ff20..6c671ca 100644
+--- a/src/framebuffer-vncserver.c
++++ b/src/framebuffer-vncserver.c
+@@ -33,6 +33,8 @@
+ #include <assert.h>
+ #include <errno.h>
+ 
++#include <arpa/inet.h>
++
+ /* libvncserver */
+ #include "rfb/rfb.h"
+ #include "rfb/keysym.h"
+@@ -66,6 +68,7 @@ static int vnc_port = 5900;
+ static int vnc_rotate = 0;
+ static int touch_rotate = -1;
+ static int target_fps = 10;
++static char listen_interface[256] = "127.0.0.1";
+ static rfbScreenInfoPtr server;
+ static size_t bytespp;
+ static unsigned int bits_per_pixel;
+@@ -246,6 +249,11 @@ static void init_fb_server(int argc, char **argv, rfbBool enable_touch, rfbBool
+     assert(server != NULL);
+ 
+     server->desktopName = "framebuffer";
++    /* Set listen interface (default: localhost for security) */
++    if (strcmp(listen_interface, "0.0.0.0") == 0)
++        server->listenInterface = htonl(INADDR_ANY);
++    else
++        server->listenInterface = inet_addr(listen_interface);
+     server->frameBuffer = (char *)vncbuf;
+     server->alwaysShared = TRUE;
+     server->httpDir = NULL;
+@@ -596,7 +604,7 @@ static void update_screen(void)
+ 
+ void print_usage(char **argv)
+ {
+-    info_print("%s [-f device] [-p port] [-t touchscreen] [-m mouse] [-k keyboard] [-r rotation] [-R touchscreen rotation] [-F FPS] [-v] [-h]\n"
++    info_print("%s [-f device] [-p port] [-t touchscreen] [-m mouse] [-k keyboard] [-r rotation] [-R touchscreen rotation] [-F FPS] [-L interface] [-v] [-h]\n"
+                "-p port: VNC port, default is 5900\n"
+                "-f device: framebuffer device node, default is /dev/fb0\n"
+                "-k device: keyboard device node (example: /dev/input/event0)\n"
+@@ -605,6 +613,7 @@ void print_usage(char **argv)
+                "-r degrees: framebuffer rotation, default is 0\n"
+                "-R degrees: touchscreen rotation, default is same as framebuffer rotation\n"
+                "-F FPS: Maximum target FPS, default is 10\n"
++               "-L interface: Listen interface, default is 127.0.0.1 (use 0.0.0.0 for all interfaces)\n"
+                "-v: verbose\n"
+                "-h: print this help\n",
+                *argv);
+@@ -664,6 +673,11 @@ int main(int argc, char **argv)
+                     if (argv[i])
+                         target_fps = atoi(argv[i]);
+                     break;
++                case 'L':
++                    i++;
++                    if (argv[i])
++                        strcpy(listen_interface, argv[i]);
++                    break;
+                 case 'v':
+                     verbose = 1;
+                     break;

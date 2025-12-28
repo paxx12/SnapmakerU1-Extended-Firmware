@@ -1,0 +1,30 @@
+{
+  "name": "Snapmaker U1 Screen",
+  "short_name": "U1 Screen",
+  "description": "Remote screen access for Snapmaker U1 3D printer",
+  "start_url": "/screen/vnc-u1.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#313131",
+  "theme_color": "#313131",
+  "icons": [
+    {
+      "src": "app/images/icons/novnc-ios-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "app/images/icons/novnc-ios-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "app/images/icons/novnc-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
