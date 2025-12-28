@@ -193,15 +193,33 @@ class TouchInput:
         event = struct.pack('llHHi', tv_sec, tv_usec, ev_type, code, value)
         os.write(self.fd, event)
 
+    def _scale(self, x, y):
+        touch_x = int(x * self.touch_max_x / self.fb_width)
+        touch_y = int(y * self.touch_max_y / self.fb_height)
+        return touch_x, touch_y
+
     def tap(self, x, y):
         if self.fd is None:
             log(f"Touch device not available, would tap at ({x}, {y})")
             return
-
-        touch_x = int(x * self.touch_max_x / self.fb_width)
-        touch_y = int(y * self.touch_max_y / self.fb_height)
+        touch_x, touch_y = self._scale(x, y)
         log(f"Tap at ({x}, {y}) -> touch ({touch_x}, {touch_y})")
+        self._write_event(EV_ABS, ABS_MT_SLOT, 0)
+        self._write_event(EV_ABS, ABS_MT_TRACKING_ID, 1)
+        self._write_event(EV_ABS, ABS_MT_POSITION_X, touch_x)
+        self._write_event(EV_ABS, ABS_MT_POSITION_Y, touch_y)
+        self._write_event(EV_KEY, BTN_TOUCH, 1)
+        self._write_event(EV_SYN, SYN_REPORT, 0)
+        time.sleep(0.05)
+        self._write_event(EV_ABS, ABS_MT_TRACKING_ID, -1)
+        self._write_event(EV_KEY, BTN_TOUCH, 0)
+        self._write_event(EV_SYN, SYN_REPORT, 0)
 
+    def touch_down(self, x, y):
+        if self.fd is None:
+            return
+        touch_x, touch_y = self._scale(x, y)
+        log(f"Touch down at ({x}, {y})")
         self._write_event(EV_ABS, ABS_MT_SLOT, 0)
         self._write_event(EV_ABS, ABS_MT_TRACKING_ID, 1)
         self._write_event(EV_ABS, ABS_MT_POSITION_X, touch_x)
@@ -209,8 +227,18 @@ class TouchInput:
         self._write_event(EV_KEY, BTN_TOUCH, 1)
         self._write_event(EV_SYN, SYN_REPORT, 0)
 
-        time.sleep(0.05)
+    def touch_move(self, x, y):
+        if self.fd is None:
+            return
+        touch_x, touch_y = self._scale(x, y)
+        self._write_event(EV_ABS, ABS_MT_POSITION_X, touch_x)
+        self._write_event(EV_ABS, ABS_MT_POSITION_Y, touch_y)
+        self._write_event(EV_SYN, SYN_REPORT, 0)
 
+    def touch_up(self):
+        if self.fd is None:
+            return
+        log(f"Touch up")
         self._write_event(EV_ABS, ABS_MT_TRACKING_ID, -1)
         self._write_event(EV_KEY, BTN_TOUCH, 0)
         self._write_event(EV_SYN, SYN_REPORT, 0)
@@ -288,6 +316,9 @@ async function updateImage() {
 
 setInterval(updateImage, 100);
 
+let dragging = false;
+let dragMoved = false;
+
 function showTouchRing(clientX, clientY) {
     const ring = document.createElement('div');
     ring.className = 'touch-ring';
@@ -306,33 +337,65 @@ function getImageCoords(clientX, clientY) {
     return { x: x, y: y };
 }
 
-function sendTouch(x, y) {
-    fetch('touch?x=' + x + '&y=' + y, { method: 'POST' })
-        .then(r => r.json())
-        .then(d => console.log('Touch:', d))
-        .catch(e => console.error('Touch error:', e));
+function sendTouch(action, x, y) {
+    fetch('touch?a=' + action + '&x=' + x + '&y=' + y, { method: 'POST' }).catch(() => {});
 }
 
-function handleTouch(clientX, clientY) {
+function onDown(clientX, clientY) {
+    dragging = true;
+    dragMoved = false;
     showTouchRing(clientX, clientY);
     const coords = getImageCoords(clientX, clientY);
-    sendTouch(coords.x, coords.y);
+    sendTouch('down', coords.x, coords.y);
 }
 
-img.addEventListener('click', function(e) {
+function onMove(clientX, clientY) {
+    if (!dragging) return;
+    dragMoved = true;
+    const coords = getImageCoords(clientX, clientY);
+    sendTouch('move', coords.x, coords.y);
+}
+
+function onUp(clientX, clientY) {
+    if (!dragging) return;
+    dragging = false;
+    const coords = getImageCoords(clientX, clientY);
+    sendTouch('up', coords.x, coords.y);
+}
+
+img.addEventListener('mousedown', function(e) {
     e.preventDefault();
-    handleTouch(e.clientX, e.clientY);
+    onDown(e.clientX, e.clientY);
 });
 
-img.addEventListener('touchend', function(e) {
-    if (e.changedTouches && e.changedTouches.length > 0) {
-        e.preventDefault();
-        const touch = e.changedTouches[0];
-        handleTouch(touch.clientX, touch.clientY);
+document.addEventListener('mousemove', function(e) {
+    onMove(e.clientX, e.clientY);
+});
+
+document.addEventListener('mouseup', function(e) {
+    onUp(e.clientX, e.clientY);
+});
+
+img.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        onDown(e.touches[0].clientX, e.touches[0].clientY);
     }
 });
 
-img.addEventListener('touchstart', function(e) { e.preventDefault(); });
+img.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        onMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+});
+
+img.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    if (e.changedTouches.length > 0) {
+        onUp(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    }
+});
 </script>
 </body>
 </html>
@@ -393,10 +456,18 @@ class ScreenHandler(BaseHTTPRequestHandler):
     def handle_touch(self, query):
         try:
             params = parse_qs(query)
+            action = params.get('a', ['tap'])[0]
             x = int(params.get('x', [0])[0])
             y = int(params.get('y', [0])[0])
-            self.touch_input.tap(x, y)
-            response = f'{{"status":"ok","x":{x},"y":{y}}}'.encode()
+            if action == 'down':
+                self.touch_input.touch_down(x, y)
+            elif action == 'move':
+                self.touch_input.touch_move(x, y)
+            elif action == 'up':
+                self.touch_input.touch_up()
+            else:
+                self.touch_input.tap(x, y)
+            response = f'{{"status":"ok","a":"{action}","x":{x},"y":{y}}}'.encode()
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', len(response))
