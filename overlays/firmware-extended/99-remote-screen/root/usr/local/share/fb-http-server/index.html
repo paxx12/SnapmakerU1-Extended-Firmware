@@ -67,7 +67,10 @@ async function updateImage() {
     try {
         const headers = getAuthHeaders();
         if (etag) headers['If-None-Match'] = etag;
-        const resp = await fetch('snapshot', { headers: headers });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1000);
+        const resp = await fetch('snapshot', { headers: headers, signal: controller.signal });
+        clearTimeout(timeout);
         if (resp.status === 200) {
             const newEtag = resp.headers.get('ETag');
             if (newEtag) etag = newEtag;
