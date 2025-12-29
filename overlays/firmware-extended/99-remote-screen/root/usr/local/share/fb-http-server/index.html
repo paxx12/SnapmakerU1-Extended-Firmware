@@ -54,7 +54,9 @@ if ('serviceWorker' in navigator) {
 
 const img = document.getElementById('screen');
 const status = document.getElementById('status');
+const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480"><rect fill="#222"/><text x="400" y="230" text-anchor="middle" fill="#c66" font-family="monospace" font-size="20">No Signal</text><text x="400" y="260" text-anchor="middle" fill="#a55" font-family="monospace" font-size="14">maybe not enabled?</text></svg>');
 let loading = false;
+let errorCount = 0;
 let etag = '';
 let frameCount = 0;
 let lastFpsTime = performance.now();
@@ -75,10 +77,19 @@ async function updateImage() {
             img.src = url;
             if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
             frameCount++;
+            errorCount = 0;
         } else if (resp.status === 204) {
             etag = resp.headers.get('ETag') || etag;
+            errorCount = 0;
+        } else {
+            errorCount++;
         }
-    } catch (e) {}
+    } catch (e) {
+        errorCount++;
+    }
+    if (errorCount >= 3) {
+        img.src = placeholderImg;
+    }
     loading = false;
     const now = performance.now();
     if (now - lastFpsTime >= 1000) {
