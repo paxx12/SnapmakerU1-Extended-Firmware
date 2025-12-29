@@ -1,11 +1,11 @@
 #!/bin/sh
+
 EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
 REMOTE_SCREEN_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" remote_screen enabled false)
 
 NAME="fb-http-server"
 DAEMON="/usr/local/bin/fb-http-server.py"
 PIDFILE="/var/run/$NAME.pid"
-LOGFILE="/var/log/$NAME.log"
 
 FB_DEVICE="/dev/fb0"
 TOUCH_DEVICE="/dev/input/event0"
@@ -14,7 +14,11 @@ PORT=8092
 BIND=127.0.0.1
 
 start() {
-	[ "$REMOTE_SCREEN_ENABLED" = "true" ] || { echo "$NAME is disabled in extended.cfg, not starting." && return 0; }
+    if [ "$REMOTE_SCREEN_ENABLED" != "true" ]; then
+        echo "remote-screen is disabled in extended.cfg, not starting."
+        return
+    fi
+
     printf "Starting $NAME: "
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
         echo "already running"
@@ -22,7 +26,7 @@ start() {
     fi
     start-stop-daemon -S -b -m -p "$PIDFILE" -x /usr/bin/python3 -- \
         "$DAEMON" --bind "$BIND" --port "$PORT" --fb "$FB_DEVICE" \
-		--touch "$TOUCH_DEVICE" --html "$HTML_TEMPLATE" >> "$LOGFILE" 2>&1
+        --touch "$TOUCH_DEVICE" --html "$HTML_TEMPLATE"
     echo "OK"
 }
 
