@@ -1,6 +1,7 @@
 --- a/etc/nginx/sites-available/fluidd
 +++ b/etc/nginx/sites-available/fluidd
-@@ -109,2 +109,26 @@
+@@ -98,4 +98,28 @@
+         error_log off;
          proxy_pass http://mjpgstreamer4/;
      }
 +

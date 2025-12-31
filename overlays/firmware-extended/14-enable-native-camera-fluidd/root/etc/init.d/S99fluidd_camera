@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# Camera capture loop
+#
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+CAMERA_STACK=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera stack paxx12)
+[ "$CAMERA_STACK" = "snapmaker" ] || exit 0
+
+log() {
+    logger -p user.info -t "CAM[$$]" -- "$1"
+    echo "$1"
+}
+
+case "$1" in
+  start)
+    log "Starting camera capture loop..."
+
+    mkdir -p /tmp/capture /tmp/camera
+
+    json_content='{"jsonrpc":"2.0","method":"camera.take_a_photo","params":{"reason":"debug","timestamp":false,"filepath":"/tmp/camera/capture.jpg"},"id":1}'
+
+    (
+        while sleep 1; do
+            mosquitto_pub -t camera/request -m "$json_content"
+        done
+    ) &
+    echo $! >/var/run/camera-capture.pid
+    ;;
+
+  stop)
+    log "Stopping camera capture loop..."
+    kill "$(cat /var/run/camera-capture.pid)" 2>/dev/null
+    rm -f /var/run/camera-capture.pid
+    ;;
+
+  restart)
+    "$0" stop
+    sleep 1
+    "$0" start
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac

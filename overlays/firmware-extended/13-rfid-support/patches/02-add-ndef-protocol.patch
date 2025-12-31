@@ -11,7 +11,7 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py roo
 @@ -124,6 +125,14 @@
                      filament_info = info
                  else:
-                     logging.info("channel[%d] m1 parse err....", channel)
+                     logging.error("channel[%d] m1 parse err: %d", channel, error)
 +            elif fm175xx_reader.FM175XX_MIFARE_CARD_TYPE_NTAG == card_type and fm175xx_reader.FM175XX_OK == result:
 +                logging.info("channel[%d] trying NDEF parsing....", channel)
 +                error, info = filament_protocol_ndef.ndef_proto_data_parse(card_data)
@@ -19,7 +19,7 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py roo
 +                    logging.info("channel[%d] NDEF parse ok....", channel)
 +                    filament_info = info
 +                else:
-+                    logging.info("channel[%d] NDEF parse err....", channel)
++                    logging.error("channel[%d] NDEF parse err....", channel)
          else:
              is_clear = True
  
