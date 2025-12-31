@@ -1,7 +1,7 @@
---- a/etc/init.d/S99camera_service
-+++ b/etc/init.d/S99camera_service
+--- a/etc/init.d/S91unisrv
++++ b/etc/init.d/S91unisrv
 @@ -3,6 +3,10 @@
- # Start/stop camera_service process
+ # Start/stop unisrv process
  #
 
 +EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"

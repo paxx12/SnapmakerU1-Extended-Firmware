@@ -48,7 +48,7 @@ unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
 
 echo ">> Verifying ownership preservation..."
 check_perms "$TEMP_DIR/rootfs/etc/passwd" 0 0
-check_perms "$TEMP_DIR/rootfs/home/lava/bin/gui" 1000 1000
+check_perms "$TEMP_DIR/rootfs/home/lava/bin/hwver.sh" 1000 1000
 echo "   Ownership check passed"
 
 for overlay; do
