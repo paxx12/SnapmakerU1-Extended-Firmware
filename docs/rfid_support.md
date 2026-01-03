@@ -120,6 +120,172 @@ Use the **NFC Tools** app (iOS/Android) to inspect tags:
 **Compatible tag types:** NTAG213/215/216, Mifare Classic 1K
 **Note:** ISO15693 tags (OpenPrintTag) are not supported
 
+## G-code Commands for Tag Management
+
+The extended firmware includes commands to read, write, and update RFID tags directly from G-code (available in version with tag writing support).
+
+### FILAMENT_TAG_READ - Read Complete Tag Information
+
+Display all information stored on an RFID tag.
+
+**Syntax:**
+```gcode
+FILAMENT_TAG_READ [CHANNEL=<0-3>]
+```
+
+**Parameters:**
+- `CHANNEL` - Filament channel (0-3, default: 0)
+
+**Example:**
+```gcode
+FILAMENT_TAG_READ CHANNEL=0
+```
+
+**Output:**
+```
+=== RFID Tag Info - Channel 0 ===
+Tag Type: NTAG (A)
+UID: 04:12:34:56:78:90:00
+
+Filament:
+  Brand: Generic
+  Type: PLA
+  Diameter: 1.75 mm
+  Density: 1.24 g/cm³
+  Color: #FF0000
+
+Temperature:
+  Min Extruder: 190°C
+  Max Extruder: 220°C
+  Bed: 60°C
+```
+
+### FILAMENT_TAG_WRITE_OPENSPOOL - Write New NTAG Tag
+
+Write complete OpenSpool format data to an NTAG tag. Use this to program blank tags or reprogram existing NTAG tags.
+
+**Syntax:**
+```gcode
+FILAMENT_TAG_WRITE_OPENSPOOL [CHANNEL=<0-3>] TYPE=<material> [BRAND=<name>]
+    [COLOR=<hex>] [ALPHA=<hex>] [COLOR2=<hex>] [COLOR3=<hex>] [COLOR4=<hex>] [COLOR5=<hex>]
+    [DIAMETER=<mm>] [DENSITY=<g/cm³>] [MIN_TEMP=<°C>] [MAX_TEMP=<°C>]
+    [BED_MIN_TEMP=<°C>] [BED_MAX_TEMP=<°C>] [BED_TEMP=<°C>]
+    [WEIGHT=<grams>] [SUBTYPE=<text>]
+```
+
+**Required Parameters:**
+- `TYPE` - Material type: PLA, PETG, ABS, TPU, PVA, NYLON, ASA, or PC
+
+**Basic Parameters:**
+- `CHANNEL` - Filament channel (0-3, default: 0)
+- `BRAND` - Manufacturer name (default: "Generic")
+- `COLOR` - Primary color as 6-digit hex code without # (default: FFFFFF)
+- `DIAMETER` - Filament diameter in mm (default: 1.75)
+- `DENSITY` - Material density in g/cm³ (uses material default if not specified)
+- `SUBTYPE` - Material subtype, e.g., "Rapid", "Matte", "Silk" (optional)
+
+**Temperature Parameters:**
+- `MIN_TEMP` - Minimum hotend temperature in °C (optional)
+- `MAX_TEMP` - Maximum hotend temperature in °C (optional)
+- `BED_MIN_TEMP` - Minimum bed temperature in °C (optional)
+- `BED_MAX_TEMP` - Maximum bed temperature in °C (optional)
+- `BED_TEMP` - Legacy parameter for bed temperature (sets both min and max, optional)
+
+**Extended Color Parameters:**
+- `ALPHA` - Color transparency as 2-digit hex (00=transparent, FF=opaque, default: FF)
+- `COLOR2` - Additional color 2 as 6-digit hex (for multicolor spools, optional)
+- `COLOR3` - Additional color 3 as 6-digit hex (for multicolor spools, optional)
+- `COLOR4` - Additional color 4 as 6-digit hex (for multicolor spools, optional)
+- `COLOR5` - Additional color 5 as 6-digit hex (for multicolor spools, optional)
+
+**Weight Tracking:**
+- `WEIGHT` - Initial spool weight in grams (optional)
+
+**Examples:**
+```gcode
+# Basic PLA tag
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PLA BRAND="Generic" COLOR=FF0000 DIAMETER=1.75 MIN_TEMP=190 MAX_TEMP=220 BED_MIN_TEMP=50 BED_MAX_TEMP=70
+
+# PETG tag with custom density and subtype
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PETG BRAND="Elegoo" SUBTYPE="Rapid" COLOR=1E90FF DENSITY=1.27 MIN_TEMP=230 MAX_TEMP=260 BED_MIN_TEMP=70 BED_MAX_TEMP=90
+
+# Transparent TPU with alpha transparency
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=TPU BRAND="Generic" COLOR=FFFFFF ALPHA=80 MIN_TEMP=210 MAX_TEMP=230 BED_MIN_TEMP=20 BED_MAX_TEMP=40
+
+# Multicolor silk PLA (rainbow)
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PLA BRAND="Generic" SUBTYPE="Silk" COLOR=FF0000 COLOR2=FF7F00 COLOR3=FFFF00 COLOR4=00FF00 COLOR5=0000FF MIN_TEMP=200 MAX_TEMP=220
+
+# Tag with initial weight tracking (1kg spool)
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PETG BRAND="Generic" COLOR=FF5500 WEIGHT=1000 MIN_TEMP=230 MAX_TEMP=250 BED_MIN_TEMP=70 BED_MAX_TEMP=85
+
+# Using legacy BED_TEMP parameter (backward compatible)
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PLA BRAND="Generic" COLOR=FFFFFF BED_TEMP=60
+```
+
+**Material Density Defaults:**
+| Material | Density (g/cm³) |
+|----------|-----------------|
+| PLA      | 1.24            |
+| PETG     | 1.27            |
+| ABS      | 1.04            |
+| TPU      | 1.21            |
+| PVA      | 1.19            |
+| NYLON    | 1.14            |
+| ASA      | 1.07            |
+| PC       | 1.20            |
+
+**Safety:** Only works with NTAG tags. Will reject M1 (Snapmaker) tags to prevent corruption.
+
+### FILAMENT_TAG_ERASE - Erase NTAG Tag
+
+Erase all data from an NTAG tag to prepare it for reprogramming.
+
+**Syntax:**
+```gcode
+FILAMENT_TAG_ERASE [CHANNEL=<0-3>] CONFIRM=1
+```
+
+**Parameters:**
+- `CHANNEL` - Filament channel (0-3, default: 0)
+- `CONFIRM` - Must be set to 1 to confirm erase operation (required)
+
+**Example:**
+```gcode
+FILAMENT_TAG_ERASE CHANNEL=0 CONFIRM=1
+```
+
+**Safety:**
+- Only works with NTAG tags (will reject M1 tags)
+- Requires CONFIRM=1 parameter to prevent accidental erasure
+- Writes empty NDEF structure, leaving tag ready for new data
+
+### Example Workflows
+
+**Workflow 1: Program a Fresh NTAG Tag**
+```gcode
+# 1. Insert blank NTAG tag
+# 2. Read to confirm it's NTAG
+FILAMENT_TAG_READ CHANNEL=0
+
+# 3. Write complete data
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PLA BRAND="Polymaker" COLOR=FF5500 DIAMETER=1.75 MIN_TEMP=190 MAX_TEMP=220 BED_TEMP=60
+
+# 4. Verify write
+FILAMENT_TAG_READ CHANNEL=0
+```
+
+**Workflow 2: Reprogram an NTAG Tag**
+```gcode
+# 1. Erase existing data
+FILAMENT_TAG_ERASE CHANNEL=0 CONFIRM=1
+
+# 2. Write new data
+FILAMENT_TAG_WRITE_OPENSPOOL CHANNEL=0 TYPE=PETG BRAND="Generic" COLOR=0000FF DIAMETER=1.75 MIN_TEMP=220 MAX_TEMP=250 BED_TEMP=80
+
+# 3. Verify
+FILAMENT_TAG_READ CHANNEL=0
+```
+
 ## Troubleshooting
 
 **Tag not detected:**

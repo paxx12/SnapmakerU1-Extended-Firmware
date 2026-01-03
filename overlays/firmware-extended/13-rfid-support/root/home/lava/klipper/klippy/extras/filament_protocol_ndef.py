@@ -26,6 +26,37 @@ def xxd_dump(data, max_lines=16):
 
     return '\n'.join(lines)
 
+def extract_ntag_uid(data_buf):
+    """Extract 7-byte UID from NTAG card data.
+
+    NTAG215 memory structure:
+    - Page 0 (bytes 0-3): UID0, UID1, UID2, BCC0
+    - Page 1 (bytes 4-7): UID3, UID4, UID5, UID6, BCC1
+
+    Returns list of 7 UID bytes, or empty list if data is invalid.
+    """
+    if not data_buf or len(data_buf) < 8:
+        return []
+
+    try:
+        # Convert to list if needed
+        data = list(data_buf) if not isinstance(data_buf, list) else data_buf
+
+        # Extract 7-byte UID from pages 0-1
+        uid = [
+            data[0],  # UID0
+            data[1],  # UID1
+            data[2],  # UID2
+            data[4],  # UID3
+            data[5],  # UID4
+            data[6],  # UID5
+            data[7],  # UID6
+        ]
+
+        return uid
+    except (IndexError, TypeError):
+        return []
+
 def ndef_parse(data_buf):
     if None == data_buf or isinstance(data_buf, (list, bytes, bytearray)) == False:
         return NDEF_PARAMETER_ERR, []
@@ -135,6 +166,17 @@ def parse_color_hex(value):
     except (ValueError, TypeError):
         return 0xFFFFFF
 
+def _get_default_density(material_type):
+    """Get default density for common filament types in g/cm³."""
+    density_map = {
+        'PLA': 1.24,
+        'PETG': 1.27,
+        'ABS': 1.04,
+        'TPU': 1.21,
+        'PVA': 1.19,
+    }
+    return density_map.get(material_type.upper(), 1.24)  # Default to PLA
+
 def openspool_parse_payload(payload):
     if None == payload or not isinstance(payload, (bytes, bytearray)):
         logging.error("OpenSpool payload parsing failed: Invalid payload parameter")
@@ -176,7 +218,18 @@ def openspool_parse_payload(payload):
             info[f'RGB_{i}'] = 0
 
         try:
-            info['ALPHA'] = max(0x00, min(0xFF, int(data.get('alpha'))))
+            alpha_val = data.get('alpha')
+            if alpha_val is not None:
+                if isinstance(alpha_val, int):
+                    # Integer value (0-255)
+                    info['ALPHA'] = max(0x00, min(0xFF, alpha_val))
+                elif isinstance(alpha_val, str):
+                    # String - parse as hex (2-char hex string like "22", "FF")
+                    info['ALPHA'] = max(0x00, min(0xFF, int(alpha_val, 16)))
+                else:
+                    info['ALPHA'] = 0xFF
+            else:
+                info['ALPHA'] = 0xFF
         except (ValueError, TypeError):
             info['ALPHA'] = 0xFF
 
@@ -194,6 +247,9 @@ def openspool_parse_payload(payload):
         info['DRYING_TEMP'] = 0
         info['DRYING_TIME'] = 0
 
+        # Density from tag data or default based on material type
+        info['DENSITY'] = float(data.get('density', _get_default_density(info['MAIN_TYPE'])))
+
         try:
             min_temp = int(data.get('min_temp', 0))
             max_temp = int(data.get('max_temp', 0))
@@ -206,6 +262,12 @@ def openspool_parse_payload(payload):
         try:
             bed_min_temp = int(data.get('bed_min_temp', 0))
             bed_max_temp = int(data.get('bed_max_temp', 0))
+            # Store both min and max separately for encoding
+            if bed_min_temp > 0:
+                info['BED_MIN_TEMP'] = bed_min_temp
+            if bed_max_temp > 0:
+                info['BED_MAX_TEMP'] = bed_max_temp
+            # Also set BED_TEMP for backward compatibility
             info['BED_TEMP'] = bed_min_temp if bed_min_temp > 0 else bed_max_temp
         except (ValueError, TypeError):
             info['BED_TEMP'] = 0
@@ -218,7 +280,6 @@ def openspool_parse_payload(payload):
         info['MF_DATE'] = '19700101'
         info['RSA_KEY_VERSION'] = 0
         info['OFFICIAL'] = True
-        info['CARD_UID'] = []
 
         return filament_protocol.FILAMENT_PROTO_OK, info
 
@@ -229,16 +290,174 @@ def openspool_parse_payload(payload):
         logging.exception("OpenSpool payload parsing failed: %s", str(e))
         return filament_protocol.FILAMENT_PROTO_ERR, None
 
+def openspool_encode_payload(info):
+    """Encode filament info dict to OpenSpool JSON payload."""
+    try:
+        logging.info(f"openspool_encode_payload called with info keys: {list(info.keys())}")
+
+        # Build JSON dict with OpenSpool fields
+        data = {
+            'protocol': 'openspool',
+            'version': '1.0',
+            'type': info.get('MAIN_TYPE', 'PLA'),
+            'brand': info.get('VENDOR', 'Generic'),
+        }
+
+        # Add subtype if available
+        if info.get('SUB_TYPE') and info['SUB_TYPE'] != 'Reserved':
+            data['subtype'] = info['SUB_TYPE']
+
+        # Add color
+        rgb = info.get('RGB_1', 0xFFFFFF)
+        color_hex = f"#{rgb:06X}"
+        data['color_hex'] = color_hex
+
+        # Add alpha transparency if not fully opaque
+        alpha = info.get('ALPHA', 0xFF)
+        if alpha < 0xFF:
+            data['alpha'] = f"{alpha:02X}"
+
+        # Add additional colors (multicolor spools)
+        additional_colors = []
+        for i in range(2, 6):
+            rgb_key = f'RGB_{i}'
+            color_val = info.get(rgb_key, 0)
+            if color_val != 0:
+                additional_colors.append(f"{color_val:06X}")
+        if additional_colors:
+            data['additional_color_hexes'] = additional_colors
+
+        # Add temperatures
+        if info.get('HOTEND_MIN_TEMP', 0) > 0:
+            data['min_temp'] = str(info['HOTEND_MIN_TEMP'])
+        if info.get('HOTEND_MAX_TEMP', 0) > 0:
+            data['max_temp'] = str(info['HOTEND_MAX_TEMP'])
+
+        # Bed temperature - use BED_MIN_TEMP/BED_MAX_TEMP if available, otherwise fall back to BED_TEMP
+        bed_min = info.get('BED_MIN_TEMP')
+        bed_max = info.get('BED_MAX_TEMP')
+        if bed_min is not None and bed_min > 0:
+            data['bed_min_temp'] = str(bed_min)
+        elif info.get('BED_TEMP', 0) > 0:
+            data['bed_min_temp'] = str(info['BED_TEMP'])
+
+        if bed_max is not None and bed_max > 0:
+            data['bed_max_temp'] = str(bed_max)
+        elif info.get('BED_TEMP', 0) > 0 and bed_min is None:
+            data['bed_max_temp'] = str(info['BED_TEMP'])
+
+        # Add diameter and density
+        diameter_mm = info.get('DIAMETER', 175) / 100.0  # Convert from 1/100mm to mm
+        data['diameter'] = diameter_mm
+
+        if info.get('DENSITY', 0.0) > 0:
+            data['density'] = info['DENSITY']
+
+        # Add weight if provided
+        weight = info.get('WEIGHT', 0)
+        if weight > 0:
+            data['weight'] = weight
+
+        # Encode to JSON bytes
+        json_str = json.dumps(data, separators=(',', ':'))  # Compact JSON
+        logging.info(f"openspool_encode_payload success: {len(json_str)} bytes")
+        return filament_protocol.FILAMENT_PROTO_OK, json_str.encode('utf-8')
+
+    except Exception as e:
+        logging.exception("OpenSpool payload encoding failed: %s", str(e))
+        return filament_protocol.FILAMENT_PROTO_ERR, None
+
+def ndef_encode(info):
+    """Encode filament info dict to complete NDEF message for NTAG.
+
+    Called by FILAMENT_TAG_WRITE_OPENSPOOL gcode command in filament_detect.py
+    to convert user parameters into NDEF format for tag writing.
+    """
+    try:
+        logging.info("ndef_encode called")
+
+        # Encode payload
+        error, payload = openspool_encode_payload(info)
+        if error != filament_protocol.FILAMENT_PROTO_OK:
+            logging.error(f"ndef_encode: openspool_encode_payload failed with error {error}")
+            return error, None
+
+        mime_type = b'application/json'
+
+        # Build NDEF record
+        type_len = len(mime_type)
+        payload_len = len(payload)
+
+        # NDEF record structure
+        record = bytearray()
+
+        if payload_len <= 255:
+            # Short record format: SR=1, payload length in 1 byte
+            # Header byte: MB=1, ME=1, CF=0, SR=1, IL=0, TNF=0x02 (Media-type)
+            header = 0xD2  # 11010010
+            record.append(header)
+            record.append(type_len)
+            record.append(payload_len)
+        else:
+            # Long record format: SR=0, payload length in 4 bytes
+            # Header byte: MB=1, ME=1, CF=0, SR=0, IL=0, TNF=0x02 (Media-type)
+            header = 0xC2  # 11000010
+            record.append(header)
+            record.append(type_len)
+            record.append((payload_len >> 24) & 0xFF)
+            record.append((payload_len >> 16) & 0xFF)
+            record.append((payload_len >> 8) & 0xFF)
+            record.append(payload_len & 0xFF)
+
+        record.extend(mime_type)
+        record.extend(payload)
+
+        # Build TLV structure
+        tlv = bytearray()
+        tlv.append(0x03)  # NDEF Message TLV tag
+        if len(record) < 255:
+            tlv.append(len(record))  # Length (1 byte)
+        else:
+            tlv.append(0xFF)  # Extended length format
+            tlv.append((len(record) >> 8) & 0xFF)
+            tlv.append(len(record) & 0xFF)
+        tlv.extend(record)
+        tlv.append(0xFE)  # Terminator TLV
+
+        # Build complete NDEF message with CC (Capability Container)
+        ndef_data = bytearray()
+        ndef_data.append(0xE1)  # NDEF Magic Number
+        ndef_data.append(0x10)  # Version 1.0
+        ndef_data.append(0x6D)  # Data area size (440 bytes / 8 = 55 => 0x37, but use conservative 0x6D for 880 bytes)
+        ndef_data.append(0x00)  # Read/Write access
+        ndef_data.extend(tlv)
+
+        logging.info(f"NDEF encoded: {len(ndef_data)} bytes total")
+        return filament_protocol.FILAMENT_PROTO_OK, list(ndef_data)
+
+    except Exception as e:
+        logging.exception("NDEF encoding failed: %s", str(e))
+        return filament_protocol.FILAMENT_PROTO_ERR, None
+
 def ndef_proto_data_parse(data_buf):
+    # Extract UID from raw NTAG data (first 9 bytes)
+    card_uid = extract_ntag_uid(data_buf)
+
+    # Create minimal info struct with UID for error cases
+    def _create_minimal_info():
+        info = copy.copy(filament_protocol.FILAMENT_INFO_STRUCT)
+        info['CARD_UID'] = card_uid
+        return info
+
     error, records = ndef_parse(data_buf)
 
     if error != NDEF_OK:
-        logging.error(f"NDEF parse failed: NDEF parsing error (code: {error})")
-        return filament_protocol.FILAMENT_PROTO_ERR, None
+        logging.error(f"NDEF parse failed: NDEF parsing error (code: {error}), returning partial info with UID only")
+        return filament_protocol.FILAMENT_PROTO_ERR, _create_minimal_info()
 
     if not records:
-        logging.error("NDEF parse failed: No records found")
-        return filament_protocol.FILAMENT_PROTO_ERR, None
+        logging.error("NDEF parse failed: No records found, returning partial info with UID only")
+        return filament_protocol.FILAMENT_PROTO_ERR, _create_minimal_info()
 
     for record in records:
         mime_type = record['mime_type']
@@ -251,14 +470,16 @@ def ndef_proto_data_parse(data_buf):
                 logging.error(f"OpenSpool parse failed: Payload parsing error (code: {error_code})")
                 continue
             else:
-                logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
+                # Set the extracted UID
+                info['CARD_UID'] = card_uid
+                logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}, uid={':'.join(f'{b:02X}' for b in card_uid) if card_uid else 'none'}")
                 return error_code, info
 
         else:
             logging.warning(f"Skipping unsupported MIME type '{mime_type}'")
 
-    logging.error("NDEF parse failed: No supported records found")
-    return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, None
+    logging.error("NDEF parse failed: No supported records found, returning partial info with UID only")
+    return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, _create_minimal_info()
 
 if __name__ == '__main__':
     import sys
