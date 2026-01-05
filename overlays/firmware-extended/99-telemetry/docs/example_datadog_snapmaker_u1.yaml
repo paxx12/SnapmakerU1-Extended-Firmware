@@ -1,0 +1,285 @@
+## Datadog OpenMetrics Configuration for Klipper Exporter
+## Collects metrics from prometheus-klipper-exporter for Snapmaker U1
+##
+## The prometheus-klipper-exporter provides metrics from a Klipper 3D printer
+## through various modules that query different aspects of the printer's operation.
+##
+## Modules enabled in this configuration:
+##   - process_stats: Moonraker and system resource metrics
+##   - job_queue: Print job queue information
+##   - system_info: System CPU count and details
+##   - network_stats: Network interface statistics
+##   - directory_info: Disk usage information
+##   - printer_objects: Detailed printer component metrics (extruder, bed, fans, MCU, etc.)
+##   - history: Print history and statistics
+##
+
+## Note: Update <PRINTER_IP> to the actual IP address of your Snapmaker U1 printer.
+##       In case you change the default Prometheus Exporter port, also update it accordingly.
+
+init_config:
+
+instances:
+  # Instance 1: High-frequency printer operation metrics (30s interval)
+  # Real-time printer state: temperatures, positions, speeds, print progress
+  - openmetrics_endpoint: http://<PRINTER_IP>:9101/probe?target=127.0.0.1:7125&modules=printer_objects
+    namespace: klipper
+    min_collection_interval: 30
+    service: snapmaker_u1
+    tag_by_endpoint: false
+
+    tags:
+      - printer:snapmaker_u1
+      - module:printer_objects
+
+    metrics:
+      # Printer Objects - Display Status
+      - klipper_print_gcode_progress:
+          type: counter
+
+      # Printer Objects - Extruder
+      - klipper_extruder_power:
+          type: gauge
+      - klipper_extruder_pressure_advance:
+          type: gauge
+      - klipper_extruder_smooth_time:
+          type: gauge
+      - klipper_extruder_target:
+          type: gauge
+      - klipper_extruder_temperature:
+          type: gauge
+
+      # Printer Objects - Fan
+      - klipper_fan_rpm:
+          type: gauge
+      - klipper_fan_speed:
+          type: gauge
+
+      # Printer Objects - Filament Sensor
+      - klipper_filament_sensor_detected:
+          type: gauge
+      - klipper_filament_sensor_enabled:
+          type: gauge
+
+      # Printer Objects - GCode
+      - klipper_gcode_extrude_factor:
+          type: gauge
+      - klipper_gcode_position_e:
+          type: gauge
+      - klipper_gcode_position_x:
+          type: gauge
+      - klipper_gcode_position_y:
+          type: gauge
+      - klipper_gcode_position_z:
+          type: gauge
+      - klipper_gcode_speed_factor:
+          type: gauge
+      - klipper_gcode_speed:
+          type: gauge
+
+      # Printer Objects - Generic Fan
+      - klipper_generic_fan_rpm:
+          type: gauge
+      - klipper_generic_fan_speed:
+          type: gauge
+
+      # Printer Objects - Heater Bed
+      - klipper_heater_bed_power:
+          type: gauge
+      - klipper_heater_bed_target:
+          type: gauge
+      - klipper_heater_bed_temperature:
+          type: gauge
+
+      # Printer Objects - Idle Timeout
+      - klipper_printing_time:
+          type: counter
+
+      # Printer Objects - MCU
+      - klipper_mcu_awake:
+          type: gauge
+      - klipper_mcu_task_avg:
+          type: gauge
+      - klipper_mcu_task_stddev:
+          type: gauge
+      - klipper_mcu_clock_frequency:
+          type: gauge
+      - klipper_mcu_invalid_bytes:
+          type: gauge
+      - klipper_mcu_read_bytes:
+          type: gauge
+      - klipper_mcu_ready_bytes:
+          type: gauge
+      - klipper_mcu_receive_seq:
+          type: gauge
+      - klipper_mcu_retransmit_bytes:
+          type: gauge
+      - klipper_mcu_retransmit_seq:
+          type: gauge
+      - klipper_mcu_rto:
+          type: gauge
+      - klipper_mcu_rttvar:
+          type: gauge
+      - klipper_mcu_send_seq:
+          type: gauge
+      - klipper_mcu_stalled_bytes:
+          type: gauge
+      - klipper_mcu_srtt:
+          type: gauge
+      - klipper_mcu_write_bytes:
+          type: gauge
+
+      # Printer Objects - Output Pin
+      - klipper_output_pin_value:
+          type: gauge
+
+      # Printer Objects - Print Stats
+      - klipper_print_filament_used:
+          type: counter
+      - klipper_print_total_duration:
+          type: counter
+
+      # Printer Objects - Temperature Sensor
+      - klipper_temperature_sensor_temperature:
+          type: gauge
+      - klipper_temperature_sensor_measured_max_temp:
+          type: gauge
+      - klipper_temperature_sensor_measured_min_temp:
+          type: gauge
+
+      # Printer Objects - Toolhead
+      - klipper_toolhead_estimated_print_time:
+          type: gauge
+      - klipper_toolhead_max_accel_to_decel:
+          type: gauge
+      - klipper_toolhead_max_accel:
+          type: gauge
+      - klipper_toolhead_max_velocity:
+          type: gauge
+      - klipper_toolhead_print_time:
+          type: gauge
+      - klipper_toolhead_square_corner_velocity:
+          type: gauge
+
+      # Printer Objects - Virtual SD Card
+      - klipper_print_file_position:
+          type: counter
+      - klipper_print_file_progress:
+          type: counter
+
+  # Instance 2: Medium-frequency system metrics (60s interval)
+  # System resources and job queue - less critical for real-time monitoring
+  - openmetrics_endpoint: http://<PRINTER_IP>:9101/probe?target=127.0.0.1:7125&modules=process_stats&modules=job_queue
+    namespace: klipper
+    min_collection_interval: 60
+    service: snapmaker_u1
+    tag_by_endpoint: false
+
+    tags:
+      - printer:snapmaker_u1
+      - module:system_metrics
+
+    metrics:
+      # Process Stats Module - Moonraker and System metrics
+      - klipper_moonraker_cpu_usage:
+          type: gauge
+      - klipper_moonraker_memory_kb:
+          type: gauge
+      - klipper_moonraker_websocket_connections:
+          type: gauge
+      - klipper_system_cpu:
+          type: gauge
+      - klipper_system_cpu_temp:
+          type: gauge
+      - klipper_system_memory_available:
+          type: gauge
+      - klipper_system_memory_total:
+          type: gauge
+      - klipper_system_memory_used:
+          type: gauge
+      - klipper_system_uptime:
+          type: counter
+
+      # Job Queue Module
+      - klipper_job_queue_length:
+          type: gauge
+
+  # Instance 3: Medium-frequency network metrics (60s interval)
+  # Network statistics - useful for diagnostics but not critical
+  - openmetrics_endpoint: http://<PRINTER_IP>:9101/probe?target=127.0.0.1:7125&modules=network_stats
+    namespace: klipper
+    min_collection_interval: 60
+    service: snapmaker_u1
+    tag_by_endpoint: false
+
+    tags:
+      - printer:snapmaker_u1
+      - module:network
+
+    metrics:
+      # Network Stats Module
+      - klipper_network_bandwidth:
+          type: gauge
+      - klipper_network_rx_bytes:
+          type: counter
+      - klipper_network_tx_bytes:
+          type: counter
+      - klipper_network_rx_drop:
+          type: counter
+      - klipper_network_tx_drop:
+          type: counter
+      - klipper_network_rx_errs:
+          type: counter
+      - klipper_network_tx_errs:
+          type: counter
+      - klipper_network_rx_packets:
+          type: counter
+      - klipper_network_tx_packets:
+          type: counter
+
+  # Instance 4: Low-frequency static/historical metrics (2 minutes)
+  # System info, disk usage, and historical data - rarely changes
+  - openmetrics_endpoint: http://<PRINTER_IP>:9101/probe?target=127.0.0.1:7125&modules=system_info&modules=directory_info&modules=history
+    namespace: klipper
+    min_collection_interval: 120
+    service: snapmaker_u1
+    tag_by_endpoint: false
+
+    tags:
+      - printer:snapmaker_u1
+      - module:historical
+
+    metrics:
+      # System Info Module
+      - klipper_system_cpu_count:
+          type: gauge
+
+      # Directory Info Module
+      - klipper_disk_usage_available:
+          type: gauge
+      - klipper_disk_usage_total:
+          type: gauge
+      - klipper_disk_usage_used:
+          type: gauge
+
+      # History Module
+      - klipper_current_print_first_layer_height:
+          type: gauge
+      - klipper_current_print_layer_height:
+          type: gauge
+      - klipper_current_print_object_height:
+          type: gauge
+      - klipper_current_print_total_duration:
+          type: gauge
+      - klipper_longest_job:
+          type: gauge
+      - klipper_longest_print:
+          type: gauge
+      - klipper_total_filament_used:
+          type: gauge
+      - klipper_total_jobs:
+          type: gauge
+      - klipper_total_print_time:
+          type: gauge
+      - klipper_total_time:
+          type: gauge

@@ -1,0 +1,60 @@
+#!/bin/sh
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+PROMETHEUS_KLIPPER_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" telemetry prometheus_enabled false)
+ADDRESS=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" telemetry prometheus_address ":9101")
+ADDRESS=$(echo "$ADDRESS" | tr -d '"')
+
+NAME="prometheus-klipper-exporter"
+DAEMON="/usr/local/bin/prometheus-klipper-exporter"
+PIDFILE="/var/run/$NAME.pid"
+
+start() {
+    if [ "$PROMETHEUS_KLIPPER_ENABLED" != "true" ]; then
+        echo "prometheus-klipper-exporter is disabled in extended.cfg, not starting."
+        return
+    fi
+
+    echo "Starting $NAME: "
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "already running"
+        return 1
+    fi
+	start-stop-daemon -S -m -q -b -c lava -p "$PIDFILE" -x $DAEMON -- -web.listen-address "$ADDRESS"
+    echo "OK"
+}
+
+stop() {
+    echo "Stopping $NAME: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?
