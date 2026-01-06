@@ -16,13 +16,14 @@ if [ "$CAMERA_LOGS" = "syslog" ]; then
     CMD_FAKE_SERVICE_ARGS="$CMD_FAKE_SERVICE_ARGS --syslog"
 fi
 
-CMD_CAPTURE="/usr/local/bin/capture-v4l2-raw-mpp --device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock"
+CMD_CAPTURE="/usr/local/bin/capture-v4l2-raw-mpp --device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --raw-frame-sock /tmp/capture-mipi-raw.sock --width 1920 --height 1080 --fps 30"
 
 CMD_WEBRTC="/usr/local/bin/stream-webrtc --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock"
 
 CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock --bind 127.0.0.1"
 
-CMD_SNAP_MQTT="/usr/bin/python3 /usr/local/bin/stream-snap-mqtt.py --jpeg-sock /tmp/capture-mipi-jpeg.sock --publish-dir /home/lava/printer_data/camera"
+CMD_UNISRV="/usr/bin/unisrv"
+CMD_UNISRV_ARGS="-t MIPI"
 
 start() {
     if [ ! -e /dev/video11 ]; then
@@ -42,14 +43,24 @@ start() {
     start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-http.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_HTTP
     echo "OK"
 
-    printf "Starting stream-snap-mqtt: "
-    start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-snap-mqtt.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_SNAP_MQTT
-    echo "OK"
+    # Emulates V4L2 device for MIPI camera input through the capture-mipi-raw.sock
+    (
+        export LD_PRELOAD=/usr/local/lib/libv4l2-imposter.so
+        export V4L2_IMPOSTER_SOCKET_PATH=/tmp/capture-mipi-raw.sock
+        export V4L2_IMPOSTER_DEVICE=/dev/video11
+        export V4L2_IMPOSTER_WIDTH=1920
+        export V4L2_IMPOSTER_HEIGHT=1080
+        export V4L2_IMPOSTER_FORMAT=nv12
+
+        printf "Starting unisrv: "
+        start-stop-daemon -S -b -q -m -p /var/run/unisrv.pid -x $CMD_UNISRV -- $CMD_UNISRV_ARGS
+        echo "OK"
+    )
 }
 
 stop() {
-    printf "Stopping stream-snap-mqtt: "
-    start-stop-daemon -K -q -p /var/run/stream-mipi-snap-mqtt.pid
+    printf "Stopping unisrv: "
+    start-stop-daemon -K -q -p /var/run/unisrv.pid
     echo "OK"
 
     printf "Stopping stream-http: "

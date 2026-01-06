@@ -14,6 +14,7 @@ The extended firmware includes hardware-accelerated camera support.
 - v4l2-mpp: MIPI CSI and USB camera support
 - WebRTC low-latency streaming
 - Hot-plug detection for USB cameras
+- Support AI detection and Snapmaker Cloud features
 
 ## Accessing Cameras
 
@@ -64,26 +65,6 @@ logs: syslog
 
 This enables the `--syslog` flag for all camera-related services. Logs are available in `/var/log/messages`. See [Extended Configuration](extended_config.md) for details.
 
-## AI detection support
-
-Currently the `stack: paxx12` does not support AI detection features.
-Those will be implemented at a later time.
-
-You can revert back to `stack: snapmaker` to have those back, at the
-expense of camera support. You will also have to modify `02_internal_camera.cfg` to be:
-
-```toml
-[webcam case]
-service: mjpegstreamer-adaptive
-stream_url: /camera/capture.jpg
-snapshot_url: /camera/capture.jpg
-target_fps: 2
-target_fps_idle: 1
-aspect_ratio: 16:9
-```
-
 ## Timelapse Support
 
 Fluidd timelapse plugin is included (no settings support).
-
-Note: Time-lapses are not available via mobile app in cloud mode.

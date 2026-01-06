@@ -42,10 +42,6 @@ All basic firmware features plus:
 - [Monitoring](monitoring.md) - Local OpenMetrics exporter for monitoring systems
 - [Timelapse recovery tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos
 
-Known issues:
-
-- The time-lapses are not available via mobile app when using Snapmaker Cloud.
-
 ## Documentation
 
 - [Installation Guide](install.md) - How to install custom firmware
