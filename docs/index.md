@@ -35,6 +35,7 @@ All basic firmware features plus:
 - WebRTC low-latency streaming
 - Fluidd or Mainsail (selectable) with timelapse plugin
 - [Remote Screen](remote_screen.md) - View printer screen remotely via web browser
+- [Prometheus Metrics Exporter](telemetry.md) - Local OpenMetrics exporter for monitoring systems
 
 Known issues:
 
@@ -51,6 +52,7 @@ Known issues:
 - [RFID Filament Tag Support](rfid_support.md) - RFID filament tag usage and programming
 - [Data Persistence](data_persistence.md) - Persistent storage configuration
 - [Remote Screen](remote_screen.md) - Access printer screen remotely via web browser
+- [Telemetry](telemetry.md) - Prometheus, Homeassistant integration, Datadog, monitoring, etc.
 
 ## Support
 

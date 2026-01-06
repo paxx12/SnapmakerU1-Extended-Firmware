@@ -47,7 +47,7 @@ Once you have the Prometheus metrics exporter enabled and running, you can use D
 To do that we like to use DataDog's built-in [DataDog OpenMetrics integration](https://docs.datadoghq.com/integrations/openmetrics/).
 
 1. Create a configuration file for OpenMetrics DataDog integration on the computer running DataDog Agent `/etc/datadog-agent/conf.d/openmetrics.d/snapmaker_u1.yaml`
-   You can find an example configuration file in overlay's examples directory: [overlays/firmware-extended/99-telemetry/docs/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/99-telemetry/docs/example_datadog_snapmaker_u1.yaml).
+   You can find an example configuration file in overlay's examples directory: [overlays/firmware-extended/99-prometheus/docs/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/99-prometheus/docs/example_datadog_snapmaker_u1.yaml).
 2. Edit the configuration file to set the correct IP address of your Snapmaker U1 printer in place of `<PRINTER_IP>`.
 3. Restart DataDog Agent to apply the changes and wait for metrics to appear in DataDog.
 
