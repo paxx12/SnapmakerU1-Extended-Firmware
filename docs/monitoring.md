@@ -1,15 +1,13 @@
-# Telemetry
+# Monitoring
 
-Because many people consider "telemetry" to be a bad word, let us clarify in no uncertain terms:
+Extended Firmware provides tools to expose printer metrics for integration with external monitoring systems. This allows you to track print progress, temperatures, and other operational data using dashboards like Grafana, Home Assistant, or DataDog.
 
-- We do NOT collect or send any telemetry whatsoever
-- Word "telemetry" is a term which describes all systems and methods for monitoring and reporting system metrics. It does NOT imply any remote collection or transmission.
-- All telemetry-related features in this firmware are always opt-in, unless they are built into the stock firmware.
-- All telemetry features that are addded by Extended Firmware are disabled by default and require explicit enabling via `extended.cfg`
+All monitoring features added by Extended Firmware are disabled by default and require explicit enabling via `extended.cfg`.
 
-Currently available telemetry features:
+## Available monitoring features
 
 - **Moonraker API's Built-in Metrics**
+
   - Enabled on all printers running Moonraker API by default. We do not have a way to control it from firmware side.
   - This is a core Moonraker feature; it is required for all client applications to work. Examples of such applications:
     - Fluidd, Mainsail
@@ -17,9 +15,11 @@ Currently available telemetry features:
     - Mobileraker, Octoapp, Octoprint
     - Homeassistant Moonraker integration.
   - You can also create your own custom metrics collection by talking to Moonraker API.
-- **Prometheus Metrics Exporter**
-  - Exposes Klipper metrics on a local HTTP endpoint for scraping by [OpenMetrics/Prometheus](https://github.com/prometheus/OpenMetrics)-compatible systems
-  - This is an addon by Extended Firmware and it is NOT enabled by default. You have to enable it explicitly in `extended.cfg`
+
+- **Klipper Metrics Exporter**
+
+  - Exposes [Klipper metrics](https://github.com/scross01/prometheus-klipper-exporter.git) on a local HTTP endpoint for scraping by [OpenMetrics/Prometheus](https://github.com/prometheus/OpenMetrics)-compatible systems
+  - This is an addon by Extended Firmware and it is NOT enabled by default. You have to enable it explicitly in `extended.cfg` by changing `[monitoring] klipper_exporter_enabled: true` and restarting printer
 
 ## Collecting Metrics using Homeassistant
 
@@ -47,7 +47,9 @@ Once you have the Prometheus metrics exporter enabled and running, you can use D
 To do that we like to use DataDog's built-in [DataDog OpenMetrics integration](https://docs.datadoghq.com/integrations/openmetrics/).
 
 1. Create a configuration file for OpenMetrics DataDog integration on the computer running DataDog Agent `/etc/datadog-agent/conf.d/openmetrics.d/snapmaker_u1.yaml`
-   You can find an example configuration file in overlay's examples directory: [overlays/firmware-extended/99-prometheus/docs/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/99-prometheus/docs/example_datadog_snapmaker_u1.yaml).
+
+    You can find an example configuration file in overlay's examples directory: [overlays/firmware-extended/99-prometheus/examples/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/99-monitoring/examples/example_datadog_snapmaker_u1.yaml).
+
 2. Edit the configuration file to set the correct IP address of your Snapmaker U1 printer in place of `<PRINTER_IP>`.
 3. Restart DataDog Agent to apply the changes and wait for metrics to appear in DataDog.
 

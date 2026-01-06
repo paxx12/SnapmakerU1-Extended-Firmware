@@ -24,10 +24,7 @@ fi
 
 echo ">> Compiling prometheus-klipper-exporter..."
 # Note: Requires Go toolchain in build environment
-GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go -C "$TARGET_DIR" build -o build/prometheus-klipper-exporter .
-
-cp "$TARGET_DIR/build/prometheus-klipper-exporter" "$1/usr/local/bin/prometheus-klipper-exporter"
-chmod 0755 "$1/usr/local/bin/prometheus-klipper-exporter"
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go -C "$TARGET_DIR" build -o "$1/usr/local/bin/prometheus-klipper-exporter" .
 
 echo ">> Validate binaries..."
 file "$1/usr/local/bin/prometheus-klipper-exporter"
