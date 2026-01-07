@@ -1,3 +1,7 @@
+---
+title: Klipper and Moonraker Custom Includes
+---
+
 # Klipper and Moonraker Custom Includes
 
 **Available in: Extended firmware**

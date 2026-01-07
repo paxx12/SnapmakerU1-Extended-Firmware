@@ -1,0 +1,30 @@
+title: Custom Snapmaker U1 Firmware
+description: Custom firmware for the Snapmaker U1 3D printer
+url: https://snapmakeru1-extended-firmware.pages.dev
+baseurl: ""
+
+theme: jekyll-theme-primer
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - _config.yml

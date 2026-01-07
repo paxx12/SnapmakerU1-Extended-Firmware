@@ -1,3 +1,7 @@
+---
+title: Installation Guide
+---
+
 # Installation Guide
 
 This guide covers installing custom firmware on your Snapmaker U1 3D printer.

@@ -1,3 +1,7 @@
+---
+title: Custom Snapmaker U1 Firmware
+---
+
 # Custom Snapmaker U1 Firmware
 
 Custom firmware for the Snapmaker U1 3D printer, enabling debug features like SSH access and adding additional capabilities.

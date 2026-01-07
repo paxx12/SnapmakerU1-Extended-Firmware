@@ -1,3 +1,7 @@
+---
+title: SSH Access
+---
+
 # SSH Access
 
 **Available in: Basic and Extended firmware**

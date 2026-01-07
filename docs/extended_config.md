@@ -1,3 +1,7 @@
+---
+title: Extended Configuration
+---
+
 # Extended Configuration
 
 **Available in: Extended firmware**

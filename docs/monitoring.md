@@ -1,3 +1,7 @@
+---
+title: Monitoring
+---
+
 # Monitoring
 
 Extended Firmware provides tools to expose printer metrics for integration with external monitoring systems. This allows you to track print progress, temperatures, and other operational data using dashboards like Grafana, Home Assistant, or DataDog.
