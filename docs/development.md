@@ -1,3 +1,7 @@
+---
+title: Building from Source
+---
+
 # Building from Source
 
 ## Prerequisites

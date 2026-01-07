@@ -1,3 +1,7 @@
+---
+title: Camera Support
+---
+
 # Camera Support
 
 **Available in: Extended firmware only**

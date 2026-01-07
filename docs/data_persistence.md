@@ -1,3 +1,7 @@
+---
+title: Data Persistence
+---
+
 # Data Persistence
 
 **Available in: Basic and Extended firmware**

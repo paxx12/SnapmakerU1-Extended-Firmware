@@ -1,3 +1,7 @@
+---
+title: Remote Screen Access
+---
+
 # Remote Screen Access
 
 **Available in: Extended firmware only**
