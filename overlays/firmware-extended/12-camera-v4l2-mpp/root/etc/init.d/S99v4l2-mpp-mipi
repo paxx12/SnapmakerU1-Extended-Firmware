@@ -21,7 +21,9 @@ CMD_CAPTURE="/usr/local/bin/capture-v4l2-raw-mpp --device /dev/video11 --format 
 
 CMD_WEBRTC="/usr/local/bin/stream-webrtc --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock"
 
-CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock --bind 127.0.0.1"
+CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock --bind 127.0.0.1 --control-sock /tmp/v4l2-control-mipi.sock"
+
+CMD_CTRLS="/usr/bin/python3 /usr/local/bin/v4l2-ctrls.py --device /dev/v4l-subdev2 --socket /tmp/v4l2-control-mipi.sock"
 
 CMD_RTSP="/usr/local/bin/stream-rtsp --h264-sock /tmp/capture-mipi-h264.sock --rtsp-port 8554 --max-clients 4"
 
@@ -40,6 +42,10 @@ start() {
 
     printf "Starting stream-webrtc: "
     start-stop-daemon -S -b -q -m -p /var/run/stream-mipi-webrtc.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_WEBRTC
+    echo "OK"
+
+    printf "Starting v4l2-ctrls: "
+    start-stop-daemon -S -b -q -m -p /var/run/v4l2-ctrls-mipi-http.pid -c lava -x $CMD_CTRLS
     echo "OK"
 
     printf "Starting stream-http: "
@@ -88,6 +94,10 @@ stop() {
 
     printf "Stopping capture-mipi-mpp: "
     start-stop-daemon -K -q -p /var/run/capture-mipi-mpp.pid
+    echo "OK"
+
+    printf "Stopping v4l2-ctrls: "
+    start-stop-daemon -K -q -p /var/run/v4l2-ctrls-mipi-http.pid
     echo "OK"
 }
 
