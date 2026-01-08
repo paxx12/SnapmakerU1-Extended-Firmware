@@ -283,7 +283,7 @@ class ScreenHandler(BaseHTTPRequestHandler):
             client_etag = self.headers.get('If-None-Match', '').strip('"')
             etag, png_data = self.framebuffer.get_snapshot(client_etag)
             if png_data is None:
-                self.send_response(204)
+                self.send_response(304)
                 self.send_header('ETag', f'"{etag}"')
                 self.end_headers()
                 return

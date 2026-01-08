@@ -69,7 +69,7 @@ async function updateImage() {
         if (etag) headers['If-None-Match'] = etag;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 1000);
-        const resp = await fetch('snapshot', { headers: headers, signal: controller.signal });
+        const resp = await fetch(`snapshot?ts=${Date.now()}`, { headers: headers, signal: controller.signal });
         clearTimeout(timeout);
         if (resp.status === 200) {
             const newEtag = resp.headers.get('ETag');
@@ -81,7 +81,7 @@ async function updateImage() {
             if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
             frameCount++;
             errorCount = 0;
-        } else if (resp.status === 204) {
+        } else if (resp.status === 304) {
             etag = resp.headers.get('ETag') || etag;
             errorCount = 0;
         } else {
