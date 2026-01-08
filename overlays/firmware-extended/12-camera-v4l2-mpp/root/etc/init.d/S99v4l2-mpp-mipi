@@ -23,7 +23,8 @@ CMD_WEBRTC="/usr/local/bin/stream-webrtc --h264-sock /tmp/capture-mipi-h264.sock
 
 CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --webrtc-sock /tmp/capture-mipi-webrtc.sock --bind 127.0.0.1 --control-sock /tmp/v4l2-control-mipi.sock"
 
-CMD_CTRLS="/usr/bin/python3 /usr/local/bin/v4l2-ctrls.py --device /dev/v4l-subdev2 --socket /tmp/v4l2-control-mipi.sock"
+CMD_CTRLS="/usr/bin/python3"
+CMD_CTRLS_ARGS="/usr/local/bin/v4l2-ctrls.py --device /dev/v4l-subdev2 --socket /tmp/v4l2-control-mipi.sock"
 
 CMD_RTSP="/usr/local/bin/stream-rtsp --h264-sock /tmp/capture-mipi-h264.sock --rtsp-port 8554 --max-clients 4"
 
@@ -45,7 +46,7 @@ start() {
     echo "OK"
 
     printf "Starting v4l2-ctrls: "
-    start-stop-daemon -S -b -q -m -p /var/run/v4l2-ctrls-mipi-http.pid -c lava -x $CMD_CTRLS
+    start-stop-daemon -S -b -q -m -p /var/run/v4l2-ctrls-mipi-http.pid -c lava -x $CMD_CTRLS -- $CMD_CTRLS_ARGS
     echo "OK"
 
     printf "Starting stream-http: "
