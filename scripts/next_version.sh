@@ -12,15 +12,12 @@ if [[ -n "$VERSION" ]]; then
   exit 0
 fi
 
-lastVer=$(git tag --sort version:refname --list "v$FIRMWARE_VERSION-$CODENAME-*" | tail -n1)
+lastVer=$(git tag --sort version:refname --list "*-$CODENAME-*" | tail -n1)
+buildVer=1
 
 if [[ -n "$lastVer" ]]; then
   newVer=(${lastVer//-/ })
-  newVer[-1]="$((${newVer[-1]}+1))"
-  nextVer="${newVer[*]}"
-  nextVer="${nextVer// /-}"
-  echo "$nextVer"
-else
-  echo "v$FIRMWARE_VERSION-$CODENAME-1"
+  buildVer="$((${newVer[-1]}+1))"
 fi
 
+echo "v$FIRMWARE_VERSION-$CODENAME-$buildVer"
