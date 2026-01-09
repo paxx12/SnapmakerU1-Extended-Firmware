@@ -176,35 +176,39 @@ def openspool_parse_payload(payload):
         info['MAIN_TYPE'] = data.get('type', 'PLA').upper()
         info['SUB_TYPE'] = data.get('subtype', 'Basic')
         info['TRAY'] = 0
+
+        info['COLOR_NUMS'] = 1
         info.update({f'RGB_{i}': 0x0 for i in range(1, 6)})
-
-        if data.get('multi_color_hexes', None):
-            colors = data.get('multi_color_hexes')
-            color_list = [c.strip() for c in colors.split(',')]
-            color_nums = min(len(color_list), 5)
-            for i in range(color_nums):
-                try:
-                    rgb, _, _ = parse_hex_color(color_list[i])
-                    info[f'RGB_{i+1}'] = rgb
-                except ValueError:
-                    pass
-
+        color_hex = data.get('color_hex', 'FFFFFF')
+        try:
+            rgb, alpha, _ = parse_hex_color(color_hex)
+            info['RGB_1'] = rgb
+            info['ALPHA'] = alpha
+        except ValueError:
+            info['RGB_1'] = 0xFFFFFF
             info['ALPHA'] = 0xFF
-            info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
-            info['COLOR_NUMS'] = color_nums
 
+        add_colors = data.get('additional_color_hexes', [])
+        if type(add_colors) == list:
+            color_list = add_colors
         else:
-            color_hex = data.get('color_hex', 'FFFFFF')
+            color_list = [c.strip() for c in add_colors.split(',')]
+        color_nums = min(len(color_list), 4)
+        info['COLOR_NUMS'] += color_nums
+        for i in range(color_nums):
             try:
-                rgb, alpha, _ = parse_hex_color(color_hex)
-                info['RGB_1'] = rgb
+                rgb, _, _ = parse_hex_color(color_list[i])
+                info[f'RGB_{i+2}'] = rgb
+            except ValueError:
+                pass
+
+        if data.get('alpha', None):
+            try:
+                alpha = int(data.get('alpha'), 16)
                 info['ALPHA'] = alpha
             except ValueError:
-                info['RGB_1'] = 0xFFFFFF
-                info['ALPHA'] = 0xFF
-
-            info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
-            info['COLOR_NUMS'] = 1
+                pass
+        info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
 
         info['DIAMETER'] = data.get('diameter', 175)
         info['WEIGHT'] = data.get('weight', 0)
