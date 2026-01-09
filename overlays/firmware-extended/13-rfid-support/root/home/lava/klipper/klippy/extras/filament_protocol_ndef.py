@@ -204,7 +204,7 @@ def openspool_parse_payload(payload):
 
         if data.get('alpha', None):
             try:
-                alpha = int(data.get('alpha'), 16)
+                alpha = max(min(int(data.get('alpha'), 16), 0xFF), 0x00)
                 info['ALPHA'] = alpha
             except ValueError:
                 pass
