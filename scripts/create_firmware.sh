@@ -76,8 +76,14 @@ for overlay; do
 
   if [[ -d "$overlay/scripts/" ]]; then
     for scriptfile in "$overlay/scripts/"*.sh; do
-      echo "[+] Running script: $(basename "$scriptfile")"
-      ./"$scriptfile" "$TEMP_DIR/rootfs"
+      # if file ends with .chroot.sh, run it in chroot
+      if [[ "$scriptfile" == *.chroot.sh ]]; then
+        echo "[+] Running chroot script: $(basename "$scriptfile")"
+        "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$TEMP_DIR/rootfs" "/firmware-root/$scriptfile"
+      else
+        echo "[+] Running script: $(basename "$scriptfile")"
+        ./"$scriptfile" "$TEMP_DIR/rootfs"
+      fi
     done
   fi
 
