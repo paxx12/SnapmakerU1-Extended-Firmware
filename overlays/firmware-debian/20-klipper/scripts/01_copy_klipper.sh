@@ -36,9 +36,6 @@ echo ">> Copying Klipper from /home/lava/klipper to /opt/klipper..."
 mkdir_chroot /opt/klipper
 copy_chroot /opt/klipper/ /home/lava/klipper/.
 
-echo ">> Installing libffi-dev..."
-in_chroot 'apt update -y && apt install -y libffi-dev'
-
 echo ">> Creating virtual environment in /opt/klipper..."
 in_chroot 'python3 -m venv /opt/klipper/venv'
 
