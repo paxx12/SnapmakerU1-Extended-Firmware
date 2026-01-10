@@ -1,6 +1,6 @@
 [Unit]
 Description=Klipper 3D Printer Firmware
-After=network.target init-printer-data.service mosquitto.service
+After=network.target init-printer-data.service mosquitto.service klippy-mcu.service
 
 [Service]
 Type=simple
