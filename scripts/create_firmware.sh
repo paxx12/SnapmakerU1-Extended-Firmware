@@ -97,7 +97,17 @@ if [[ -z "$DIRTY" ]]; then
 fi
 
 echo ">> Create squash filesystem..."
+rm -rf "$TEMP_DIR/rk-unpacked/rootfs-v2.img"
 mksquashfs "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs-v2.img" -comp gzip
+
+echo ">> Checking image size..."
+IMAGE_SIZE=$(stat -c '%s' "$TEMP_DIR/rk-unpacked/rootfs-v2.img")
+MAX_SIZE=$((300 * 1024 * 1024))
+if [[ $IMAGE_SIZE -gt $MAX_SIZE ]]; then
+  echo "Error: Image size $(($IMAGE_SIZE / 1024 / 1024))MiB exceeds maximum of 300MiB"
+  exit 1
+fi
+echo "   Image size: $(($IMAGE_SIZE / 1024 / 1024))MiB (OK)"
 
 echo ">> Replace rootfs.img in firmware..."
 mv -v "$TEMP_DIR/rk-unpacked"/{rootfs-v2,rootfs}.img
