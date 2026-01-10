@@ -14,5 +14,5 @@ in_chroot() {
   "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" bash -c "$@"
 }
 
-echo ">> Installing Pillow for JPEG support in moonraker venv..."
-in_chroot '/opt/venv/bin/pip3 install Pillow'
+echo ">> Creating virtual environment in /opt..."
+in_chroot 'python3 -m venv /opt/venv'

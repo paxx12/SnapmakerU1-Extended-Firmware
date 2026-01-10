@@ -11,15 +11,17 @@ ORG_ROOTFS_DIR="${ROOTFS_DIR}.org"
 
 set -e
 
-"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" apt-get purge -y \
+"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" apt-get purge -t bookworm -y \
   build-essential \
   cpp-14-aarch64-linux-gnu \
   gcc-14-aarch64-linux-gnu \
   g++-14-aarch64-linux-gnu \
-  libpython3.13-dev \
+  libpython3.11-dev \
   libgcc-14-dev \
   vim-runtime \
   git
+
+"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" apt-get autoremove -y
 
 rm -rf "$ROOTFS_DIR/var/cache/apt/"
 rm -rf "$ROOTFS_DIR/var/lib/apt/lists/"

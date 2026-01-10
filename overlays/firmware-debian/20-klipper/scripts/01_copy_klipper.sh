@@ -56,16 +56,13 @@ cat <<'EOF' | in_chroot 'cd /opt/klipper && patch -p1'
  markupsafe==1.1.1
 EOF
 
-echo ">> Creating virtual environment in /opt/klipper..."
-in_chroot 'python3 -m venv /opt/klipper/venv'
-
 echo ">> Installing klipper requirements..."
-in_chroot '/opt/klipper/venv/bin/pip3 install --upgrade pip'
-in_chroot '/opt/klipper/venv/bin/pip3 install -r /opt/klipper/scripts/klippy-requirements.txt'
+in_chroot '/opt/venv/bin/pip3 install --upgrade pip'
+in_chroot '/opt/venv/bin/pip3 install -r /opt/klipper/scripts/klippy-requirements.txt'
 
 # Additional modules not included in klippy-requirements.txt
 echo ">> Installing additional klipper requirements..."
-in_chroot '/opt/klipper/venv/bin/pip3 install paho-mqtt spidev cryptography "numpy<2.0"'
+in_chroot '/opt/venv/bin/pip3 install paho-mqtt spidev cryptography "numpy<2.0"'
 
 echo ">> Setting ownership to lava:lava..."
 in_chroot 'chown -R lava:lava /opt/klipper'
