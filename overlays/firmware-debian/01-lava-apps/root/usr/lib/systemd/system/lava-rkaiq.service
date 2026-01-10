@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=lava
 Environment="LD_LIBRARY_PATH=/opt/lava/lib"
 ExecStart=/opt/lava/bin/rkaiq_3A_server
+ExecStartPost=-/bin/sleep 1
 Restart=always
 RestartSec=5
 StartLimitBurst=3
