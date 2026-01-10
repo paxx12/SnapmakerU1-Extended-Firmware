@@ -7,7 +7,7 @@ ConditionPathExists=/dev/video11
 [Service]
 Type=simple
 User=lava
-ExecStart=/usr/bin/python3 /usr/local/bin/stream-snap-mqtt.py --jpeg-sock /tmp/capture-mipi-jpeg.sock
+ExecStart=/opt/venv/bin/python /usr/local/bin/stream-snap-mqtt.py --jpeg-sock /tmp/capture-mipi-jpeg.sock
 Restart=always
 RestartSec=5
 StartLimitBurst=3
