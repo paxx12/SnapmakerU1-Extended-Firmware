@@ -1,0 +1,44 @@
+#!/bin/sh
+# early-init-overlay.sh
+
+echo "Starting early init overlay..."
+
+# mount kernel filesystems (must exist in squashfs)
+mount -t proc  proc  /proc
+mount -t sysfs sysfs /sys
+
+# loading kernel modules
+/usr/sbin/insmod /opt/lava/modules/io_manager.ko # IO manager
+/usr/sbin/insmod /opt/lava/modules/bcmdhd.ko     # WiFi/BT driver
+/usr/sbin/insmod /opt/lava/modules/chsc6540.ko   # Touchpanel driver
+
+# loading modules and configuring hardware
+echo "Enabling USB power..."
+/opt/lava/bin/lava_io set MAIN_USB_HUB_RESET=1
+
+sleep 5s
+/usr/sbin/ip link set dev eth0 up
+/usr/sbin/ip addr add 192.168.88.134/24 dev eth0
+
+# create temporary overlay storage
+mkdir -p /overlay
+mount -t tmpfs tmpfs /overlay
+
+# mount overlay rootfs
+mkdir -p /overlay/upper /overlay/work
+mount -t overlay overlay /overlay \
+  -o lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work
+
+# move kernel mounts into new root
+mount --move /proc /overlay/proc
+mount --move /sys  /overlay/sys
+mount --move /dev  /overlay/dev
+
+# pivot root: old root becomes /rom
+pivot_root /overlay /overlay/rom
+
+# move essential mounts to new root
+mount --move /rom/overlay /overlay
+
+# hand off to real init
+exec /lib/systemd/systemd
