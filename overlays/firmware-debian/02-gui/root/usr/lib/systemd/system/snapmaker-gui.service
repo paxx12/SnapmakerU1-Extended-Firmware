@@ -1,6 +1,6 @@
 [Unit]
 Description=Lava GUI Application
-After=network.target
+After=network.target init-printer-data.service
 
 [Service]
 Type=simple
