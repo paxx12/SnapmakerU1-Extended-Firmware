@@ -90,6 +90,10 @@ mkdir_chroot /usr/lib/firmware
 copy_chroot /usr/lib/firmware /usr/lib/firmware/fw_bcm43438a1.bin
 copy_chroot /usr/lib/firmware /usr/lib/firmware/nvram_ap6212a.txt
 
+# version strings
+copy_chroot /etc /etc/FULLVERSION
+copy_chroot /etc /etc/VERSION
+
 # # AI detection
 # mkdir_chroot /opt/lava/unisrv
 # copy_chroot /opt/lava/unisrv /etc/unisrv
