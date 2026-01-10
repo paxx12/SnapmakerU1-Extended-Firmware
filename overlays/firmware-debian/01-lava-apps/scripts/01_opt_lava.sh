@@ -70,6 +70,13 @@ validate_ldd /opt/lava/firmware_mcu/klippy_mcu
 copy_chroot /opt/lava/bin /usr/bin/updateEngine
 validate_ldd /opt/lava/bin/updateEngine
 
+# rockchip Auto Image Quality
+copy_chroot /opt/lava/bin /usr/bin/rkaiq_3A_server
+copy_chroot /opt/lava/lib /usr/lib/librkaiq.so
+copy_chroot /opt/lava/lib /usr/lib/libdrm.so.2
+copy_chroot /etc /etc/iqfiles
+validate_ldd /opt/lava/bin/rkaiq_3A_server
+
 # GUI
 copy_chroot /opt/lava/bin /usr/bin/gui
 validate_ldd /opt/lava/bin/gui
