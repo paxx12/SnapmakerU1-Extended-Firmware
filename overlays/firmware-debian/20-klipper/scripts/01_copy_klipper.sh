@@ -36,26 +36,6 @@ echo ">> Copying Klipper from /home/lava/klipper to /opt/klipper..."
 mkdir_chroot /opt/klipper
 copy_chroot /opt/klipper/ /home/lava/klipper/.
 
-echo ">> Applying patches to klipper..."
-cat <<'EOF' | in_chroot 'cd /opt/klipper && patch -p1'
---- a/scripts/klippy-requirements.txt
-+++ b/scripts/klippy-requirements.txt
-@@ -2,10 +2,11 @@
- # the Klipper host software (Klippy).  These package requirements are
- # typically installed via the command:
- #   pip install -r klippy-requirements.txt
--cffi==1.14.6
-+cffi==1.17.0
- pyserial==3.4
- greenlet==2.0.2 ; python_version < '3.12'
--greenlet==3.0.3 ; python_version >= '3.12'
-+greenlet==3.0.3 ; python_version >= '3.12' and python_version < '3.13'
-+greenlet==3.3.0 ; python_version >= '3.13'
- Jinja2==2.11.3
- python-can==3.3.4
- markupsafe==1.1.1
-EOF
-
 echo ">> Installing klipper requirements..."
 in_chroot '/opt/venv/bin/pip3 install --upgrade pip'
 in_chroot '/opt/venv/bin/pip3 install -r /opt/klipper/scripts/klippy-requirements.txt'
