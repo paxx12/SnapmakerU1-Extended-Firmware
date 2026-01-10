@@ -2,18 +2,20 @@
 
 set -e
 
-apt-get purge -t bookworm -y \
+# trixie cleanup
+apt-get autopurge -y \
   build-essential \
   cpp-14-aarch64-linux-gnu \
   gcc-14-aarch64-linux-gnu \
   g++-14-aarch64-linux-gnu \
-  libpython3.11-dev \
   libgcc-14-dev \
   vim-runtime \
   git
 
-apt-get autoremove -y
+# bookworm cleanup
+apt-get autoremove -y libpython3.11-dev
 
+# general cleanup
 rm -rf "/var/cache/apt/"
 rm -rf "/var/lib/apt/lists/"
 find "/var/log" -type f -delete
