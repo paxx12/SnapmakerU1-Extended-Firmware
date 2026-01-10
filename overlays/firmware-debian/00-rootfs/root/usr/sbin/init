@@ -13,12 +13,11 @@ mount -t sysfs sysfs /sys
 /usr/sbin/insmod /opt/lava/modules/chsc6540.ko   # Touchpanel driver
 
 # loading modules and configuring hardware
-echo "Enabling USB power..."
 /opt/lava/bin/lava_io set MAIN_USB_HUB_RESET=1
 
-sleep 5s
-/usr/sbin/ip link set dev eth0 up
-/usr/sbin/ip addr add 192.168.88.134/24 dev eth0
+# sleep 5s
+# /usr/sbin/ip link set dev eth0 up
+# /usr/sbin/ip addr add 192.168.88.134/24 dev eth0
 
 # create temporary overlay storage
 mkdir -p /overlay
