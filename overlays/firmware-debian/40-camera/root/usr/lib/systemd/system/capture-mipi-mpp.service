@@ -1,6 +1,6 @@
 [Unit]
 Description=MIPI Camera Capture Service
-After=network.target rkaiq.service
+After=network.target lava-rkaiq.service
 ConditionPathExists=/dev/video11
 
 [Service]
