@@ -6,6 +6,8 @@ if [[ $# -lt 2 ]]; then
 fi
 
 ROOTFS="$(realpath "$1")"
+ROOT_DIR="$(dirname "$ROOTFS")/../.."
+CACHE_DIR="$ROOT_DIR/tmp/root-cache"
 shift
 
 cd "$ROOTFS"
@@ -19,10 +21,14 @@ cleanup() {
   umount -l ./proc
   umount -l ./sys
   umount -l ./dev
+  umount -l ./root/.cache
 }
 
 trap cleanup EXIT
 
+mkdir -p "$CACHE_DIR" ./root/.cache
+
+mount --bind "$CACHE_DIR" ./root/.cache
 mount -t proc /proc ./proc
 mount --bind /sys ./sys
 mount --bind /dev ./dev
