@@ -39,6 +39,31 @@ copy_chroot /opt/moonraker/ /home/lava/moonraker/.
 echo ">> Creating virtual environment in /opt/moonraker..."
 in_chroot 'python3 -m venv /opt/moonraker/venv'
 
+cat <<EOF > "$ROOTFS_DIR/opt/moonraker/scripts/moonraker-requirements.txt"
+# Python dependencies for Moonraker
+--find-links=python_wheels
+tornado==6.2.0 ; python_version=='3.7'
+tornado==6.4.1 ; python_version>='3.8'
+pyserial==3.4
+pyserial-asyncio==0.6
+pillow
+streaming-form-data==1.11.0 ; python_version=='3.7'
+streaming-form-data==1.15.0 ; python_version>='3.8'
+distro==1.9.0
+inotify-simple==1.3.5
+libnacl==2.1.0
+paho-mqtt==1.6.1
+zeroconf==0.131.0
+preprocess-cancellation==0.2.1
+jinja2==3.1.4
+dbus-next==0.2.3
+apprise==1.8.0
+ldap3==2.9.1
+python-periphery==2.4.1
+importlib_metadata==6.7.0 ; python_version=='3.7'
+importlib_metadata==8.2.0 ; python_version>='3.8'
+EOF
+
 echo ">> Installing moonraker requirements..."
 in_chroot '/opt/moonraker/venv/bin/pip3 install --upgrade pip'
 in_chroot '/opt/moonraker/venv/bin/pip3 install -r /opt/moonraker/scripts/moonraker-requirements.txt'
