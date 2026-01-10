@@ -57,11 +57,11 @@ copy_chroot /opt/lava/modules /lib/modules/bcmdhd.ko
 copy_chroot /opt/lava/modules /lib/modules/chsc6540.ko
 
 # lava_io
+mkdir_chroot /opt/lava/bin
 copy_chroot /opt/lava/bin /usr/bin/lava_io
 validate_ldd /opt/lava/bin/lava_io
 
 # updateEngine
-mkdir_chroot /opt/lava/bin
 copy_chroot /opt/lava/bin /usr/bin/updateEngine
 validate_ldd /opt/lava/bin/updateEngine
 
