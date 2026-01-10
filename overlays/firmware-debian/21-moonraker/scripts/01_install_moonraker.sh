@@ -39,9 +39,6 @@ echo ">> Copying moonraker files to rootfs..."
 mkdir_chroot /opt/moonraker
 cp -rv "$TMP_DIR/moonraker"/* "$ROOTFS_DIR/opt/moonraker/"
 
-echo ">> Installing Python3 and venv in chroot..."
-in_chroot 'apt update && apt install -y python3 python3-venv python3-dev python3-pip build-essential libopenjp2-7 python3-libgpiod curl libcurl4-openssl-dev libssl-dev liblmdb-dev libsodium-dev zlib1g-dev libjpeg-dev packagekit git'
-
 echo ">> Creating virtual environment in /opt/moonraker..."
 in_chroot 'python3 -m venv /opt/moonraker/venv'
 
