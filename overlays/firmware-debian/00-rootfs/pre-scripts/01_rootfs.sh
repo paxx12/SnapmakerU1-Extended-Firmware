@@ -9,17 +9,16 @@ ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 ROOTFS_DIR="$(realpath "$1")"
 TMP_DIR="$ROOT_DIR/tmp"
 
-VERSION=20260110-ba725df
+VERSION=20260110-7c0f17d
 FILENAME="debian-rootfs-trixie-$VERSION.tgz"
 TMP_FILENAME="$ROOT_DIR/tmp/$FILENAME"
 URL="https://github.com/Snapmaker-U1-Extended-Firmware/base-debian-os/releases/download/$VERSION/$FILENAME"
-SHA256="4da9394aa98c5d643aefb2fd5d361cb5195215e5d2eafdf12959180c801877c9"
+SHA256="6e4a157e891dc46192cfe0f9a7bac73f5157a390170cf18e57ab8138e48f5d07"
 
 set -e
 
 echo ">> Downloading debian rootfs tarball..."
 "$ROOT_DIR/scripts/helpers/download_file.sh" "$TMP_FILENAME" "$URL" "$SHA256"
-
 
 if [[ ! -d "${ROOTFS_DIR}.org" ]]; then
   echo ">> Backuping rootfs..."
