@@ -8,7 +8,7 @@ User=lava
 Group=lava
 WorkingDirectory=/opt/moonraker
 Environment="PYTHONPATH=/opt/moonraker"
-ExecStart=/opt/moonraker/venv/bin/python /opt/moonraker/moonraker/moonraker.py -d /home/lava/printer_data -c /home/lava/printer_data/config/moonraker.conf
+ExecStart=/opt/venv/bin/python /opt/moonraker/moonraker/moonraker.py -d /home/lava/printer_data -c /home/lava/printer_data/config/moonraker.conf
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

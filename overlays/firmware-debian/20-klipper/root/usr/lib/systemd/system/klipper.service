@@ -8,7 +8,7 @@ User=lava
 Group=lava
 WorkingDirectory=/opt/klipper
 Environment="PYTHONPATH=/opt/klipper"
-ExecStart=/opt/klipper/venv/bin/python /opt/klipper/klippy/klippy.py /home/lava/printer_data/config/printer.cfg -I /home/lava/printer_data/comms/klippy.serial -l /home/lava/printer_data/logs/klippy.log -a /home/lava/printer_data/comms/klippy.sock
+ExecStart=/opt/venv/bin/python /opt/klipper/klippy/klippy.py /home/lava/printer_data/config/printer.cfg -I /home/lava/printer_data/comms/klippy.serial -l /home/lava/printer_data/logs/klippy.log -a /home/lava/printer_data/comms/klippy.sock
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
