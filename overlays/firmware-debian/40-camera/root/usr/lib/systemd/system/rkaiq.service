@@ -1,0 +1,16 @@
+[Unit]
+Description=Rockchip Auto Image Quality
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Environment="LD_LIBRARY_PATH=/opt/lava/lib"
+ExecStart=/opt/lava/bin/rkaiq_3A_server
+Restart=always
+RestartSec=5
+StartLimitBurst=3
+StartLimitIntervalSec=60
+
+[Install]
+WantedBy=multi-user.target
