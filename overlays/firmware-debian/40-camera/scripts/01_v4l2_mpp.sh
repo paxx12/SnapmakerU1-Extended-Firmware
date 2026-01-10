@@ -48,4 +48,7 @@ file "$1/usr/local/bin/stream-http.py"
 echo ">> Creating timelapse directory..."
 mkdir -p "$1/userdata/.tmp_timelapse"
 
+echo ">> Installing Python dependencies..."
+"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" /opt/venv/bin/pip3 install paho-mqtt
+
 echo ">> v4l2-mpp installation completed successfully."
