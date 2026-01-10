@@ -1,6 +1,7 @@
 [Unit]
 Description=Lava GUI Application
 After=network.target init-printer-data.service
+ConditionPathExists=/dev/fb0
 
 [Service]
 Type=simple
