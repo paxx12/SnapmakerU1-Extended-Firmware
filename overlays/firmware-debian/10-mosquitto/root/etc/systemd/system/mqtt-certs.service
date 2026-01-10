@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate MQTT Certificates
+Before=mosquitto.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/generate-mqtt-certs.sh
+
+[Install]
+WantedBy=multi-user.target
