@@ -11,22 +11,21 @@ ORG_ROOTFS_DIR="${ROOTFS_DIR}.org"
 
 set -e
 
-copy_bin() {
-  local src="$1"
-  local target="$2"
-  shift 2
+mkdir_chroot() {
+  for dir; do
+    echo ">> Creating directory $dir in chroot..."
+    mkdir -p "$ROOTFS_DIR/$dir"
+  done
+}
 
-  echo ">> Copying $src to $target ..."
-  mkdir -p "$ROOTFS_DIR/$target"
-  cp -rv -L --remove-destination "$ORG_ROOTFS_DIR/$src" "$ROOTFS_DIR/$target"
+copy_chroot() {
+  local target="$1"
+  shift
 
-  if [[ $# -gt 0 ]]; then
-    echo ">> Testing $@..."
-    if ! "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" "$@"; then
-      echo ">> ERROR: Testing $@ failed after copying $src to $target"
-      exit 1
-    fi
-  fi
+  echo ">> Copying to $target the $@..."
+  for src; do
+    cp -rv -L --remove-destination "$ORG_ROOTFS_DIR/$src" "$ROOTFS_DIR/$target"
+  done
 }
 
 in_chroot() {
@@ -52,40 +51,40 @@ validate_ldd() {
   fi
 }
 
-mkdir_chroot() {
-  local dir="$1"
-  echo ">> Creating directory $dir in chroot..."
-  mkdir -p "$ROOTFS_DIR/$dir"
-}
-
 # copy all lib
 mkdir_chroot /opt/lava/lib
-copy_bin /usr/lib/librkwifibt.so /opt/lava/lib/
-copy_bin /usr/lib/libzlog.so.1.2 /opt/lava/lib/
-copy_bin /usr/lib/libjpeg.so.8 /opt/lava/lib/
-copy_bin /usr/lib/libwpa_client.so /opt/lava/lib/
+copy_chroot /opt/lava/lib /usr/lib/librkwifibt.so
+copy_chroot /opt/lava/lib /usr/lib/libzlog.so.1.2
+copy_chroot /opt/lava/lib /usr/lib/libjpeg.so.8
+copy_chroot /opt/lava/lib /usr/lib/libwpa_client.so
 
 # updateEngine
 mkdir_chroot /opt/lava/bin
-copy_bin /usr/bin/updateEngine /opt/lava/bin
+copy_chroot /opt/lava/bin /usr/bin/updateEngine
 test_bin '/opt/lava/bin/updateEngine --help | grep "Linux A/B mode: Setting the current partition to bootable."'
 
 # GUI
 in_chroot 'apt install -y libfreetype6 libpaho-mqtt1.3 libglib2.0-0t64 libbluetooth3'
-copy_bin /usr/bin/gui /opt/lava/bin/
+copy_chroot /opt/lava/bin /usr/bin/gui
 validate_ldd '/opt/lava/bin/gui'
 
+# GUI resources
+mkdir_chroot /home/lava/resource
+copy_chroot /home/lava/resource/ /home/lava/resource/.
+
 # kernel modules
-copy_bin /lib/modules/io_manager.ko /opt/lava/modules/
-copy_bin /lib/modules/bcmdhd.ko /opt/lava/modules/
-copy_bin /lib/modules/chsc6540.ko /opt/lava/modules/
+mkdir_chroot /opt/lava/modules
+copy_chroot /opt/lava/modules /lib/modules/io_manager.ko
+copy_chroot /opt/lava/modules /lib/modules/bcmdhd.ko
+copy_chroot /opt/lava/modules /lib/modules/chsc6540.ko
 
 # wlan firmware
-copy_bin /usr/lib/firmware/fw_bcm43438a1.bin /usr/lib/firmware/
-copy_bin /usr/lib/firmware/nvram_ap6212a.txt /usr/lib/firmware/
+mkdir_chroot /usr/lib/firmware
+copy_chroot /usr/lib/firmware /usr/lib/firmware/fw_bcm43438a1.bin
+copy_chroot /usr/lib/firmware /usr/lib/firmware/nvram_ap6212a.txt
 mkdir -p "$ROOTFS_DIR/vendor/etc"
 ln -sf /usr/lib/firmware "$ROOTFS_DIR/vendor/etc/firmware"
 
 # lava_io
-copy_bin /usr/bin/lava_io /opt/lava/bin/
+copy_chroot /opt/lava/bin /usr/bin/lava_io
 validate_ldd '/opt/lava/bin/lava_io'

@@ -1,0 +1,15 @@
+[Unit]
+Description=Lava GUI Application
+After=network.target
+
+[Service]
+Type=simple
+Environment="LD_LIBRARY_PATH=/opt/lava/lib"
+ExecStart=/opt/lava/bin/gui -d
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

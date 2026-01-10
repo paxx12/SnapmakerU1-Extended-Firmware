@@ -16,5 +16,5 @@ if [[ ! -u "$ROOTFS_DIR/usr/bin/sudo" ]]; then
 fi
 
 echo ">> Add user lava..."
-"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" useradd -m -G sudo -s /bin/bash lava
+"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" useradd -m -G sudo,video,input -s /bin/bash lava
 "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" bash -c 'echo lava:snapmaker | chpasswd'
