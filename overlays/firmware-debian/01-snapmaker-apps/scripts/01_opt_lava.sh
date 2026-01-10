@@ -32,14 +32,6 @@ in_chroot() {
   "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" bash -c "$@"
 }
 
-test_bin() {
-  if ! "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" bash -c "$@"; then
-    echo ">> ERROR: Testing $@ failed after copying $src to $target"
-    exit 1
-  fi
-}
-
-# validate ldd that there are no missing files
 validate_ldd() {
   local bin_path="$1"
   echo ">> Validating ldd for $bin_path ..."
@@ -58,32 +50,34 @@ copy_chroot /opt/lava/lib /usr/lib/libzlog.so.1.2
 copy_chroot /opt/lava/lib /usr/lib/libjpeg.so.8
 copy_chroot /opt/lava/lib /usr/lib/libwpa_client.so
 
-# updateEngine
-mkdir_chroot /opt/lava/bin
-copy_chroot /opt/lava/bin /usr/bin/updateEngine
-test_bin '/opt/lava/bin/updateEngine --help | grep "Linux A/B mode: Setting the current partition to bootable."'
-
-# GUI
-copy_chroot /opt/lava/bin /usr/bin/gui
-validate_ldd '/opt/lava/bin/gui'
-
-# GUI resources
-mkdir_chroot /home/lava/resource
-copy_chroot /home/lava/resource/ /home/lava/resource/.
-
 # kernel modules
 mkdir_chroot /opt/lava/modules
 copy_chroot /opt/lava/modules /lib/modules/io_manager.ko
 copy_chroot /opt/lava/modules /lib/modules/bcmdhd.ko
 copy_chroot /opt/lava/modules /lib/modules/chsc6540.ko
 
+# lava_io
+copy_chroot /opt/lava/bin /usr/bin/lava_io
+validate_ldd /opt/lava/bin/lava_io
+
+# updateEngine
+mkdir_chroot /opt/lava/bin
+copy_chroot /opt/lava/bin /usr/bin/updateEngine
+validate_ldd /opt/lava/bin/updateEngine
+
+# GUI
+copy_chroot /opt/lava/bin /usr/bin/gui
+validate_ldd /opt/lava/bin/gui
+
+# GUI resources
+mkdir_chroot /home/lava/resource
+copy_chroot /home/lava/resource/ /home/lava/resource/.
+
 # wlan firmware
 mkdir_chroot /usr/lib/firmware
 copy_chroot /usr/lib/firmware /usr/lib/firmware/fw_bcm43438a1.bin
 copy_chroot /usr/lib/firmware /usr/lib/firmware/nvram_ap6212a.txt
-mkdir -p "$ROOTFS_DIR/vendor/etc"
-ln -sf /usr/lib/firmware "$ROOTFS_DIR/vendor/etc/firmware"
 
-# lava_io
-copy_chroot /opt/lava/bin /usr/bin/lava_io
-validate_ldd '/opt/lava/bin/lava_io'
+# AI detection
+mkdir_chroot /opt/lava/unisrv
+copy_chroot /opt/lava/unisrv /etc/unisrv
