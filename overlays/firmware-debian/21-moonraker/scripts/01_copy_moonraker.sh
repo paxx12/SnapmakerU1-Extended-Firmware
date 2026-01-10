@@ -62,6 +62,7 @@ ldap3==2.9.1
 python-periphery==2.4.1
 importlib_metadata==6.7.0 ; python_version=='3.7'
 importlib_metadata==8.2.0 ; python_version>='3.8'
+httpx
 EOF
 
 echo ">> Installing moonraker requirements..."
