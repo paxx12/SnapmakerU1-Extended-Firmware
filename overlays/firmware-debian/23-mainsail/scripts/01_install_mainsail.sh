@@ -40,5 +40,5 @@ rm -rf "$TARGET_DIR/mainsail-$VERSION"
 unzip -o "$TARGET_DIR/$FILENAME" -d "$TARGET_DIR/mainsail-$VERSION"
 
 echo ">> Installing $FILENAME to target rootfs..."
-rm -rf "$1/home/lava/mainsail"
-cp -r "$TARGET_DIR/mainsail-$VERSION" "$1/home/lava/mainsail"
+rm -rf "$1/opt/mainsail"
+cp -r "$TARGET_DIR/mainsail-$VERSION" "$1/opt/mainsail"
