@@ -1,6 +1,6 @@
 [Unit]
 Description=Moonraker API Server
-After=network.target init-printer-data.service
+After=network.target init-printer-data.service mosquitto.service
 
 [Service]
 Type=simple

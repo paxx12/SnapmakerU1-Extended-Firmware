@@ -17,7 +17,7 @@ echo ">> Enabling multi-user.target as default..."
 "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" systemctl set-default multi-user.target
 
 echo ">> Disabling systemd-networkd-wait-online.service..."
-"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" bash -c "systemctl disable systemd-networkd-wait-online.service"
+"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" systemctl mask systemd-networkd-wait-online.service
 
 echo ">> Installing systemd-resolved..."
 "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$ROOTFS_DIR" systemctl enable systemd-resolved

@@ -65,7 +65,7 @@ in_chroot '/opt/klipper/venv/bin/pip3 install -r /opt/klipper/scripts/klippy-req
 
 # Additional modules not included in klippy-requirements.txt
 echo ">> Installing additional klipper requirements..."
-in_chroot '/opt/klipper/venv/bin/pip3 install paho-mqtt spidev cryptography'
+in_chroot '/opt/klipper/venv/bin/pip3 install paho-mqtt spidev cryptography "numpy<2.0"'
 
 echo ">> Setting ownership to lava:lava..."
 in_chroot 'chown -R lava:lava /opt/klipper'
