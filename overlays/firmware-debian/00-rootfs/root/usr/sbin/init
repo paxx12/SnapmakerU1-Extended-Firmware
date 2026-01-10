@@ -1,0 +1,37 @@
+#!/bin/sh
+# early-init-overlay.sh
+
+echo "Starting early init overlay..."
+
+# mount kernel filesystems
+mount -t proc  proc  /proc
+mount -t sysfs sysfs /sys
+
+# loading kernel modules
+/usr/sbin/insmod /opt/lava/modules/io_manager.ko # IO manager (powers USB, etc.)
+/usr/sbin/insmod /opt/lava/modules/bcmdhd.ko     # WiFi/BT driver
+/usr/sbin/insmod /opt/lava/modules/chsc6540.ko   # Touchpanel driver
+
+# create temporary overlay storage
+mkdir -p /overlay
+mount -t tmpfs tmpfs /overlay
+
+# mount overlay rootfs
+mkdir -p /overlay/upper /overlay/work
+mount -t overlay overlay /overlay \
+  -o lowerdir=/,upperdir=/overlay/upper,workdir=/overlay/work
+
+# move kernel mounts into new root
+mount --move /proc /overlay/proc
+mount --move /sys  /overlay/sys
+mount --move /dev  /overlay/dev
+
+# pivot root: old root becomes /rom
+pivot_root /overlay /overlay/rom
+
+# move essential mounts to new root
+mount --move /rom/overlay /overlay
+
+# hand off to real init
+echo "Starting real init..."
+exec /lib/systemd/systemd

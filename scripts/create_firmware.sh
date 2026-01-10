@@ -18,8 +18,6 @@ OUT_FIRMWARE="$(realpath -m "$3")"
 ROOT_DIR="$(realpath "$(dirname "$0")/..")"
 shift 3
 
-rm -rf "$TEMP_DIR"
-
 check_perms() {
   local file="$1"
   local expected_uid="$2"
@@ -40,16 +38,20 @@ check_perms() {
   fi
 }
 
-echo ">> Unpacking firmware..."
-"$ROOT_DIR/scripts/helpers/unpack_firmware.sh" "$IN_FIRMWARE" "$TEMP_DIR"
+if [[ -z "$DIRTY" ]]; then
+  rm -rf "$TEMP_DIR"
 
-echo ">> Extracting squashfs from rootfs.img..."
-unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
+  echo ">> Unpacking firmware..."
+  "$ROOT_DIR/scripts/helpers/unpack_firmware.sh" "$IN_FIRMWARE" "$TEMP_DIR"
 
-echo ">> Verifying ownership preservation..."
-check_perms "$TEMP_DIR/rootfs/etc/passwd" 0 0
-check_perms "$TEMP_DIR/rootfs/home/lava/bin/hwver.sh" 1000 1000
-echo "   Ownership check passed"
+  echo ">> Extracting squashfs from rootfs.img..."
+  unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
+
+  echo ">> Verifying ownership preservation..."
+  check_perms "$TEMP_DIR/rootfs/etc/passwd" 0 0
+  check_perms "$TEMP_DIR/rootfs/home/lava/bin/hwver.sh" 1000 1000
+  echo "   Ownership check passed"
+fi
 
 for overlay; do
   if [[ ! -d "$overlay" ]]; then
@@ -74,26 +76,44 @@ for overlay; do
 
   if [[ -d "$overlay/scripts/" ]]; then
     for scriptfile in "$overlay/scripts/"*.sh; do
-      echo "[+] Running script: $(basename "$scriptfile")"
-      ./"$scriptfile" "$TEMP_DIR/rootfs"
+      # if file ends with .chroot.sh, run it in chroot
+      if [[ "$scriptfile" == *.chroot.sh ]]; then
+        echo "[+] Running chroot script: $(basename "$scriptfile")"
+        "$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$TEMP_DIR/rootfs" "/firmware-root/$scriptfile"
+      else
+        echo "[+] Running script: $(basename "$scriptfile")"
+        ./"$scriptfile" "$TEMP_DIR/rootfs"
+      fi
     done
   fi
 
   if [[ -d "$overlay/root/" ]]; then
     echo ">> Copying custom files..."
-    cp -rv "$overlay/root/." "$TEMP_DIR/rootfs/"
+    cp -rv --remove-destination "$overlay/root/." "$TEMP_DIR/rootfs/"
   fi
 done
 
-echo ">> Checking for non-ARM binaries in rootfs..."
-if FILES=$(find "$TEMP_DIR/rootfs" -type f -exec file {} + | grep "ELF" | grep -v "ARM"); then
-  echo "!! Error: Found non-ARM binaries in the rootfs:"
-  echo "$FILES"
-  exit 1
+if [[ -z "$DIRTY" ]]; then
+  echo ">> Checking for non-ARM binaries in rootfs..."
+  if FILES=$(find "$TEMP_DIR/rootfs" -type f -exec file {} + | grep "ELF" | grep -v "ARM"); then
+    echo "!! Error: Found non-ARM binaries in the rootfs:"
+    echo "$FILES"
+    exit 1
+  fi
 fi
 
 echo ">> Create squash filesystem..."
+rm -rf "$TEMP_DIR/rk-unpacked/rootfs-v2.img"
 mksquashfs "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs-v2.img" -comp gzip
+
+echo ">> Checking image size..."
+IMAGE_SIZE=$(stat -c '%s' "$TEMP_DIR/rk-unpacked/rootfs-v2.img")
+MAX_SIZE=$((300 * 1024 * 1024))
+if [[ $IMAGE_SIZE -gt $MAX_SIZE ]]; then
+  echo "Error: Image size $(($IMAGE_SIZE / 1024 / 1024))MiB exceeds maximum of 300MiB"
+  exit 1
+fi
+echo "   Image size: $(($IMAGE_SIZE / 1024 / 1024))MiB (OK)"
 
 echo ">> Replace rootfs.img in firmware..."
 mv -v "$TEMP_DIR/rk-unpacked"/{rootfs-v2,rootfs}.img
