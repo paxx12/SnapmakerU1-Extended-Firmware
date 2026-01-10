@@ -61,6 +61,11 @@ mkdir_chroot /opt/lava/bin
 copy_chroot /opt/lava/bin /usr/bin/lava_io
 validate_ldd /opt/lava/bin/lava_io
 
+# klippy_mcu
+mkdir_chroot /opt/lava/firmware_mcu
+copy_chroot /opt/lava/firmware_mcu /home/lava/firmware_MCU/.
+validate_ldd /opt/lava/firmware_mcu/klippy_mcu
+
 # updateEngine
 copy_chroot /opt/lava/bin /usr/bin/updateEngine
 validate_ldd /opt/lava/bin/updateEngine
@@ -78,6 +83,6 @@ mkdir_chroot /usr/lib/firmware
 copy_chroot /usr/lib/firmware /usr/lib/firmware/fw_bcm43438a1.bin
 copy_chroot /usr/lib/firmware /usr/lib/firmware/nvram_ap6212a.txt
 
-# AI detection
-mkdir_chroot /opt/lava/unisrv
-copy_chroot /opt/lava/unisrv /etc/unisrv
+# # AI detection
+# mkdir_chroot /opt/lava/unisrv
+# copy_chroot /opt/lava/unisrv /etc/unisrv
