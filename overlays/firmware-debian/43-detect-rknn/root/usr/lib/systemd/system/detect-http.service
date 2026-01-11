@@ -14,4 +14,3 @@ StartLimitBurst=3
 StartLimitIntervalSec=60
 
 [Install]
-WantedBy=multi-user.target
