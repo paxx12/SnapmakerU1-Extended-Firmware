@@ -95,6 +95,8 @@ class Framebuffer:
         self.mm = None
         self.width = 0
         self.height = 0
+        self.virtual_width = 0
+        self.virtual_height = 0
         self.bpp = 0
         self.line_length = 0
         self._cache_hash = None
@@ -111,16 +113,22 @@ class Framebuffer:
         fcntl.ioctl(self.fd, FBIOGET_FSCREENINFO, finfo)
 
         self.width = vinfo.xres
+        self.virtual_width = vinfo.xres_virtual
         self.height = vinfo.yres
+        self.virtual_height = vinfo.yres_virtual
         self.bpp = vinfo.bits_per_pixel
         self.line_length = finfo.line_length
 
-        size = finfo.line_length * vinfo.yres
+        size = self.line_length * self.virtual_height
         self.mm = mmap.mmap(self.fd, size, mmap.MAP_SHARED, mmap.PROT_READ)
-        log(f"Framebuffer: {self.width}x{self.height} @ {self.bpp}bpp, line_length={self.line_length}")
+        log(f"Framebuffer: {self.width}x{self.height} ({self.virtual_width}x{self.virtual_height} virtual) @ {self.bpp}bpp, line_length={self.line_length}")
 
     def get_snapshot(self, client_etag=None):
-        self.mm.seek(0)
+        vinfo = FbVarScreeninfo()
+        fcntl.ioctl(self.fd, FBIOGET_VSCREENINFO, vinfo)
+        offset = vinfo.yoffset * self.line_length
+        
+        self.mm.seek(offset)
         raw = self.mm.read(self.line_length * self.height)
         raw_hash = hashlib.md5(raw).hexdigest()[:16]
         if client_etag and client_etag == raw_hash:
