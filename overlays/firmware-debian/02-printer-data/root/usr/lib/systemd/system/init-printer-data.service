@@ -1,7 +1,7 @@
 [Unit]
 Description=Initialize printer data from /opt/lava/printer_data to /oem/printer_data
 After=local-fs.target
-Before=multi-user.target
+Before=multi-user.target mosquitto.service
 
 [Service]
 Type=oneshot
