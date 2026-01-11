@@ -97,6 +97,6 @@ copy_chroot /etc /etc/VERSION
 # mqtt certificates
 copy_chroot /opt/lava/bin /home/lava/bin/ca_tool.py
 
-# # AI detection
-# mkdir_chroot /opt/lava/unisrv
-# copy_chroot /opt/lava/unisrv /etc/unisrv
+# AI detection
+mkdir_chroot /opt/lava/unisrv
+copy_chroot /opt/lava/unisrv /etc/unisrv
