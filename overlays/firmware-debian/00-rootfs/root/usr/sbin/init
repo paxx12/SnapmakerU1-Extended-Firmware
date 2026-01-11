@@ -14,13 +14,13 @@ mount -t sysfs sysfs /sys
 
 # mounting persistent storage overlay
 if OEM_DISK=$(blkid -o device -t PARTLABEL=oem | head -n 1); then
-  echo "Checking $OEM_DISK..."
-  fsck.ext4 -y "$OEM_DISK"
+  # check and mount oem partition (in case of improper shutdown)
+  if ! fsck -y "$OEM_DISK"; then
+    echo "Filesystem check failed on $OEM_DISK"
+  fi
 
-  echo "Mounting /oem partition..."
   if mount -t ext4 "$OEM_DISK" /oem; then
-    echo "Mounted /oem partition successfully."
-    rm -rf /oem/overlay-debian
+    echo "Mounted /oem partition from $OEM_DISK"
     mkdir -p /oem/overlay-debian
     mount --bind /oem/overlay-debian /overlay
     umount /oem
@@ -31,6 +31,21 @@ fi
 if ! mountpoint /overlay; then
   echo "Failed to mount /oem partition!"
   mount -t tmpfs tmpfs /overlay
+fi
+
+# remove extra files from previous overlay
+overlay_persist_files() {
+  # user specified persistent files
+  [ -e /overlay/persist ] && echo --exclude-from=/overlay/persist
+
+  # always persist SSH host keys
+  echo "--exclude=/etc/ssh/ssh_host_*"
+}
+
+if [ -d /overlay/upper ]; then
+  echo "Cleaning up previous overlay..."
+  # misuse /rom as this is empty directory at this point
+  rsync -a --delete $(overlay_persist_files) /rom /overlay/upper/
 fi
 
 # mount overlay rootfs
