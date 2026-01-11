@@ -21,7 +21,8 @@ apt-get autopurge -y packagekit libgstreamer*
 apt-get autoremove -y libpython3.11-dev
 
 # remove python bytecode files
-find / -name '*.pyc' -delete
+find /usr -name '*.pyc' -delete
+find /opt -name '*.pyc' -delete
 
 # risky cleanup (breaks the system dependencies)
 rm -rf /usr/include/*
