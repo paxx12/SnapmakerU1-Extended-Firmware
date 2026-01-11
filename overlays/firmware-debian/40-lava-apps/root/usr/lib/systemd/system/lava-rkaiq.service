@@ -1,6 +1,7 @@
 [Unit]
 Description=Rockchip Auto Image Quality
 After=network.target
+ConditionPathExists=/dev/lava-io
 
 [Service]
 Type=simple

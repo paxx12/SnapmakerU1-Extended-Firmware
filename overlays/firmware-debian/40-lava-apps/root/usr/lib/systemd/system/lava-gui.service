@@ -2,6 +2,7 @@
 Description=Lava GUI Application
 After=network.target init-printer-data.service
 ConditionPathExists=/dev/fb0
+ConditionPathExists=/dev/lava-io
 
 [Service]
 Type=simple

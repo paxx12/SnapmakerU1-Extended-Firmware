@@ -2,6 +2,7 @@
 Description=Klipper MCU Firmware
 After=network.target
 Before=klipper.service
+ConditionPathExists=/dev/lava-io
 
 [Service]
 Type=simple
