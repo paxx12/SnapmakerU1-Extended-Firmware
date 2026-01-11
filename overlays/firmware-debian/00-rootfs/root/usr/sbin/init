@@ -36,16 +36,22 @@ fi
 # remove extra files from previous overlay
 overlay_persist_files() {
   # user specified persistent files
-  [ -e /overlay/persist ] && echo --exclude-from=/overlay/persist
+  [ -e /overlay/upper/etc/sysupgrade.conf ] && echo --exclude-from=/overlay/upper/etc/sysupgrade.conf
+
+  # always persist custom sysupgrade version file
+  echo "--exclude=/etc/sysupgrade.conf"
 
   # always persist SSH host keys
   echo "--exclude=/etc/ssh/ssh_host_*"
 }
 
-if [ -d /overlay/upper ]; then
+# if overlay version mismatches, clean up previous overlay
+if [ -d /overlay/upper ] && ! diff -u /overlay/version /etc/CUSTOM_VERSION; then
   echo "Cleaning up previous overlay..."
   # misuse /rom as this is empty directory at this point
-  rsync -a --delete $(overlay_persist_files) /rom /overlay/upper/
+  rsync -a --delete $(overlay_persist_files) /rom /overlay/upper
+  # write current version
+  cat /etc/CUSTOM_VERSION > /overlay/version
 fi
 
 # mount overlay rootfs
