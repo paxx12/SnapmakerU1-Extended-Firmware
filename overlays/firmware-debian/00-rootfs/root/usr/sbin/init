@@ -12,9 +12,26 @@ mount -t sysfs sysfs /sys
 /usr/sbin/insmod /opt/lava/modules/bcmdhd.ko     # WiFi/BT driver
 /usr/sbin/insmod /opt/lava/modules/chsc6540.ko   # Touchpanel driver
 
-# create temporary overlay storage
-mkdir -p /overlay
-mount -t tmpfs tmpfs /overlay
+# mounting persistent storage overlay
+if OEM_DISK=$(blkid -o device -t PARTLABEL=oem | head -n 1); then
+  echo "Checking $OEM_DISK..."
+  fsck.ext4 -y "$OEM_DISK"
+
+  echo "Mounting /oem partition..."
+  if mount -t ext4 "$OEM_DISK" /oem; then
+    echo "Mounted /oem partition successfully."
+    rm -rf /oem/overlay-debian
+    mkdir -p /oem/overlay-debian
+    mount --bind /oem/overlay-debian /overlay
+    umount /oem
+  fi
+fi
+
+# fallback to tmpfs overlay
+if ! mountpoint /overlay; then
+  echo "Failed to mount /oem partition!"
+  mount -t tmpfs tmpfs /overlay
+fi
 
 # mount overlay rootfs
 mkdir -p /overlay/upper /overlay/work
