@@ -9,11 +9,11 @@ ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 ROOTFS_DIR="$(realpath "$1")"
 TMP_DIR="$ROOT_DIR/tmp"
 
-VERSION=20260111-16ff24a
+VERSION=20260110-7c0f17d
 FILENAME="debian-rootfs-trixie-$VERSION.tgz"
 TMP_FILENAME="$ROOT_DIR/tmp/$FILENAME"
 URL="https://github.com/Snapmaker-U1-Extended-Firmware/base-debian-os/releases/download/$VERSION/$FILENAME"
-SHA256="c60b06c9a30e28c61dd66528c46bf48b6ebfa8e5ffee5f486ba7eb90723b72c5"
+SHA256="6e4a157e891dc46192cfe0f9a7bac73f5157a390170cf18e57ab8138e48f5d07"
 
 set -e
 
