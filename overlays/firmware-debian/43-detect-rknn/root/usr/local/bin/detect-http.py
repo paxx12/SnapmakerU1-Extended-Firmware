@@ -151,7 +151,7 @@ async function updateFrame() {
 
             if (data.detections && Object.keys(data.detections).length > 0) {
                 drawDetections(data.detections);
-                displayDetectionInfo(data.detections);
+                displayDetectionInfo(data.detections, data.stats);
             } else {
                 detectionsEl.innerHTML = '<div style="opacity:0.6;">No detections</div>';
             }
@@ -164,7 +164,11 @@ async function updateFrame() {
                 lastTime = now;
             }
             const statusText = isRunning ? 'Running' : 'Stopped';
-            statusEl.textContent = `${statusText} | FPS: ${fps} | ${image.width}x${image.height}`;
+            let statusStr = `${statusText} | FPS: ${fps} | ${image.width}x${image.height}`;
+            if (data.stats) {
+                statusStr += ` | Capture: ${(data.stats.capture_time * 1000).toFixed(1)}ms`;
+            }
+            statusEl.textContent = statusStr;
         };
 
         image.src = 'data:image/jpeg;base64,' + data.image;
@@ -177,50 +181,64 @@ async function updateFrame() {
 
 function drawDetections(detections) {
     let totalBoxes = 0;
-    for (const [className, objects] of Object.entries(detections)) {
-        const color = getColorForClass(className);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.font = '16px monospace';
-        ctx.fillStyle = color;
-
-        objects.forEach(obj => {
-            const x = obj.x;
-            const y = obj.y;
-            const w = obj.width;
-            const h = obj.height;
-
-            ctx.strokeRect(x, y, w, h);
-
-            const label = `${className} ${(obj.confidence * 100).toFixed(1)}%`;
-            const textMetrics = ctx.measureText(label);
-            const textHeight = 20;
-
+    for (const [socketName, socketDetections] of Object.entries(detections)) {
+        for (const [className, objects] of Object.entries(socketDetections)) {
+            const color = getColorForClass(className);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.font = '16px monospace';
             ctx.fillStyle = color;
-            ctx.fillRect(x, y - textHeight, textMetrics.width + 8, textHeight);
 
-            ctx.fillStyle = '#000';
-            ctx.fillText(label, x + 4, y - 4);
+            objects.forEach(obj => {
+                const x = obj.x;
+                const y = obj.y;
+                const w = obj.w;
+                const h = obj.h;
 
-            totalBoxes++;
-        });
+                ctx.strokeRect(x, y, w, h);
+
+                const label = `${className} ${(obj.confidence * 100).toFixed(1)}%`;
+                const textMetrics = ctx.measureText(label);
+                const textHeight = 20;
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y - textHeight, textMetrics.width + 8, textHeight);
+
+                ctx.fillStyle = '#000';
+                ctx.fillText(label, x + 4, y - 4);
+
+                totalBoxes++;
+            });
+        }
     }
 }
 
-function displayDetectionInfo(detections) {
+function displayDetectionInfo(detections, stats) {
     let html = '';
-    for (const [className, objects] of Object.entries(detections)) {
-        const color = getColorForClass(className);
-        const count = objects.length;
-        const avgConf = objects.reduce((sum, obj) => sum + obj.confidence, 0) / count;
+    if (stats && stats.processing_times) {
+        html += '<div style="margin-bottom: 12px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">';
+        html += '<div style="font-weight: bold; margin-bottom: 4px;">Processing Times</div>';
+        for (const [socketName, procTime] of Object.entries(stats.processing_times)) {
+            html += `<div style="font-size: 11px;">${socketName}: ${(procTime * 1000).toFixed(1)}ms</div>`;
+        }
+        html += '</div>';
+    }
+    for (const [socketName, socketDetections] of Object.entries(detections)) {
+        html += `<div style="margin-top: 8px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.2);"><strong>${socketName}</strong></div>`;
+        for (const [className, objects] of Object.entries(socketDetections)) {
+            if (objects.length === 0) continue;
+            const color = getColorForClass(className);
+            const count = objects.length;
+            const avgConf = objects.reduce((sum, obj) => sum + obj.confidence, 0) / count;
 
-        html += `
+            html += `
 <div class="detection-item" style="border-color: ${color};">
     <div class="detection-label">${className}</div>
     <div>Count: ${count}</div>
     <div>Avg Conf: ${(avgConf * 100).toFixed(1)}%</div>
 </div>
 `;
+        }
     }
     detectionsEl.innerHTML = html;
 }
@@ -344,25 +362,33 @@ class DetectHTTPHandler(BaseHTTPRequestHandler):
 
         try:
             import base64
+            import os
+            start_time = time.time()
             jpeg_data = read_socket(self.jpeg_sock)
+            capture_time = time.time() - start_time
 
             with open(self.temp_image_path, 'wb') as f:
                 f.write(jpeg_data)
 
-            all_detections = {}
+            detections_by_socket = {}
+            processing_times = {}
             for detect_sock in self.detect_socks:
+                sock_basename = os.path.basename(detect_sock).replace('.sock', '')
+                proc_start = time.time()
                 detect_result = send_detect_request(detect_sock, self.temp_image_path)
+                proc_time = time.time() - proc_start
+                processing_times[sock_basename] = proc_time
                 if "error" not in detect_result:
-                    detections = detect_result.get("detections", {})
-                    for class_name, objects in detections.items():
-                        if class_name not in all_detections:
-                            all_detections[class_name] = []
-                        all_detections[class_name].extend(objects)
+                    detections_by_socket[sock_basename] = detect_result.get("detections", {})
 
             image_b64 = base64.b64encode(jpeg_data).decode('utf-8')
             response = {
                 "image": image_b64,
-                "detections": all_detections,
+                "detections": detections_by_socket,
+                "stats": {
+                    "capture_time": capture_time,
+                    "processing_times": processing_times
+                },
                 "timestamp": time.time()
             }
 
