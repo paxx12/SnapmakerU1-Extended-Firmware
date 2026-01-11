@@ -1,6 +1,6 @@
 [Unit]
 Description=Bed Detection Service
-After=capture-mipi-mpp.service fake-camera-agent.service
+After=capture-mipi-mpp.service
 Requires=capture-mipi-mpp.service
 ConditionPathExists=/dev/video11
 
