@@ -98,5 +98,6 @@ copy_chroot /etc /etc/VERSION
 copy_chroot /opt/lava/bin /home/lava/bin/ca_tool.py
 
 # AI detection
-mkdir_chroot /opt/lava/unisrv
-copy_chroot /opt/lava/unisrv /etc/unisrv
+copy_chroot /opt/lava/ /etc/unisrv
+# The RKNN runtime library requires /usr/lib
+copy_chroot /usr/lib /usr/lib/librknnrt.so

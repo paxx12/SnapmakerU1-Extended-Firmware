@@ -7,7 +7,7 @@ ConditionPathExists=/dev/video11
 [Service]
 Type=simple
 User=lava
-ExecStart=/usr/local/bin/detect-rknn-yolo11.py --model /opt/lava/unisrv/camera_service/model/print_check.fp.rknn --labels noodle,residue,clean_bed --jpeg-sock /tmp/capture-mipi-jpeg.sock --sock /tmp/detect-print-check.sock
+ExecStart=/opt/venv/bin/python3 /usr/local/bin/detect-rknn-yolo11.py --model /opt/lava/unisrv/camera_service/model/print_check.fp.rknn --labels noodle,residue,clean_bed --sock /tmp/detect-print-check.sock
 Restart=always
 RestartSec=5
 StartLimitBurst=3
