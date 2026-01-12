@@ -1,0 +1,15 @@
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "brand": "PolyLite",
+  "type": "ABS",
+  "subtype": "Basic",
+  "color_hex": "FFFFFF",
+  "alpha": "80",
+  "min_temp": 240,
+  "max_temp": 260,
+  "bed_min_temp": 90,
+  "bed_max_temp": 110,
+  "weight": 1000,
+  "diameter": 1.75
+}

@@ -1,0 +1,16 @@
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "brand": "Overture",
+  "type": "PLA",
+  "subtype": "Silk",
+  "color_hex": "FF0080",
+  "additional_color_hexes": ["00FF80", "8000FF", "FFFF00", "00FFFF"],
+  "alpha": "FF",
+  "min_temp": 200,
+  "max_temp": 230,
+  "bed_min_temp": 50,
+  "bed_max_temp": 65,
+  "weight": 1000,
+  "diameter": 1.75
+}

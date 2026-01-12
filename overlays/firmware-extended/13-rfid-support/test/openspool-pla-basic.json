@@ -1,0 +1,11 @@
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "brand": "Generic",
+  "type": "PLA",
+  "color_hex": "FF0000",
+  "min_temp": 190,
+  "max_temp": 220,
+  "bed_min_temp": 50,
+  "bed_max_temp": 60
+}
