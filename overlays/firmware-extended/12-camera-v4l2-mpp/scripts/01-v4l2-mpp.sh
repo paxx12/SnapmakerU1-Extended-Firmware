@@ -3,7 +3,7 @@
 ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 
 GIT_URL=https://github.com/justinh-rahb/v4l2-mpp.git
-GIT_SHA=2c3d6b31c59be9d189d70115b69a494774536164
+GIT_SHA=5fae0bdae76f7650737d1382b34be2def8ddac76
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <rootfs-dir>"
@@ -44,5 +44,5 @@ file "$1/usr/local/bin/stream-rtsp"
 file "$1/usr/local/bin/stream-webrtc"
 file "$1/usr/local/bin/stream-snap-mqtt.py"
 file "$1/usr/local/bin/stream-http.py"
-file "$1/usr/local/bin/v4l2-ctrls.py"
+file "$1/usr/local/bin/control-v4l2.py"
 echo ">> v4l2-mpp installation completed successfully."
