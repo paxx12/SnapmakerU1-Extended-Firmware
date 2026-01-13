@@ -16,29 +16,28 @@ Get the latest pre-built firmware from [Releases](https://github.com/paxx12/Snap
 For installation instructions, see [Installation Guide](install.md)
 and the [release notes](https://github.com/paxx12/SnapmakerU1/releases/latest).
 
-## Features & Documentation
+For building custom firmware, see [Building from Source](development.md).
 
-### Getting Started
+## Firmware Variants
 
-- [Installation Guide](install.md) - How to install custom firmware on your Snapmaker U1
-- [Building from Source](development.md) - Development guide for building custom firmware
-
-### Core Features (Basic & Extended)
+### Basic Firmware
 
 - [SSH Access](ssh_access.md) - Remote shell access with `root/snapmaker` and `lava/snapmaker`
 - [Data Persistence](data_persistence.md) - Persistent storage configuration across firmware updates
 - USB Ethernet Adapters - Hot-plug support with automatic DHCP configuration
 - Fluidd web interface with camera feed
 
-### Extended Firmware Features
+### Extended Firmware
+
+All basic firmware features plus:
 
 - [Extended Configuration](extended_config.md) - Customize firmware behavior via config file
-- [Camera Support](camera_support.md) - Hardware-accelerated camera stack for internal and USB cameras with web-based controls, WebRTC streaming, and optional RTSP support
+- [Camera Support](camera_support.md) - Hardware-accelerated camera stack for internal and USB cameras with web-based controls
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
 - [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format
 - [Remote Screen](remote_screen.md) - View and control printer screen remotely via web browser
 - [Monitoring](monitoring.md) - Integration with Prometheus, Home Assistant, DataDog, and other monitoring systems
-- Fluidd or Mainsail (selectable) with timelapse plugin
+- [Fluidd or Mainsail](extended_config.md#web) (selectable) with timelapse support
 - Moonraker Adaptive Mesh Support - Object processing for adaptive mesh features
 - Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - [Timelapse Recovery Tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos

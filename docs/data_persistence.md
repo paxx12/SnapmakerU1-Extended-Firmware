@@ -27,15 +27,12 @@ reboot
 
 The `/home/lava/printer_data` directory always persists, regardless of `/oem/.debug`.
 
-## ⚠️ Important Warning
+## Firmware Upgrades
 
-**Enabling data persistence may break firmware functionality when performing system upgrades.**
+**Firmware upgrades automatically remove all persisted changes and delete `/oem/.debug`.**
 
-It is strongly advised to remove persistence before conducting any firmware upgrade to avoid compatibility issues. To do this:
+After upgrading, you can re-enable persistence if needed:
 
 ```bash
-rm /oem/.debug
-reboot
+touch /oem/.debug
 ```
-
-After the firmware upgrade is complete, you can re-enable persistence if needed by recreating the file.

@@ -37,17 +37,6 @@ vi /home/lava/printer_data/config/extended/extended.cfg
 
 After saving, reboot the printer.
 
-## Identifying Customized Settings
-
-When you modify a configuration file, the system automatically creates a `.default` file alongside it containing the original default values. For example, if you customize `extended.cfg`, you'll find `extended.cfg.default` in the same directory.
-
-This makes it easy to:
-- See which files you have customized
-- Compare your changes against the defaults
-- Restore default values if needed
-
-The `.default` files are updated on each boot to reflect the current firmware defaults.
-
 ## Configuration Options
 
 ### [camera]
@@ -82,6 +71,17 @@ logs: syslog
 frontend: fluidd
 # frontend: mainsail
 ```
+
+## Identifying Customized Settings
+
+When you modify a configuration file, the system automatically creates a `.default` file alongside it containing the original default values. For example, if you customize `extended.cfg`, you'll find `extended.cfg.default` in the same directory.
+
+This makes it easy to:
+- See which files you have customized
+- Compare your changes against the defaults
+- Restore default values if needed
+
+The `.default` files are updated on each boot to reflect the current firmware defaults.
 
 ## Important Notes
 
