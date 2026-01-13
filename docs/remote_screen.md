@@ -35,7 +35,7 @@ Remote screen access is **disabled by default**. To enable it:
 2. Open Fluidd or Mainsail in your web browser (`http://<printer-ip>`)
 3. Go to the **Configuration** tab
 4. Modify the `extended.cfg`, and set `[remote_screen] enabled: true`. Save the file.
-7. Modify the `extended/moonraker/04_remote_screen.cfg` and set `enabled: true`. Save the file.
+7. Modify the `extended/moonraker/04_remote_screen.cfg`. Save the file.
 7. Reboot the printer
 
 ### Via SSH
