@@ -33,6 +33,6 @@ if ! cp "$TARGET_DIR/fix_timelapse.py" "$1/usr/local/bin/fix_timelapse"; then
 fi
 chmod +x "$1/usr/local/bin/fix_timelapse"
 echo ">> Validate binaries..."
-file "$1/usr/local/bin/fix_timelapse"
+stat "$1/usr/local/bin/fix_timelapse" >/dev/null
 
 echo ">> Timelapse Recovery Tool installation complete."

@@ -19,7 +19,7 @@ echo ">> Compiling fake-service..."
 make -C "$CUR_DIR/../apps/fake-service" install DESTDIR="$1"
 
 echo ">> Validate binaries..."
-file "$1/usr/local/lib/libv4l2-imposter.so"
-file "$1/usr/local/bin/fake-service"
+stat "$1/usr/local/lib/libv4l2-imposter.so" >/dev/null
+stat "$1/usr/local/bin/fake-service" >/dev/null
 
 echo ">> Extra apps installation completed successfully."
