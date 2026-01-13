@@ -1,0 +1,3 @@
+[submodule "deps/screen-apps"]
+	path = deps/screen-apps
+	url = https://github.com/paxx12/screen-apps.git

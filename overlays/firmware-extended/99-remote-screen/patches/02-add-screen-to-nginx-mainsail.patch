@@ -4,13 +4,13 @@
          proxy_pass http://mjpgstreamer4/;
      }
 +
-+    # Remote screen access via fb-http-server
++    # Remote screen access via fb-http
 +    location = /screen {
 +        return 301 /screen/;
 +    }
 +
 +    location /screen/ {
-+        alias /usr/local/share/fb-http-server/;
++        alias /usr/local/share/fb-http/html/;
 +        index index.html;
 +    }
 +

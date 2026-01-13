@@ -1,0 +1,44 @@
+--- a/usr/local/share/fb-http/html/index.html
++++ b/usr/local/share/fb-http/html/index.html
+@@ -10,6 +10,9 @@
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ <meta name="apple-mobile-web-app-title" content="U1 Screen">
++<link rel="manifest" href="manifest.json">
++<link rel="icon" type="image/svg+xml" href="icon.svg">
++<link rel="apple-touch-icon" href="icon.svg">
+ <style>
+ * { margin: 0; padding: 0; box-sizing: border-box; }
+ html, body { width: 100%; height: 100%; background: #1a1a1a; overflow: hidden; }
+@@ -47,7 +50,7 @@
+     if (loading) return;
+     loading = true;
+     try {
+-        const headers = {};
++        const headers = getAuthHeaders();
+         if (etag) headers['If-None-Match'] = etag;
+         const controller = new AbortController();
+         const timeout = setTimeout(() => controller.abort(), 1000);
+@@ -108,7 +110,8 @@
+ }
+
+ function sendTouch(action, x, y) {
+-    fetch('touch?a=' + action + '&x=' + x + '&y=' + y, { method: 'POST' }).catch(() => {});
++    const headers = getAuthHeaders();
++    fetch('touch?a=' + action + '&x=' + x + '&y=' + y, { method: 'POST', headers: headers }).catch(() => {});
+ }
+
+ function onDown(clientX, clientY) {
+@@ -166,5 +169,12 @@
+     }
+ });
+ </script>
++<script src="auth.js"></script>
++<script>
++if ('serviceWorker' in navigator) {
++    navigator.serviceWorker.register('sw.js').catch(() => {});
++}
++initAuth();
++</script>
+ </body>
+ </html>
