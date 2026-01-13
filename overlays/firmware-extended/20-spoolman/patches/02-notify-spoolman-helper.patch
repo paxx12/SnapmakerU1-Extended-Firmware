@@ -1,0 +1,37 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py	2026-01-14 00:53:34
++++ rootfs/home/lava/klipper/klippy/extras/filament_detect.py	2026-01-14 00:42:38
+@@ -51,6 +51,12 @@
+         self.printer.register_event_handler("klippy:ready", self._ready)
+         self.printer.register_event_handler("filament_feed:port", self._feed_port_evt_handle)
+         self.printer.register_event_handler("filament_switch_sensor:runout", self._runout_evt_handle)
++        self.spoolman = None
++    
++    def getSpoolman(self):
++        if not self.spoolman:
++            self.spoolman = self.printer.lookup_object("spoolman_helper", None)
++        return self.spoolman
+ 
+     def _ready(self):
+         self.filament_feed_objects = self.printer.lookup_objects('filament_feed')
+@@ -143,6 +149,10 @@
+ 
+         self._state[channel] = FILAMENT_DT_STATE_IDLE
+         self._filament_info_update(channel, filament_info, is_clear)
++
++        spoolman = self.getSpoolman()
++        if spoolman:
++            spoolman.set_spool_for_channel(channel, filament_info)
+ 
+     def register_cb_2_update_filament_info(self, cb):
+         try:
+@@ -168,6 +178,10 @@
+         if self._fm175xx_reader is not None:
+             self._state[channel] = FILAMENT_DT_STATE_DETECTING
+             self._fm175xx_reader.request_clear_card_info(channel)
++        
++        spoolman = self.getSpoolman()
++        if spoolman:
++            spoolman.clear_spool_for_channel(channel)
+ 
+     def get_a_filament_info(self, channel):
+         error = FILAMENT_DT_ERR
