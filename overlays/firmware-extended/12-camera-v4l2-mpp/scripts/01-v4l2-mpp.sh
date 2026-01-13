@@ -37,12 +37,10 @@ echo ">> Compiling v4l2-mpp applications..."
 make -C "$TARGET_DIR" install DESTDIR="$1"
 
 echo ">> Validate binaries..."
-file "$1/usr/local/bin/capture-v4l2-jpeg-mpp"
-file "$1/usr/local/bin/capture-v4l2-raw-mpp"
-file "$1/usr/local/bin/fake-service"
-file "$1/usr/local/bin/stream-rtsp"
-file "$1/usr/local/bin/stream-webrtc"
-file "$1/usr/local/bin/stream-snap-mqtt.py"
-file "$1/usr/local/bin/stream-http.py"
-file "$1/usr/local/bin/control-v4l2.py"
+stat "$1/usr/local/bin/capture-v4l2-jpeg-mpp" >/dev/null
+stat "$1/usr/local/bin/capture-v4l2-raw-mpp" >/dev/null
+stat "$1/usr/local/bin/stream-rtsp" >/dev/null
+stat "$1/usr/local/bin/stream-webrtc" >/dev/null
+stat "$1/usr/local/bin/stream-http.py" >/dev/null
+stat "$1/usr/local/bin/control-v4l2.py" >/dev/null
 echo ">> v4l2-mpp installation completed successfully."
