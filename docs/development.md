@@ -20,31 +20,11 @@ Each overlay is self-contained and numbered to control application order. This m
 
 ## Prerequisites
 
-### Option 1: Docker (Recommended)
-
 - Docker installed on your system
-- Use `./dev.sh` script for containerized builds
 
-The `dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
-
-### Option 2: Native Build
-
-- Linux build environment (ARM64 or with cross-compilation support)
-- `make`
-- `wget`
-- `squashfs-tools`
-- `gcc-aarch64-linux-gnu`
-- `cmake`
-- `pkg-config`
-- `git-core`
-- `bc`
-- `libssl-dev`
-- `dos2unix`
-- `build-essential`
+The `./dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
 
 ## Quick Start
-
-### Using Docker (Recommended)
 
 Build tools and download firmware:
 
@@ -70,29 +50,6 @@ Open a shell in the development environment:
 ```bash
 ./dev.sh bash
 ```
-
-### Native Build
-
-Build tools and download firmware:
-
-```bash
-make tools
-make firmware
-```
-
-Build basic firmware:
-
-```bash
-sudo make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
-```
-
-Build extended firmware:
-
-```bash
-sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended_fluidd.bin
-```
-
-**Note:** The build process requires root privileges due to squashfs root filesystem operations.
 
 ## Profiles
 
@@ -195,7 +152,7 @@ Edit `vars.mk` to configure base firmware and kernel.
 To extract and examine the base firmware:
 
 ```bash
-make extract
+./dev.sh make extract
 ```
 
 Output: `tmp/extracted/`
