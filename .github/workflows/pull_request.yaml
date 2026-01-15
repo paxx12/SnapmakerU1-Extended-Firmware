@@ -96,7 +96,35 @@ jobs:
       if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       with:
         script: |
-          const body = `✅ Build artifacts ready: [Download builds](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+          const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: ${{ github.run_id }}
+          });
+
+          const mergeCommitSha = '${{ github.sha }}'.substring(0, 7);
+          const prHeadSha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
+          const prHeadFullSha = '${{ github.event.pull_request.head.sha }}';
+
+          const artifactLines = artifacts.artifacts.map(a => {
+            const url = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${a.id}`;
+            const size = (a.size_in_bytes / 1024 / 1024).toFixed(2);
+            return `| [\`${a.name}\`](${url}) | ${size} MB |`;
+          }).join('\n');
+
+          const body = [
+            '## ✅ Build Artifacts',
+            '',
+            `**Version:** \`${{ env.GIT_VERSION }}\``,
+            `**Build commit:** \`${mergeCommitSha}\` (merge of [${prHeadSha}](https://github.com/${{ github.repository }}/commit/${prHeadFullSha}) into \`${{ github.base_ref }}\`)`,
+            '',
+            '| Artifact | Size |',
+            '|----------|------|',
+            artifactLines,
+            '',
+            `[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+          ].join('\n');
+
           await github.rest.issues.createComment({
             owner: context.repo.owner,
             repo: context.repo.repo,
