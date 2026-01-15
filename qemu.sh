@@ -64,8 +64,8 @@ qemu-system-aarch64 \
   -m 1024 \
   -serial mon:stdio \
   -display none \
-  -kernel "$KERNEL_FILE" \
-  -append "$APPEND" \
+  -kernel "kernel-open-6.1-20260112-d688db2-vmlinuz" \
+  -append "$APPEND initcall_blacklist=rockchip_drm_init" \
   -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::2280-:80,hostfwd=tcp::2443-:443 \
   -device virtio-net-device,netdev=net0 \
   -drive "if=none,file=$DISK_IMG,format=raw,id=hd1" \
