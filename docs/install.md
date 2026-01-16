@@ -6,7 +6,9 @@ title: Installation Guide
 
 This guide covers installing custom firmware on your Snapmaker U1 3D printer.
 
-> **Warning**: Installing custom firmware may void warranty and could potentially damage your device. Use at your own risk.
+> **Warning**: While installing custom firmware does not automatically void the product warranty, any damage caused by or attributable to the installation or use of custom firmware is not covered under warranty. Use at your own risk. See [Snapmaker Terms of Use](https://www.snapmaker.com/terms-of-use) for details.
+>
+> Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
 
 ## Prerequisites
 
