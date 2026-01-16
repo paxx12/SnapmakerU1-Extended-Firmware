@@ -1,0 +1,77 @@
+# Generic functions for maintenance-tool
+# These are basic actions available in all configurations
+
+links:
+  web-interface:
+    url: /
+    icon: "🌐"
+    label: Web Interface
+    condition: null
+
+settings: {}
+
+actions:
+  show-status:
+    label: Show MCUs Version
+    cmd:
+      - /home/lava/bin/systemUpgrade.sh
+      - show-status
+    background: false
+    message: "System status:"
+
+  collect-logs:
+    label: Collect System Logs
+    cmd:
+      - /home/lava/bin/sysinfoCollection.sh
+      - "no"
+      - /userdata/logs.tar.gz
+    message: "Collecting system logs..."
+    download_file: /userdata/logs.tar.gz
+
+  restart-klipper:
+    label: Restart Klipper
+    confirm: true
+    cmd:
+      - /etc/init.d/S60klipper
+      - restart
+    message: "Restarting Klipper..."
+
+  restart-moonraker:
+    label: Restart Moonraker
+    confirm: true
+    cmd:
+      - /etc/init.d/S61moonraker
+      - restart
+    message: "Restarting Moonraker..."
+
+  reboot-system:
+    label: Reboot System
+    confirm: true
+    cmd:
+      - /sbin/reboot
+    background: true
+    message: "Rebooting system..."
+
+  revert-changes:
+    label: Revert Changes
+    confirm: "Remove printer configuration changes, disable data persistence and reboot?"
+    background: true
+    cmd:
+      - /bin/bash
+      - -xc
+      - |
+        rm -f /oem/.printer_data /oem/.debug &&
+        /sbin/reboot
+    message: "Reverting changes..."
+
+  recover-to-backup-firmware:
+    label: Recover to Backup Firmware
+    confirm: "Restore previous firmware version, remove printer configuration changes, disable data persistence and reboot?"
+    background: true
+    cmd:
+      - /bin/bash
+      - -xc
+      - |
+        rm -f /oem/.printer_data /oem/.debug &&
+        updateEngine --misc=other --reboot
+    message: "Recovering to backup firmware..."

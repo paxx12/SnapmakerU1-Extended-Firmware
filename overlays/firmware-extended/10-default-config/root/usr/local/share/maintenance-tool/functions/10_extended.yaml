@@ -1,0 +1,202 @@
+# Extended firmware functions - additional settings and links
+# These are merged on top of 01_generic.yaml
+
+links:
+  internal-camera:
+    url: /webcam
+    icon: "📷"
+    label: Internal Camera
+    condition:
+      setting: camera-stack
+      value: paxx12
+
+  usb-camera:
+    url: /webcam2
+    icon: "📹"
+    label: USB Camera
+    condition:
+      setting: usb-camera
+      value: "true"
+
+  remote-screen:
+    url: /screen
+    icon: "🖥️"
+    label: Remote Screen
+    condition:
+      setting: remote-screen
+      value: "true"
+
+settings:
+  web-frontend:
+    label: Web Frontend
+    get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended.cfg, web, frontend, fluidd]
+    options:
+      mainsail:
+        label: Mainsail
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg web frontend mainsail &&
+            /etc/init.d/S49nginx_conf restart &&
+            /usr/sbin/nginx -s reload
+      fluidd:
+        label: Fluidd
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg web frontend fluidd &&
+            /etc/init.d/S49nginx_conf restart &&
+            /usr/sbin/nginx -s reload
+    default: fluidd
+
+  remote-screen:
+    label: Remote Screen
+    get_cmd:
+      - /usr/local/bin/extended-config.py
+      - get
+      - /home/lava/printer_data/config/extended/extended.cfg
+      - remote_screen
+      - enabled
+      - "false"
+    options:
+      "true":
+        label: Enabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg remote_screen enabled true &&
+            /usr/local/bin/extended-config.py uncomment /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg "webcam gui" &&
+            /usr/local/bin/extended-config.py update /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg "webcam gui" enabled true &&
+            /etc/init.d/S99fb-http restart &&
+            /etc/init.d/S61moonraker restart
+      "false":
+        label: Disabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg remote_screen enabled false &&
+            /usr/local/bin/extended-config.py comment /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg "webcam gui" &&
+            /etc/init.d/S99fb-http restart &&
+            /etc/init.d/S61moonraker restart
+    default: "false"
+
+  camera-stack:
+    label: Camera Stack
+    get_cmd:
+      - /usr/local/bin/extended-config.py
+      - get
+      - /home/lava/printer_data/config/extended/extended.cfg
+      - camera
+      - stack
+      - snapmaker
+    options:
+      paxx12:
+        label: Paxx12
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera stack paxx12 &&
+            /etc/init.d/S99v4l2-mpp-mipi restart &&
+            /etc/init.d/S99v4l2-mpp-usb restart
+      snapmaker:
+        label: Snapmaker
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera stack snapmaker &&
+            /etc/init.d/S99v4l2-mpp-mipi restart &&
+            /etc/init.d/S99v4l2-mpp-usb restart
+    default: snapmaker
+
+  camera-rtsp:
+    label: Camera RTSP Stream
+    get_cmd:
+      - /usr/local/bin/extended-config.py
+      - get
+      - /home/lava/printer_data/config/extended/extended.cfg
+      - camera
+      - rtsp
+      - "false"
+    options:
+      "true":
+        label: Enabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera rtsp true &&
+            /etc/init.d/S99v4l2-mpp-mipi restart &&
+            /etc/init.d/S99v4l2-mpp-usb restart
+      "false":
+        label: Disabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera rtsp false &&
+            /etc/init.d/S99v4l2-mpp-mipi restart &&
+            /etc/init.d/S99v4l2-mpp-usb restart
+    default: "false"
+
+  usb-camera:
+    label: USB Camera
+    get_cmd:
+      - /usr/local/bin/extended-config.py
+      - get
+      - /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg
+      - webcam usb
+      - enabled
+      - "false"
+    options:
+      "true":
+        label: Enabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py uncomment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
+            /usr/local/bin/extended-config.py update /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" enabled true &&
+            /etc/init.d/S61moonraker restart
+      "false":
+        label: Disabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py comment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
+            /etc/init.d/S61moonraker restart
+    default: "false"
+
+  klipper-metrics:
+    label: Klipper Metrics Exporter
+    get_cmd:
+      - /usr/local/bin/extended-config.py
+      - get
+      - /home/lava/printer_data/config/extended/extended.cfg
+      - monitoring
+      - klipper_exporter_enabled
+      - "false"
+    options:
+      "true":
+        label: Enabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg monitoring klipper_exporter_enabled true &&
+            /etc/init.d/S99prometheus-klipper-exporter restart
+      "false":
+        label: Disabled
+        cmd:
+          - bash
+          - -xc
+          - |
+            /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg monitoring klipper_exporter_enabled false &&
+            /etc/init.d/S99prometheus-klipper-exporter stop
+    default: "false"
