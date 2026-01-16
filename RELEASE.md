@@ -19,6 +19,10 @@ Quick steps:
 1. Download `.bin` from the [Snapmaker U1 Wiki](https://wiki.snapmaker.com/en/snapmaker_u1/firmware/release_notes).
 2. Follow the same as for install.
 
+## Community
+
+Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
+
 ## Support
 
 If you find this project useful and would like to support its development, you can:

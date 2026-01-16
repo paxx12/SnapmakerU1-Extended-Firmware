@@ -24,6 +24,10 @@ Download the latest firmware from [Releases](https://github.com/paxx12/Snapmaker
 
 For developers who want to build custom firmware, see [Building from Source](development.md).
 
+## Community
+
+Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
+
 ## Firmware Variants
 
 ### Basic Firmware
