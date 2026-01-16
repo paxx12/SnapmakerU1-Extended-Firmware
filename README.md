@@ -23,6 +23,10 @@ See [Building from Source](docs/development.md) for instructions on building cus
 
 - [v4l2-mpp](https://github.com/paxx12/v4l2-mpp) - Hardware-accelerated camera stack with WebRTC streaming, V4L2 controls, and settings persistence
 
+## Community
+
+Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
+
 ## Support
 
 If you find this project useful and would like to support its development:
