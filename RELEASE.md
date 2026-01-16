@@ -1,7 +1,8 @@
 ## Notice
 
-> **Warning**: Installing custom firmware may void warranty and could potentially damage your device.
-> Use at your own risk.
+> **Warning**: While installing custom firmware does not automatically void the product warranty, any damage caused by or attributable to the installation or use of custom firmware is not covered under warranty. Use at your own risk. See [Snapmaker Terms of Use](https://www.snapmaker.com/terms-of-use) for details.
+>
+> Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
 
 ## Install
 
@@ -17,6 +18,10 @@ Quick steps:
 
 1. Download `.bin` from the [Snapmaker U1 Wiki](https://wiki.snapmaker.com/en/snapmaker_u1/firmware/release_notes).
 2. Follow the same as for install.
+
+## Community
+
+Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
 
 ## Support
 

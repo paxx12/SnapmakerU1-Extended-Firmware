@@ -3,8 +3,9 @@
 This project builds custom firmware for the Snapmaker U1 3D printer,
 enabling debug features like SSH access and adding additional capabilities.
 
-> **Warning**: Installing custom firmware may void warranty and could potentially damage your device.
-> Use at your own risk.
+> **Warning**: While installing custom firmware does not automatically void the product warranty, any damage caused by or attributable to the installation or use of custom firmware is not covered under warranty. Use at your own risk. See [Snapmaker Terms of Use](https://www.snapmaker.com/terms-of-use) for details.
+>
+> Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
 
 ## Download
 
@@ -21,6 +22,10 @@ See [Building from Source](docs/development.md) for instructions on building cus
 ## Dependent projects
 
 - [v4l2-mpp](https://github.com/paxx12/v4l2-mpp) - Hardware-accelerated camera stack with WebRTC streaming, V4L2 controls, and settings persistence
+
+## Community
+
+Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
 
 ## Support
 
