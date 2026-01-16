@@ -11,12 +11,18 @@ CAMERA_LOGS=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera logs "")
 if [ "$CAMERA_LOGS" = "syslog" ]; then
     CMD_FAKE_SERVICE_ARGS="$CMD_FAKE_SERVICE_ARGS --syslog"
 fi
+RTSP_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera rtsp false)
 
 CMD_CAPTURE="/usr/local/bin/capture-v4l2-jpeg-mpp --device /dev/video18 --jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock"
 
 CMD_WEBRTC="/usr/local/bin/stream-webrtc --h264-sock /tmp/capture-usb-h264.sock --webrtc-sock /tmp/capture-usb-webrtc.sock"
 
-CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock --webrtc-sock /tmp/capture-usb-webrtc.sock --bind 127.0.0.1 --port 8081"
+CMD_HTTP="/usr/bin/python3 /usr/local/bin/stream-http.py --jpeg-sock /tmp/capture-usb-jpeg.sock --mjpeg-sock /tmp/capture-usb-mjpeg.sock --h264-sock /tmp/capture-usb-h264.sock --webrtc-sock /tmp/capture-usb-webrtc.sock --control-sock /tmp/v4l2-control-usb.sock --bind 127.0.0.1 --port 8081"
+
+CMD_CTRL="/usr/bin/python3"
+CMD_CTRL_ARGS="/usr/local/bin/control-v4l2.py --device /dev/video18 --sock /tmp/v4l2-control-usb.sock --state-file /oem/printer_data/config/extended/camera/usb.json"
+
+CMD_RTSP="/usr/local/bin/stream-rtsp --h264-sock /tmp/capture-usb-h264.sock --rtsp-port 8555 --max-clients 4"
 
 start() {
     if [ ! -e /dev/video18 ]; then
@@ -32,12 +38,28 @@ start() {
     start-stop-daemon -S -b -q -m -p /var/run/stream-usb-webrtc.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_WEBRTC
     echo "OK"
 
+    printf "Starting control-v4l2: "
+    start-stop-daemon -S -b -q -m -p /var/run/control-usb-v4l2.pid -c lava -x $CMD_CTRL -- $CMD_CTRL_ARGS
+    echo "OK"
+
     printf "Starting stream-http: "
     start-stop-daemon -S -b -q -m -p /var/run/stream-usb-http.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_HTTP
     echo "OK"
+
+    if [ "$RTSP_ENABLED" = "true" ]; then
+        printf "Starting stream-rtsp: "
+        start-stop-daemon -S -b -q -m -p /var/run/stream-usb-rtsp.pid -c lava -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_RTSP
+        echo "OK"
+    fi
 }
 
 stop() {
+    if [ -f /var/run/stream-usb-rtsp.pid ]; then
+        printf "Stopping stream-rtsp: "
+        start-stop-daemon -K -q -p /var/run/stream-usb-rtsp.pid
+        echo "OK"
+    fi
+
     printf "Stopping stream-http: "
     start-stop-daemon -K -q -p /var/run/stream-usb-http.pid
     echo "OK"
@@ -48,6 +70,10 @@ stop() {
 
     printf "Stopping capture-usb-mpp: "
     start-stop-daemon -K -q -p /var/run/capture-usb-mpp.pid
+    echo "OK"
+
+    printf "Stopping control-v4l2: "
+    start-stop-daemon -K -q -p /var/run/control-usb-v4l2.pid
     echo "OK"
 }
 

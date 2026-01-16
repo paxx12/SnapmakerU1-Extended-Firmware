@@ -10,4 +10,5 @@ fi
 set -eo pipefail
 
 echo ">> Installing Pillow for JPEG support"
-"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$1" /usr/bin/pip3 install Pillow
+stat "$1/usr/local/bin/fb-http.py" >/dev/null
+stat "$1/usr/local/share/fb-http/html/index.html" >/dev/null

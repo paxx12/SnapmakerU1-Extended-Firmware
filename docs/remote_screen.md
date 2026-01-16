@@ -6,105 +6,62 @@ title: Remote Screen Access
 
 **Available in: Extended firmware only**
 
-The extended firmware includes web-based remote screen access with touch control, allowing you to interact with your printer's touchscreen from any device with a web browser.
+View and control your printer's touchscreen remotely from any web browser.
 
 ## Features
 
-- Full screen mirroring of the printer's display
-- Touch input support (tap, swipe, multi-touch)
-- Access from any device (desktop, tablet, phone)
-- Authentication inherited from Fluidd/Mainsail web interface
+- Full screen mirroring with touch control support
+- Works on desktop, tablet, and phone browsers
+- Authentication inherited from Fluidd/Mainsail
+- Progressive Web App (PWA) support
 
-## Accessing the Remote Screen
+## Access
 
-Once enabled, access the remote screen at:
+Once enabled: `http://<printer-ip>/screen/`
 
-```text
-http://<printer-ip>/screen/
-```
+## Enabling Remote Screen
 
-Replace `<printer-ip>` with your printer's IP address.
+Remote screen is **disabled by default**. To enable:
 
-## Enabling Remote Screen Access
-
-Remote screen access is **disabled by default**. To enable it:
-
-### Via Fluidd/Mainsail
-
-1. On the printer, go to **Settings > Maintenance > Advanced Mode** and enable it
-2. Open Fluidd or Mainsail in your web browser (`http://<printer-ip>`)
-3. Go to the **Configuration** tab
-4. Modify the `extended.cfg`, and set `[remote_screen] enabled: true`. Save the file.
-7. Modify the `extended/moonraker/04_remote_screen.cfg` and set `enabled: true`. Save the file.
-7. Reboot the printer
-
-### Via SSH
-
-```bash
-ssh lava@<printer-ip>
-vi /home/lava/printer_data/config/extended/extended.cfg
-```
-
-Add or modify:
-
+**Step 1:** Edit `extended/extended.cfg` and add:
 ```ini
 [remote_screen]
 enabled: true
 ```
 
-Save and reboot the printer.
-
-```
-ssh lava@<printer-ip>
-vi /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg
-```
-
-Add or modify:
-
+**Step 2:** Edit `extended/moonraker/04_remote_screen.cfg` and uncomment:
 ```ini
 [webcam gui]
 enabled: true
 ```
 
-Save and reboot the printer.
+**Step 3:** Reboot the printer
 
-## Security
+**Editing via Fluidd/Mainsail:**
+1. Enable **Advanced Mode** in printer settings
+2. Open Fluidd/Mainsail Configuration tab
+3. Edit the configuration files
+4. Save and reboot
 
-- Reuses Fluidd/Mainsail authentication which is none by default
-- Remote screen is disabled by default in [extended.cfg](../10-default-config/root/home/lava/default-config/extended/extended.cfg) because by default there is no authentication
-- User has to explicitly enable it in `extended.cfg` and in `04_remote_screen.cfg`
-- Requires authentication only if Fluidd/Mainsail also require authentication (Moonraker config)
-- The `GUI` iframe only works in Fluidd. Mainsail does not expose the `iframe`
-
-## Browser/Device Compatibility
-
-The remote screen uses normal HTML and works with all modern browsers.
-It can also be installed as a Progressive Web App (PWA) on supported devices for a more app-like experience.
+**Editing via SSH:**
+```bash
+ssh lava@<printer-ip>
+vi /home/lava/printer_data/config/extended/extended.cfg
+vi /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg
+```
 
 ## Troubleshooting
 
-### Remote screen not accessible
+**Remote screen not accessible:**
+- Verify remote screen is enabled in both config files
+- Reboot printer after enabling
+- Check that Fluidd/Mainsail web interfaces work normally
 
-1. Verify remote screen is enabled in `extended.cfg`
-2. Reboot the printer after enabling
-3. Check that you can access Fluidd/Mainsail web interfaces normally
-
-### Screen appears frozen
-
-1. Refresh the browser page
-2. Check if the printer's physical screen is responding
-3. Restart the remote screen service:
-
-   ```bash
-   ssh lava@<printer-ip>
-   sudo /etc/init.d/S99fb-http restart
-   ```
+**Screen appears frozen:**
+- Refresh browser page
+- Check if physical printer screen responds
+- Restart service: `ssh lava@<printer-ip>` then `sudo /etc/init.d/S99fb-http restart`
 
 ## Technical Details
 
-The remote screen feature uses:
-
-- **fb-http-server.py**: A lightweight Python HTTP server that serves the framebuffer as PNG snapshots and accepts touch input
-- **nginx**: Serves the web interface and proxies WebSocket connections
-
-For more technical information, see the [overlay README](../overlays/firmware-extended/99-remote-screen/README.md).
+The remote screen uses a lightweight Python HTTP server (`fb-http-server.py`) that captures framebuffer snapshots and processes touch input, served through nginx. For implementation details, see [overlay README](../overlays/firmware-extended/99-remote-screen/README.md).

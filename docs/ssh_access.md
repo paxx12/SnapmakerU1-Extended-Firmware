@@ -23,5 +23,4 @@ Replace `<printer-ip>` with your printer's IP address.
 
 ## Changing Passwords
 
-To persist password changes across reboots, you need to enable data persistence.
-See [Data Persistence](data_persistence.md) for details.
+To persist password changes across reboots, enable data persistence. See [Data Persistence](data_persistence.md).

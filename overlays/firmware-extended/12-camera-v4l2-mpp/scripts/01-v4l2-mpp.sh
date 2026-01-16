@@ -3,7 +3,7 @@
 ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=eed72ef7f772072aaff50c71dbf3f67c364414ff
+GIT_SHA=468fe35b159977a6e86f75f5e9024cb404eaa71d
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <rootfs-dir>"
@@ -37,12 +37,10 @@ echo ">> Compiling v4l2-mpp applications..."
 make -C "$TARGET_DIR" install DESTDIR="$1"
 
 echo ">> Validate binaries..."
-file "$1/usr/local/bin/capture-v4l2-jpeg-mpp"
-file "$1/usr/local/bin/capture-v4l2-raw-mpp"
-file "$1/usr/local/bin/fake-service"
-file "$1/usr/local/bin/stream-rtsp"
-file "$1/usr/local/bin/stream-webrtc"
-file "$1/usr/local/bin/stream-snap-mqtt.py"
-file "$1/usr/local/bin/stream-http.py"
-
+stat "$1/usr/local/bin/capture-v4l2-jpeg-mpp" >/dev/null
+stat "$1/usr/local/bin/capture-v4l2-raw-mpp" >/dev/null
+stat "$1/usr/local/bin/stream-rtsp" >/dev/null
+stat "$1/usr/local/bin/stream-webrtc" >/dev/null
+stat "$1/usr/local/bin/stream-http.py" >/dev/null
+stat "$1/usr/local/bin/control-v4l2.py" >/dev/null
 echo ">> v4l2-mpp installation completed successfully."

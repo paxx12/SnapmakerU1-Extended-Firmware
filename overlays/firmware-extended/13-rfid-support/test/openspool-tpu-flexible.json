@@ -1,0 +1,15 @@
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "brand": "NinjaFlex",
+  "type": "TPU",
+  "subtype": "Basic",
+  "color_hex": "000000",
+  "alpha": "FF",
+  "min_temp": 220,
+  "max_temp": 240,
+  "bed_min_temp": 40,
+  "bed_max_temp": 50,
+  "weight": 500,
+  "diameter": 1.75
+}

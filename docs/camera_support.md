@@ -6,64 +6,130 @@ title: Camera Support
 
 **Available in: Extended firmware only**
 
-The extended firmware includes hardware-accelerated camera support.
+The extended firmware includes hardware-accelerated camera support with WebRTC streaming.
 
 ## Features
 
-- Hardware-accelerated camera stack (Rockchip MPP/VPU)
-- v4l2-mpp: MIPI CSI and USB camera support
-- WebRTC low-latency streaming
+- Hardware-accelerated camera stack (Rockchip MPP/VPU) with WebRTC streaming
+- MIPI CSI internal camera and USB camera support
+- Low-latency WebRTC streaming (best quality and performance)
 - Hot-plug detection for USB cameras
-- Support AI detection and Snapmaker Cloud features
+- Web-based camera controls with settings persistence
+- Optional RTSP streaming support
+- Compatible with AI detection and Snapmaker Cloud features
 
 ## Accessing Cameras
 
 ### Internal Camera
 
-Access the native camera at:
-```
-http://<printer-ip>/webcam/
-```
+Access at: `http://<printer-ip>/webcam/`
+
+The internal camera is automatically configured and enabled.
 
 ### USB Camera
 
-Access USB camera at:
+Access at: `http://<printer-ip>/webcam2/`
+
+USB cameras require configuration in Moonraker. See [Moonraker Camera Configuration](#moonraker-camera-configuration) below for setup instructions.
+
+## Moonraker Camera Configuration
+
+Camera streaming settings are configured through Moonraker configuration files in the `extended/moonraker/` directory.
+
+### Internal Camera Configuration
+
+Edit `extended/moonraker/02_internal_camera.cfg` to customize internal camera streaming:
+
+```cfg
+[webcam case]
+service: webrtc-camerastreamer
+stream_url: /webcam/webrtc
+snapshot_url: /webcam/snapshot.jpg
+aspect_ratio: 16:9
 ```
-http://<printer-ip>/webcam2/
+
+**Available streaming modes:**
+- `webrtc-camerastreamer` - WebRTC streaming (best quality and performance, default)
+  - `stream_url: /webcam/webrtc`
+- `iframe` - H264/MJPEG iframe streaming (acceptable quality and performance)
+  - `stream_url: /webcam/player`
+- `mjpegstreamer-adaptive` - MJPEG streaming (best compatibility, most resource intensive)
+  - No stream_url needed (uses snapshot_url only)
+
+### USB Camera Configuration
+
+Edit `extended/moonraker/03_usb_camera.cfg` to enable USB camera. Uncomment one of the sections:
+
+```cfg
+[webcam usb]
+service: webrtc-camerastreamer
+stream_url: /webcam2/webrtc
+snapshot_url: /webcam2/snapshot.jpg
+aspect_ratio: 16:9
 ```
 
-You need to add USB camera in Fluidd. Use the following
-settings for the best performance:
+**Important:** Only one streaming mode can be active per camera. After changing camera configuration, reboot the printer.
 
-<img src="images/usb_cam.png" alt="Fluidd USB camera" width="300"/>
+## Camera Controls
 
-## Switch to Snapmaker's Original Camera Stack
+**Note: Camera controls and RTSP streaming are only available with the paxx12 camera stack.**
 
-By default, the extended firmware uses a custom hardware-accelerated camera stack (paxx12).
-If you prefer to use Snapmaker's original camera stack instead, edit `/home/lava/printer_data/config/extended/extended.cfg`:
+The paxx12 camera stack includes a web-based interface for adjusting camera settings in real-time. Available controls depend on your camera hardware capabilities.
+
+### Accessing Camera Controls
+
+Camera controls are accessible at:
+- Internal camera: `http://<printer-ip>/webcam/control`
+- USB camera: `http://<printer-ip>/webcam2/control`
+
+### Settings Persistence
+
+Camera settings are automatically saved across reboots:
+- Internal camera: `/oem/printer_data/config/extended/camera/case.json`
+- USB camera: `/oem/printer_data/config/extended/camera/usb.json`
+
+To reset camera settings to defaults, delete the corresponding JSON file and reboot the printer.
+
+## Configuration
+
+All camera configuration is done through `/home/lava/printer_data/config/extended/extended.cfg`. See [Extended Configuration](extended_config.md) for editing instructions.
+
+### Camera Stack Selection
+
+By default, the extended firmware uses a custom hardware-accelerated camera stack (paxx12). To switch to Snapmaker's original camera stack:
 
 ```ini
 [camera]
-# stack: paxx12
 stack: snapmaker
-logs: syslog
 ```
 
-Then reboot the printer.
+Note: Only one camera stack can be operational at a time.
 
-Note: Only one camera stack can be operational at a time. See [Extended Configuration](extended_config.md) for details.
+### Camera Logging
 
-## Camera Logging
-
-Camera service logging to syslog is controlled by the `logs` setting in `/home/lava/printer_data/config/extended/extended.cfg`:
+Enable logging to syslog for all camera services:
 
 ```ini
 [camera]
-stack: paxx12
 logs: syslog
 ```
 
-This enables the `--syslog` flag for all camera-related services. Logs are available in `/var/log/messages`. See [Extended Configuration](extended_config.md) for details.
+Logs are available in `/var/log/messages`.
+
+### RTSP Streaming
+
+Enable RTSP streaming (paxx12 stack only):
+
+```ini
+[camera]
+rtsp: true
+```
+
+RTSP streams will be available at:
+- Internal camera: `rtsp://<printer-ip>:8554/stream`
+- USB camera: `rtsp://<printer-ip>:8555/stream`
+
+After any configuration changes, reboot the printer for changes to take effect.
 
 ## Timelapse Support
 

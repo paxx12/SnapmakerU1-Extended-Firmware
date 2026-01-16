@@ -4,33 +4,27 @@ title: Building from Source
 
 # Building from Source
 
+## Understanding Overlays
+
+The custom firmware uses an overlay system to modify the base Snapmaker firmware. Overlays are modular modifications that:
+
+- Add patches to modify existing firmware files
+- Copy additional files to the firmware root filesystem
+- Run build-time scripts to install components
+- Enable features without changing the base firmware source
+
+Each overlay is self-contained and numbered to control application order. This modular approach makes it easy to:
+- Enable/disable features by including/excluding overlays
+- Maintain different firmware profiles (basic vs extended)
+- Add custom modifications without conflicts
+
 ## Prerequisites
 
-### Option 1: Docker (Recommended)
-
 - Docker installed on your system
-- Use `./dev.sh` script for containerized builds
 
-The `dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
-
-### Option 2: Native Build
-
-- Linux build environment (ARM64 or with cross-compilation support)
-- `make`
-- `wget`
-- `squashfs-tools`
-- `gcc-aarch64-linux-gnu`
-- `cmake`
-- `pkg-config`
-- `git-core`
-- `bc`
-- `libssl-dev`
-- `dos2unix`
-- `build-essential`
+The `./dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
 
 ## Quick Start
-
-### Using Docker (Recommended)
 
 Build tools and download firmware:
 
@@ -57,29 +51,6 @@ Open a shell in the development environment:
 ./dev.sh bash
 ```
 
-### Native Build
-
-Build tools and download firmware:
-
-```bash
-make tools
-make firmware
-```
-
-Build basic firmware:
-
-```bash
-sudo make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
-```
-
-Build extended firmware:
-
-```bash
-sudo make build PROFILE=extended OUTPUT_FILE=firmware/U1_extended_fluidd.bin
-```
-
-**Note:** The build process requires root privileges due to squashfs root filesystem operations.
-
 ## Profiles
 
 The build system supports two profiles:
@@ -90,6 +61,14 @@ The build system supports two profiles:
 ## Overlays
 
 Overlays are organized into categories based on their scope and build profile. Each overlay is numbered to indicate its application order within its category.
+
+### Overlay Categories
+
+- **common/** - Core modifications applied to all firmware profiles (basic and extended)
+- **firmware-basic/** - Modifications specific to the basic firmware profile
+- **firmware-extended/** - Modifications specific to the extended firmware profile
+- **devel/** - Development tools and utilities (only included with DEVEL=1 flag)
+- **staging/** - Disabled overlays kept for potential future use
 
 ## Build Options
 
@@ -173,7 +152,7 @@ Edit `vars.mk` to configure base firmware and kernel.
 To extract and examine the base firmware:
 
 ```bash
-make extract
+./dev.sh make extract
 ```
 
 Output: `tmp/extracted/`

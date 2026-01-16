@@ -27,6 +27,6 @@ echo ">> Compiling prometheus-klipper-exporter..."
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go -C "$TARGET_DIR" build -o "$1/usr/local/bin/prometheus-klipper-exporter" .
 
 echo ">> Validate binaries..."
-file "$1/usr/local/bin/prometheus-klipper-exporter"
+stat "$1/usr/local/bin/prometheus-klipper-exporter" >/dev/null
 
 echo ">> Prometheus Klipper Exporter installation complete."

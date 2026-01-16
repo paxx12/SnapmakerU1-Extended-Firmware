@@ -6,31 +6,23 @@ title: Klipper and Moonraker Custom Includes
 
 **Available in: Extended firmware**
 
-The `enable-klipper-includes` overlay adds support for custom Klipper and Moonraker configuration files.
+Add custom Klipper and Moonraker configuration files through the Fluidd/Mainsail web interface.
 
-## What It Does
-
-This overlay modifies the default Klipper and Moonraker configurations to include user-defined configuration files from specific directories:
-
-- Klipper includes from: `extended/klipper/*.cfg`
-- Moonraker includes from: `extended/moonraker/*.cfg`
+Configuration files are automatically included from:
+- Klipper: `extended/klipper/*.cfg`
+- Moonraker: `extended/moonraker/*.cfg`
 
 ## Usage
 
-### Using Fluidd or Mainsail Web Interface
-
-1. Open Fluidd or Mainsail in your web browser (`http://<printer-ip>`)
+1. Open Fluidd or Mainsail (`http://<printer-ip>`)
 2. Go to **Configuration** tab
-3. Navigate to the **klipper** folder to create Klipper configuration files (`.cfg`)
-4. Navigate to the **moonraker** folder to create Moonraker configuration files (`.cfg`)
-5. Create your custom configuration files using the interface
-6. Restart the respective service after making changes
+3. Navigate to **extended/klipper/** or **extended/moonraker/** folder
+4. Create `.cfg` files with your custom configuration
+5. Restart the respective service after making changes
 
-### Klipper Configuration
+### Example: Custom Klipper Macro
 
-In the Configuration tab, go to the **klipper** folder and create `.cfg` files with your custom Klipper configuration.
-
-Example `custom-macros.cfg`:
+Create `extended/klipper/custom-macros.cfg`:
 
 ```cfg
 [gcode_macro CUSTOM_MACRO]
@@ -39,38 +31,16 @@ gcode:
     G1 Z10 F600
 ```
 
-### Moonraker Configuration
-
-In the Configuration tab, go to the **moonraker** folder and create `.cfg` files with your custom Moonraker configuration.
-
-Example `usb-camera.cfg` for USB camera support:
-
-```conf
-[webcam webcam2]
-service: webrtc-camerastreamer
-stream_url: /webcam2/webrtc
-snapshot_url: /webcam2/snapshot.jpg
-aspect_ratio: 16:9
-```
+For camera configuration examples, see [Camera Support](camera_support.md#moonraker-camera-configuration).
 
 ## Important Notes
 
-- All `.cfg` files in the `extended/klipper/` folder are automatically included
-- All `.cfg` files in the `extended/moonraker/` folder are automatically included
+- All `.cfg` files in `extended/klipper/` and `extended/moonraker/` are automatically included
 - Configuration files persist across reboots
 - Do not modify or remove the `00_keep.cfg` placeholder files
-- Test changes carefully to avoid breaking the printer configuration
 - Invalid configuration will prevent Klipper/Moonraker from starting
+- Test changes carefully before printing
 
-## Recovery from Extended Firmware Configuration Issues
+## Configuration Recovery
 
-If you break Moonraker with an invalid configuration, the printer will not connect to WiFi on next boot.
-
-To recover:
-
-1. Create an empty file named `extended-recover.txt` on a USB stick
-2. Insert the USB stick into the printer
-3. Restart the printer
-4. The configuration folder will be backed up to `extended.bak`
-5. The printer will start with a fresh configuration
-6. Remove the USB stick and the `extended-recover.txt` file will be automatically deleted
+If an invalid configuration breaks Moonraker (printer won't connect to WiFi), see [Extended Configuration - Recovery & Reset](extended_config.md#recovery--reset) for recovery instructions.

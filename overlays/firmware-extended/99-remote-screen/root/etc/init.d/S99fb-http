@@ -3,13 +3,13 @@
 EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
 REMOTE_SCREEN_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" remote_screen enabled false)
 
-NAME="fb-http-server"
-DAEMON="/usr/local/bin/fb-http-server.py"
+NAME="fb-http"
+DAEMON="/usr/local/bin/fb-http.py"
 PIDFILE="/var/run/$NAME.pid"
 
 FB_DEVICE="/dev/fb0"
 TOUCH_DEVICE="/dev/input/event0"
-HTML_TEMPLATE="/usr/local/share/fb-http-server/index.html"
+HTML_DIR="/usr/share/fb-http/html"
 PORT=8092
 BIND=127.0.0.1
 
@@ -26,7 +26,7 @@ start() {
     fi
     start-stop-daemon -S -b -m -p "$PIDFILE" -x /usr/bin/python3 -- \
         "$DAEMON" --bind "$BIND" --port "$PORT" --fb "$FB_DEVICE" \
-        --touch "$TOUCH_DEVICE" --html "$HTML_TEMPLATE"
+        --touch "$TOUCH_DEVICE" --html-dir "$HTML_DIR"
     echo "OK"
 }
 

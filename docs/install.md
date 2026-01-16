@@ -17,7 +17,9 @@ This guide covers installing custom firmware on your Snapmaker U1 3D printer.
 
 1. **Download Firmware**
    - Get the latest `.bin` file from the [Releases page](https://github.com/paxx12/SnapmakerU1/releases)
-   - Choose between Basic or Extended firmware based on your needs
+   - Choose between Basic or Extended firmware:
+     - **Basic** - Stock firmware with SSH access and minimal debugging features
+     - **Extended** - Heavily expanded with hardware accelerated camera (WebRTC), RFID support, remote screen, monitoring, and extensive customization
 
 2. **Prepare USB Drive**
    - Format a USB drive as FAT32
@@ -32,12 +34,13 @@ This guide covers installing custom firmware on your Snapmaker U1 3D printer.
 
 ## Post-Installation
 
-After installation completes:
+After installation, the printer will automatically reboot.
 
-- The printer will automatically reboot
-- For SSH access, see [SSH Access documentation](ssh_access.md)
-- For camera features, see [Camera Support documentation](camera_support.md)
-- Fluidd interface will be available (Extended firmware only)
+**Next Steps:**
+- [SSH Access](ssh_access.md) - Access printer via SSH
+- [Extended Configuration](extended_config.md) - Customize firmware behavior (Extended only)
+- [Camera Support](camera_support.md) - Configure WebRTC camera streaming (Extended only)
+- [Remote Screen](remote_screen.md) - Enable remote screen access (Extended only)
 
 ## Reverting to Stock Firmware
 

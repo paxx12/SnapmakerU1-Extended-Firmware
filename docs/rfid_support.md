@@ -4,12 +4,13 @@ title: RFID Filament Tag Support
 
 # RFID Filament Tag Support
 
-The Snapmaker U1 can automatically detect filament properties (material type, color, temperatures) by reading RFID tags attached to filament spools.
+**Available in: All firmware (extended adds OpenSpool support)**
 
-The extended firmware adds support for **NTAG tags** with OpenSpool format, while maintaining compatibility with original Snapmaker tags.
+The Snapmaker U1 automatically detects filament properties by reading RFID tags on spools.
 
-- **Original firmware:** Mifare Classic 1K with Snapmaker format only
-- **Extended firmware:** Adds NTAG215/216 support (OpenSpool format)
+**Firmware Support:**
+- **Original & Basic:** Mifare Classic 1K with Snapmaker proprietary format
+- **Extended:** Adds NTAG215/216 support with OpenSpool format
 
 ## Supported Formats
 
@@ -30,30 +31,25 @@ The extended firmware adds support for **NTAG tags** with OpenSpool format, whil
 
 ## How It Works
 
-### Tags Are Read When:
+Tags are automatically read when filament is loaded into the feeder. Tag data clears when filament is removed.
 
-- Filament is loaded into the feeder
-- Manually triggered via `FILAMENT_DT_UPDATE CHANNEL=<n>`
-- On startup (if configured)
-
-### Tag Data Clears When:
-
-- Filament is removed from the feeder
-- Manually cleared via `FILAMENT_DT_CLEAR CHANNEL=<n>`
+**Manual Commands:**
+- Read tag: `FILAMENT_DT_UPDATE CHANNEL=<n>`
+- Clear tag data: `FILAMENT_DT_CLEAR CHANNEL=<n>`
+- Check current tag: `FILAMENT_DT_QUERY CHANNEL=<n>`
 
 ## Programming Filament Tags
 
-### OpenSpool (Recommended)
+### OpenSpool (Recommended for Extended Firmware)
 
+**Quick Setup:**
 1. Get NTAG215 or NTAG216 tags
-2. Open Chrome on your Android phone
-3. Go to [printtag-web.pages.dev](https://printtag-web.pages.dev)
+2. Open Chrome on Android phone
+3. Visit [printtag-web.pages.dev](https://printtag-web.pages.dev)
 4. Enter filament information
 5. Tap tag to phone to write
 
-**Requirements:** Android phone with NFC + Chrome browser
-
-Alternatively, use any NFC app that supports NDEF with JSON. Set MIME type to `application/json`.
+**Alternative:** Use any NFC app that supports NDEF with JSON (MIME type: `application/json`)
 
 Example payload:
 ```json
@@ -79,77 +75,63 @@ Using the non-standard OpenSpool `subtype` field it is possible to specify a mat
   "type": "PETG",
   "subtype": "Rapid",
   "color_hex": "AFAFAF",
+  "additional_color_hexes": ["EEFFEE","FF00FF"],
+  "alpha": "FF",
   "brand": "Elegoo",
   "min_temp": "230",
   "max_temp": "260"
 }
 ```
 
-**Supported OpenSpool Fields:**
-- `protocol` (required) - Must be "openspool"
-- `version` (required) - Specification version (e.g., "1.0")
-- `type` (required) - Material type (e.g., "PLA", "PETG", "ABS")
-- `color_hex` (required) - Color in hex format (e.g., "#FF0000")
-- `brand` (optional) - Manufacturer name (e.g., "Generic", "Overture", "PolyLite")
-- `min_temp` (optional) - Minimum nozzle temperature in °C
-- `max_temp` (optional) - Maximum nozzle temperature in °C
+### OpenSpool Field Reference
 
-**Supported non-standard OpenSpool Fields:**
-- `bed_min_temp` (optional) - Minimum bed temperature in °C
-- `bed_max_temp` (optional) - Maximum bed temperature in °C
-- `subtype` (optional, default: "Basic") - Material subtype (e.g. "Rapid", "HF")
+**Required Fields:**
+- `protocol` - Must be "openspool"
+- `version` - Specification version (e.g., "1.0")
+- `type` - Material type (PLA, PETG, ABS, TPU, etc.)
+- `color_hex` - Color in hex format (#RRGGBB)
 
-## Snapmaker Orca Filament Naming Scheme
+**Optional Standard Fields:**
+- `brand` - Manufacturer name
+- `min_temp` / `max_temp` - Nozzle temperature range in °C
 
-In order for Snapmaker Orca to recognize the filement, it must be named according to this naming scheme: `<brand> <type> <subtype>`, e.g. `Generic PLA Basic` and `Elegoo PETG Rapid`.
+**Optional Extended Fields (U1-specific):**
+- `bed_min_temp` / `bed_max_temp` - Bed temperature range in °C
+- `subtype` - Material variant (Basic, Rapid, HF, Silk, etc.)
+- `alpha` - Color transparency (00-FF hex, default: FF)
+- `additional_color_hexes` - Additional colors for multicolor spools (up to 4)
+- `weight` - Spool weight in grams
+- `diameter` - Filament diameter in mm (e.g., 1.75)
+
+### Snapmaker Orca Naming Convention
+
+Snapmaker Orca requires filaments to follow this naming pattern: `<brand> <type> <subtype>`
+
+Examples: `Generic PLA Basic`, `Elegoo PETG Rapid`
 
 ## Reading Existing Tags
 
-To check what's on a tag before using it, use **NFC Tools** app (available on both iOS and Android):
+Use the **NFC Tools** app (iOS/Android) to inspect tags:
 
-1. Download **NFC Tools** from App Store (iOS) or Google Play (Android)
-2. Open the app and tap "Read"
-3. Hold your tag to the phone's NFC reader
-4. The app will show:
-   - **Tag type** (NTAG213/215/216, Mifare Classic, ISO15693, etc.)
-   - **Memory size** and available space
-   - **NDEF records** (for OpenPrintTag/OpenSpool tags)
-   - **Raw data** stored on the tag
+1. Download NFC Tools from App Store or Google Play
+2. Tap "Read" and hold tag to phone
+3. Check tag type and NDEF records
 
-**What to look for:**
-- **Tag Type:** Should be NTAG213/215/216 or Mifare Classic 1K
-- **NDEF Message:** For OpenSpool, look for MIME type `application/json` with OpenSpool payload
-
-If the tag shows ISO15693, it's an OpenPrintTag and won't work with Snapmaker U1.
-
-## Common G-code Commands
-
-```
-# Check what tag detected
-FILAMENT_DT_QUERY CHANNEL=0
-
-# Force read tag
-FILAMENT_DT_UPDATE CHANNEL=0
-
-# Clear tag data
-FILAMENT_DT_CLEAR CHANNEL=0
-```
+**Compatible tag types:** NTAG213/215/216, Mifare Classic 1K
+**Note:** ISO15693 tags (OpenPrintTag) are not supported
 
 ## Troubleshooting
 
 **Tag not detected:**
-
 - Ensure tag is NTAG213/215/216 or Mifare Classic 1K
-- Position tag close to reader antenna (1-3cm)
-- Try manual update: `FILAMENT_DT_UPDATE CHANNEL=<n>` and then `FILAMENT_DT_QUERY CHANNEL=<n>`
-- Look in `klipper.log` to see if tags were discovered
+- Position tag within 1-3cm of reader antenna
+- Manually read tag: `FILAMENT_DT_UPDATE CHANNEL=<n>` then `FILAMENT_DT_QUERY CHANNEL=<n>`
+- Check `klipper.log` for detection messages
 
 **OpenPrintTag tags don't work:**
+- Expected - OpenPrintTag uses ISO15693 which is not supported by U1 hardware
+- Use NTAG tags with OpenSpool format instead
 
-- Expected - OpenPrintTag uses ISO15693, Snapmaker uses ISO14443A
-- Use NTAG with OpenSpool format instead
-
-**NTAG tags don't work on original firmware:**
-
-- NTAG support is only in extended firmware
-- Original firmware only reads Mifare Classic 1K with Snapmaker proprietary format
+**NTAG tags only work on extended firmware:**
+- Basic and original firmware only support Mifare Classic 1K with Snapmaker proprietary format
+- Extended firmware adds NTAG215/216 support

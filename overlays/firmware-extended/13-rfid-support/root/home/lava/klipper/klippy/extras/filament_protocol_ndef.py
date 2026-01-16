@@ -126,6 +126,15 @@ def ndef_parse(data_buf):
         logging.exception("NDEF parsing failed: %s", str(e))
         return NDEF_ERR, []
 
+def parse_color_hex(value):
+    try:
+        hex_str = str(value)
+        if hex_str.startswith('#'):
+            hex_str = hex_str[1:]
+        return int(hex_str, 16)
+    except (ValueError, TypeError):
+        return 0xFFFFFF
+
 def openspool_parse_payload(payload):
     if None == payload or not isinstance(payload, (bytes, bytearray)):
         logging.error("OpenSpool payload parsing failed: Invalid payload parameter")
@@ -154,26 +163,33 @@ def openspool_parse_payload(payload):
         info['SUB_TYPE'] = data.get('subtype', 'Basic')
         info['TRAY'] = 0
 
-        color_hex = data.get('color_hex', 'FFFFFF')
-        if color_hex.startswith('#'):
-            color_hex = color_hex[1:]
+        info['COLOR_NUMS'] = 1
+        info['RGB_1'] = parse_color_hex(data.get('color_hex', 'FFFFFF'))
+
+        additional_color_hexes = list(data.get('additional_color_hexes') or [])
+        for hex_color in additional_color_hexes[:5]:
+            idx = info['COLOR_NUMS'] + 1
+            info['COLOR_NUMS'] = idx
+            info[f'RGB_{idx}'] = parse_color_hex(hex_color)
+
+        for i in range(info['COLOR_NUMS'] + 1, 6):
+            info[f'RGB_{i}'] = 0
+
         try:
-            rgb_value = int(color_hex, 16)
-            info['RGB_1'] = rgb_value
-            info['ALPHA'] = 0xFF
-        except ValueError:
-            info['RGB_1'] = 0xFFFFFF
+            info['ALPHA'] = max(0x00, min(0xFF, int(data.get('alpha'))))
+        except (ValueError, TypeError):
             info['ALPHA'] = 0xFF
 
-        info['COLOR_NUMS'] = 1
-        info['RGB_2'] = 0
-        info['RGB_3'] = 0
-        info['RGB_4'] = 0
-        info['RGB_5'] = 0
         info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
 
-        info['DIAMETER'] = 175
-        info['WEIGHT'] = 0
+        try:
+            info['DIAMETER'] = int(float(data.get('diameter', 1.75)) * 100)
+        except (ValueError, TypeError):
+            info['DIAMETER'] = 175
+        try:
+            info['WEIGHT'] = int(data.get('weight', 0))
+        except (ValueError, TypeError):
+            info['WEIGHT'] = 0
         info['LENGTH'] = 0
         info['DRYING_TEMP'] = 0
         info['DRYING_TIME'] = 0

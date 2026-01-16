@@ -1,0 +1,7 @@
+--- a/etc/group
++++ b/etc/group
+@@ -14,3 +14,3 @@
+ floppy:x:19:
+-video:x:28:
++video:x:28:lava
+ audio:x:29:

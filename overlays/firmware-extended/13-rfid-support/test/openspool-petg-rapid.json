@@ -1,0 +1,12 @@
+{
+  "protocol": "openspool",
+  "version": "1.0",
+  "type": "PETG",
+  "subtype": "Rapid",
+  "color_hex": "AFAFAF",
+  "additional_color_hexes": ["EEFFEE","FF00FF"],
+  "alpha": "FF",
+  "brand": "Elegoo",
+  "min_temp": "230",
+  "max_temp": "260"
+}
