@@ -8,7 +8,9 @@ OUTPUT_FILE := firmware/firmware.bin
 
 ifneq (,$(PROFILE))
 PROFILE_MAIN := $(patsubst %-devel,%,$(PROFILE))
+ifeq (,$(DIRTY))
 OVERLAYS += $(wildcard overlays/common/*/)
+endif
 OVERLAYS += $(wildcard overlays/firmware-$(PROFILE_MAIN)/*/)
 ifneq ($(filter %-devel,$(PROFILE)),)
 OVERLAYS += $(wildcard overlays/devel/*/)

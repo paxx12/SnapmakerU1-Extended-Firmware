@@ -12,7 +12,7 @@ if [[ ! -d "$1" ]]; then
   exit 1
 fi
 
-if [[ -f "$2" ]]; then
+if [[ -f "$2" ]] && [[ -z "$FORCE" ]]; then
   echo "Error: Output file $2 already exists."
   exit 1
 fi
