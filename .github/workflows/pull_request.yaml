@@ -5,15 +5,16 @@ on:
     paths-ignore:
       - '*.md'
       - .github/workflows/*.yaml
-  pull_request:
+  pull_request_target:
   workflow_dispatch:
 
 jobs:
   custom-firmware-build:
     runs-on: ubuntu-24.04-arm
     permissions:
-      pull-requests: write
       contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -46,11 +47,13 @@ jobs:
         echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
 
     - name: Set GIT_VERSION (for Pull Request)
+      id: version
       shell: bash
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request_target'
       run: |
         nextVer=$(./scripts/next_version.sh paxx12 test-pr-${{ github.event.pull_request.number }})
         echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
+        echo "version=${nextVer//v/}" >> $GITHUB_OUTPUT
 
     - name: Download firmware
       run: ./dev.sh make firmware
@@ -91,9 +94,29 @@ jobs:
         name: extended-devel-build
         path: U1_extended_*_devel.bin
 
+    - name: Save Firmwares Cache
+      if: steps.cache-firmwares.outputs.cache-hit != 'true' && (github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository)
+      uses: actions/cache/save@v4
+      with:
+        path: firmware/
+        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
+
+    - name: Save Kernel Cache
+      if: steps.cache-kernel.outputs.cache-hit != 'true' && (github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository)
+      uses: actions/cache/save@v4
+      with:
+        path: tmp/kernel/
+        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
+
+  comment:
+    runs-on: ubuntu-latest
+    needs: custom-firmware-build
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      pull-requests: write
+    steps:
     - name: Comment PR with artifact links
       uses: actions/github-script@v7
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       with:
         script: |
           const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
@@ -115,7 +138,7 @@ jobs:
           const body = [
             '## ✅ Build Artifacts',
             '',
-            `**Version:** \`${{ env.GIT_VERSION }}\``,
+            `**Version:** \`${{ needs.custom-firmware-build.outputs.version }}\``,
             `**Build commit:** \`${mergeCommitSha}\` (merge of [${prHeadSha}](https://github.com/${{ github.repository }}/commit/${prHeadFullSha}) into \`${{ github.base_ref }}\`)`,
             '',
             '| Artifact | Size |',
@@ -131,17 +154,3 @@ jobs:
             issue_number: context.issue.number,
             body: body
           });
-
-    - name: Save Firmwares Cache
-      if: steps.cache-firmwares.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: firmware/
-        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
-
-    - name: Save Kernel Cache
-      if: steps.cache-kernel.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: tmp/kernel/
-        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
