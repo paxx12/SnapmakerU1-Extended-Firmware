@@ -35,6 +35,7 @@ Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-10865
 Stock firmware with SSH access and minimal debugging features:
 
 - [SSH Access](ssh_access.md) - Remote shell access with `root/snapmaker` and `lava/snapmaker`
+- [Maintenance Tool](maintenance.md) - Web-based system administration and firmware upgrades
 - [Data Persistence](data_persistence.md) - Persistent storage configuration across firmware updates
 - USB Ethernet Adapters - Hot-plug support with automatic DHCP configuration
 - Fluidd web interface with basic camera support

@@ -9,7 +9,7 @@ configure_nginx_site()
 	rm -f "$SITES_ENABLED/fluidd"
 	rm -f "$SITES_ENABLED/mainsail"
 
-	WEB_FRONTEND=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" web frontend fluidd)
+	WEB_FRONTEND=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" web frontend fluidd)
 
 	if [ "$WEB_FRONTEND" = "mainsail" ]; then
 		echo "Enabling Mainsail web interface"
