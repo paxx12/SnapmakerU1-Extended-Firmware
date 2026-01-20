@@ -23,13 +23,13 @@ Once enabled: `http://<printer-ip>/screen/`
 
 Remote screen is **disabled by default**. To enable:
 
-**Step 1:** Edit `extended/extended.cfg` and add:
+**Step 1:** Edit `extended/extended.cfg`, locate the setting below and set it to true:
 ```ini
 [remote_screen]
 enabled: true
 ```
 
-**Step 2:** Edit `extended/moonraker/04_remote_screen.cfg` and uncomment:
+**Step 2:** Edit `extended/moonraker/04_remote_screen.cfg`, locate the setting below and set it to true:
 ```ini
 [webcam gui]
 enabled: true
