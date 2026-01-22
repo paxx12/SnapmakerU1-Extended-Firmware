@@ -59,8 +59,8 @@ server: http://10.6.9.248:8000
 
 ### Enabling the klipper module
 
-- Find the `/extended/klipper/spoolman.cfg` file
-- uncomment the macros include and module configuration section
+- Find the `/extended/klipper/spoolman.cfg` file.
+- Uncomment the macros include and module configuration section.
 
 ```
 [include spoolman_suport_macros/*.cfg]
