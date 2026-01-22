@@ -16,9 +16,9 @@ This is not backwards compatible with the manual spoolman config, while the macr
 
 This is like your regular Spoolman for multi tools, with a bit of automation sprinkled in.
 
-- Detects and configures RFID tagged spools, utagged spools wil still need to have their filament manually selected
-- Set Active spools when a tool is picked
-- Deals with the U1's specific 32 virtual tools system for jobs needing more then 4 filaments
+- Detects and configures RFID-tagged spools. Untagged spools will still need to have their filament manually selected.
+- Set Active spools when a tool is picked.
+- Deals with the U1's specific 32 virtual tools system for jobs needing more than 4 filaments.
 
 ### what it does not, currently, do
 
