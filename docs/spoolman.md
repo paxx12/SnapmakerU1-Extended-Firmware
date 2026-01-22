@@ -33,8 +33,8 @@ Spoolman is just a web app. You don't need to have it running on your printer, a
 You can find instructions on how to install standalone [Spoolman](https://github.com/Donkie/Spoolman) on its [wiki](https://github.com/Donkie/Spoolman/wiki/Filament-Usage-History).
 You can choose 2 different paths:
 
-- [docker](https://github.com/Donkie/Spoolman/wiki/Installation#docker-install): the easiets in my opinion
-- or you can go nuts with pyton's delirium versions and dependencies and choose a [standalone](https://github.com/Donkie/Spoolman/wiki/Installation#standalone-install) path
+- [Docker](https://github.com/Donkie/Spoolman/wiki/Installation#docker-install): the easiest in my opinion.
+- Or you can go nuts with Python's delirium versions and dependencies and choose a [standalone](https://github.com/Donkie/Spoolman/wiki/Installation#standalone-install) path
 
 ### Properly tagged Spools
 
