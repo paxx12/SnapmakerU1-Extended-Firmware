@@ -14,7 +14,7 @@ This is not backwards compatible with the manual spoolman config, while the macr
 
 ## Features
 
-This is like your regulat Spoolman for multi tools, with a bit of automation sprinkled in
+This is like your regular Spoolman for multi tools, with a bit of automation sprinkled in.
 
 - Detects and configures RFID tagged spools, utagged spools wil still need to have their filament manually selected
 - Set Active spools when a tool is picked
