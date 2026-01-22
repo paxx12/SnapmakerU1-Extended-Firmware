@@ -22,8 +22,8 @@ This is like your regular Spoolman for multi tools, with a bit of automation spr
 
 ### What it does not currently do
 
-- it does not write tags, NONE of them
-- it does not automagically figure out `spool_ids`
+- It does not write tags, NONE of them.
+- It does not automagically figure out `spool_ids`.
 
 ## Prerequisites
 
