@@ -29,9 +29,9 @@ This is like your regular Spoolman for multi tools, with a bit of automation spr
 
 ### A working Spoolman instance
 
-Spoolman is just a webapp, you don't need to have it runing on your printer, and in this case you wil need to host it somewhere else.
-You can find instruction on how to install standalone [Spoolman](https://github.com/Donkie/Spoolman) on its [wiki](https://github.com/Donkie/Spoolman/wiki/Filament-Usage-History).
-You can choose 2 differtn patsh:
+Spoolman is just a web app. You don't need to have it running on your printer, and in this case, you will need to host it somewhere else.
+You can find instructions on how to install standalone [Spoolman](https://github.com/Donkie/Spoolman) on its [wiki](https://github.com/Donkie/Spoolman/wiki/Filament-Usage-History).
+You can choose 2 different paths:
 
 - [docker](https://github.com/Donkie/Spoolman/wiki/Installation#docker-install): the easiets in my opinion
 - or you can go nuts with pyton's delirium versions and dependencies and choose a [standalone](https://github.com/Donkie/Spoolman/wiki/Installation#standalone-install) path
