@@ -116,8 +116,8 @@ The macros provided by this module can be found in `/extended/klipper/spoolman_s
 
 You will also find 2 other cfg files, they provide the necessary T# macro proxies for the whole spoolman magic to happen:
 
-- `base_tools.cfg`: these are necessary and manadory, without these macros this whole thing does not work.
-- `extended_tools.cfg`: these are necessary for `manual` mode, or to provide a fault back spool id for prints needing more than 4 filamens while they're automatically tracked. You most likelly do not need to touch any of this when in `auto` mode.
+- `base_tools.cfg`: these are necessary and mandatory; without these macros, this whole thing does not work.
+- `extended_tools.cfg`: these are necessary for `manual` mode, or to provide a fault back spool id for prints needing more than 4 filaments while they're automatically tracked. You most likely do not need to touch any of this when in `auto` mode.
 
 ### Commands
 
