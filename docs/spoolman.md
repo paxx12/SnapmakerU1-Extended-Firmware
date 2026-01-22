@@ -77,7 +77,7 @@ From Fluidd's main page, open the `3 dots menu`, and select `Adjust dashboard la
 ![access flluidd interface](images/spoolman/3dots.png)
 ![access flluidd interface](images/spoolman/layout.png)
 
-find the spoolman pannel and verify it is active
+Find the spoolman panel and verify it is active.
 ![access flluidd interface](images/spoolman/spoolman.png)
 !!! PAY ATTENTION !!!: I reorganized my fuidd's pannel as it please me, so your spoolman panel might not be in the same position as mine. Look for it.
 
