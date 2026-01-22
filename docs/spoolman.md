@@ -10,7 +10,7 @@ Real time tracking of your material usage
 
 **!!!WARNINIG!!!**
 
-This is not backwards compatible with the manual spoolman config, while the macros may look similar, this integration provides a new klipper module and having both config anabled may cause unforseen behavours.
+This is not backwards compatible with the manual spoolman config, while the macros may look similar, this integration provides a new Klipper module, and having both config anabled may cause unforeseen behaviours.
 
 ## Features
 
