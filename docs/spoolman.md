@@ -20,7 +20,7 @@ This is like your regular Spoolman for multi tools, with a bit of automation spr
 - Set Active spools when a tool is picked.
 - Deals with the U1's specific 32 virtual tools system for jobs needing more than 4 filaments.
 
-### what it does not, currently, do
+### What it does not currently do
 
 - it does not write tags, NONE of them
 - it does not automagically figure out `spool_ids`
