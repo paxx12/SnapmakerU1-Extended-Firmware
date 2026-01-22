@@ -39,9 +39,9 @@ You can choose 2 different paths:
 ### Properly tagged Spools
 
 `Spoolman helper` uses your tags `spool_id` to recognize your spool within your Spoolman instance.
-For Snapmaker's spools, since their tags are encripted, it uses the `SKU` property and matches is against the `Article Number` filament property in your Spoolman instance.
+For Snapmaker's spools, since their tags are encrypted, it uses the `SKU` property, and matches is against the `Article Number` filament property in your Spoolman instance.
 Note: half kg and 1kg spools of the same color have different SKU.
-Here the SKUs I have, feel free to add more:
+Here are the SKUs I have. Feel free to add more:
 ![Snapmkaer configured SKUs](images/spoolman/snapmaker_skus.png)
 The "SKU trick" can be used with any tag that can be read by your U1 and has such a property.
 
