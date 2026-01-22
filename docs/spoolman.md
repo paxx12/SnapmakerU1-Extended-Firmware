@@ -89,7 +89,7 @@ Restart Kipper or the whole printer, of course.
 
 ### Configuration
 
-The `Spoolman Helper` exposes 2 config parameters: mode and logging
+The `Spoolman Helper` exposes 2 config parameters: mode and logging.
 
 #### mode
 
