@@ -95,8 +95,8 @@ The `Spoolman Helper` exposes 2 config parameters: mode and logging.
 
 `auto` or `manual`, it controls how the `active spool` is selected.
 
-- auto: the rfid is the primary source of truth, if it can find it it'll try to default to a manually configure spool (aka the "normal" way) for the current tool
-- manual: the manually configure spool drives, and tags are used as faultback if the user didn't manually select a spool for the selected tool
+- auto: the rfid is the primary source of truth, if it can find it, it'll try to default to a manually configured spool (aka the "normal" way) for the current tool.
+- manual: the manually configured spool drives, and tags are used as a fallback if the user didn't manually select a spool for the selected tool.
 
 #### logging
 
