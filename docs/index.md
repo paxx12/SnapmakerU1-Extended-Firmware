@@ -50,6 +50,7 @@ Heavily expanded firmware with extensive features and customization. Includes al
 - [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format
 - [Remote Screen](remote_screen.md) - View and control printer screen remotely via web browser
 - [Monitoring](monitoring.md) - Integration with Prometheus, Home Assistant, DataDog, and other monitoring systems
+- [VPN Remote Access](vpn.md) - Secure remote access via Tailscale (Experimental)
 - [Fluidd or Mainsail](firmware_config.md#web) (selectable) with timelapse support
 - Moonraker Adaptive Mesh Support - Object processing for adaptive mesh features
 - Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services

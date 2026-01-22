@@ -1,0 +1,82 @@
+#!/bin/sh
+
+TAILSCALE_DAEMON="/usr/local/sbin/tailscaled"
+TAILSCALE_PIDFILE="/var/run/tailscaled.pid"
+TAILSCALE_STATE_DIR="/home/lava/printer_data/tailscale"
+
+# Load config from user
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+VPN_PROVIDER=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" vpn provider none)
+
+start_tailscale() {
+    if [ -f "$TAILSCALE_PIDFILE" ] && kill -0 "$(cat "$TAILSCALE_PIDFILE")" 2>/dev/null; then
+        echo "tailscaled already running"
+        return 0
+    fi
+
+    insmod /lib/modules/tun.ko
+
+    printf "Starting tailscaled: "
+    mkdir -p "$TAILSCALE_STATE_DIR"
+
+    GOMEMLIMIT=256MiB \
+    GOGC=70 \
+    start-stop-daemon -S -b -m \
+        -p "$TAILSCALE_PIDFILE" \
+        -x "$TAILSCALE_DAEMON" -- \
+        --state="$TAILSCALE_STATE_DIR/tailscaled.state"
+
+    echo "OK"
+
+    echo ""
+    echo "Now run 'tailscale up' to authenticate this device, if not done already."
+}
+
+start() {
+    case "$VPN_PROVIDER" in
+        tailscale)
+            start_tailscale
+            ;;
+        *)
+            echo "VPN provider is not set to 'tailscale'; not starting tailscaled."
+            exit 0
+            ;;
+    esac
+}
+
+stop() {
+    printf "Stopping tailscaled: "
+    if [ -f "$TAILSCALE_PIDFILE" ]; then
+        start-stop-daemon -K -p "$TAILSCALE_PIDFILE" -s TERM
+        rm -f "$TAILSCALE_PIDFILE"
+        # like tailscales systemd unit, run a cleanup
+        "$TAILSCALE_DAEMON" --cleanup
+
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?

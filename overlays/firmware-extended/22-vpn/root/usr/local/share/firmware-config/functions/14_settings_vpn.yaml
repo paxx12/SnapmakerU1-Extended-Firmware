@@ -1,0 +1,46 @@
+status:
+  tailscale:
+    title: Tailscale Network
+    if_cmd: test "$(/usr/local/bin/extended-config.py get /home/lava/printer_data/config/extended/extended.cfg vpn provider none)" = "tailscale"
+    items:
+      - label: Status
+        cmd: /usr/local/bin/tailscale status --json 2>/dev/null | grep -o '"BackendState":[ ]*"[^"]*"' | cut -d'"' -f4 || echo "Stopped"
+      - label: IP Address
+        cmd: /usr/local/bin/tailscale ip -4 2>/dev/null || echo "-"
+      - label: Hostname
+        cmd: /usr/local/bin/tailscale status --json 2>/dev/null | grep -o '"HostName":[ ]*"[^"]*"' | head -1 | cut -d'"' -f4 || echo "-"
+
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      vpn-provider:
+        label: VPN Provider (Experimental)
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended.cfg
+          - vpn
+          - provider
+          - none
+        options:
+          none:
+            label: None
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg vpn provider none &&
+                /etc/init.d/S99vpn stop
+          tailscale:
+            label: Tailscale
+            cmd:
+              - bash
+              - -xc
+              - |
+                echo "WARNING: VPN is experimental. Higher resource usage may affect print quality."
+                /usr/local/bin/tailscale-pkg download &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg vpn provider tailscale &&
+                /etc/init.d/S99vpn restart &&
+                /usr/local/bin/tailscale up --timeout=60s
+        default: none

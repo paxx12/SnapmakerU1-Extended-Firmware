@@ -45,6 +45,7 @@ Toggle settings directly from the web interface:
 | USB Camera | Enabled, Disabled | Enable USB camera support |
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
+| VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Data Persistence | Enabled, Disabled | Persist configuration across reboots |
 
 Changes are applied immediately and relevant services are restarted.
@@ -117,6 +118,14 @@ After saving, reboot the printer.
 - `true` (default) - Firmware Config available at `/firmware-config/` when Advanced Mode is enabled
 - `false` - Firmware Config disabled even when Advanced Mode is enabled
 
+#### [vpn]
+
+**provider** - VPN provider for remote access (only one can be active)
+- `none` (default) - VPN disabled
+- `tailscale` - Connect to your Tailnet via [Tailscale](https://tailscale.com)
+
+See [VPN Remote Access](vpn.md) for setup instructions.
+
 #### [camera]
 
 **stack** - Camera stack selection (only one can be active)
@@ -184,6 +193,9 @@ frontend: fluidd
 [monitoring]
 # klipper_exporter_enabled: true
 # klipper_exporter_address: :9101
+
+[vpn]
+# provider: tailscale
 ```
 
 ### Identifying Customized Settings
@@ -227,3 +239,4 @@ If an invalid configuration breaks Moonraker (printer won't connect to WiFi):
 - [Camera Support](camera_support.md) - Camera features and WebRTC streaming
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files
 - [Data Persistence](data_persistence.md) - Understanding persistent storage
+- [VPN Remote Access](vpn.md) - Secure remote access via Tailscale
