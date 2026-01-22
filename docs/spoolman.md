@@ -107,12 +107,12 @@ From less to more: error, info, warn, verbose, debug
 
 The macros provided by this module can be found in `/extended/klipper/spoolman_suport_macros/spoolman_multi_tool.cfg` and they're NOT backwards compatilbe with the old config.
 
-- READ_FILAMENT_ID: makes your printer read the selected lane's {0...3} spool's tag if any
-- GET_FILAMENT_ID: print the currently read tag for the selected spool lane
-- SET_ACTIVE_SPOOL TOOL={0...3}: sets the selected tool as `Active Spool`
-- CLEAR_ACTIVE_SPOOL: clears the current `Active Spool`
-- CLEAR_ALL_SPOOLS: clear all the curent selected spool for each tool.
-- DUMP_SPOOLS: prints what `Spoolman Helper` knows about the currently loaded spools. This output varies depending on your selected log level.
+- `READ_FILAMENT_ID`: Makes your printer read the selected lane's {0...3} spool's tag, if any.
+- `GET_FILAMENT_ID`: Print the currently read tag for the selected spool lane.
+- `SET_ACTIVE_SPOOL TOOL={0...3}`: Sets the selected tool as `Active Spool`.
+- `CLEAR_ACTIVE_SPOOL`: Clears the current `Active Spool`.
+- `CLEAR_ALL_SPOOLS`: Clear all the current selected spools for each tool.
+- `DUMP_SPOOLS`: prints what `Spoolman Helper` knows about the currently loaded spools. This output varies depending on your selected log level.
 
 You will also find 2 other cfg files, they provide the necessary T# macro proxies for the whole spoolman magic to happen:
 
