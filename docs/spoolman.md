@@ -49,8 +49,8 @@ The "SKU trick" can be used with any tag that can be read by your U1 and has suc
 
 ### Connect to your spoolman instance
 
-- Find the `/extended/moonraker/05_spoolman.cfg` file
-- uncomment the module configuration section and point it to your spoolman instance.
+- Find the `/extended/moonraker/05_spoolman.cfg` file.
+- Uncomment the module configuration section and point it to your spoolman instance.
 
 ```
 [spoolman]
