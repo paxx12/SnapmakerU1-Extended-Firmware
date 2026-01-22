@@ -123,6 +123,6 @@ You will also find 2 other cfg files, they provide the necessary T# macro proxie
 
 Additionaly `Spoolman Helper` provides the following commands:
 
-- SH_CONFIG, with `MODE` and `LOGS` params, allows you to change the mosumodule's behaviour at runtime without needing to restart klipper or your printer
-- SH_DETECT_SPOOLS: tells `Spoolman Helper` to re-detect the loaded spools. This is handy in case of unforseen inconsistent spool states. Kind of like a big reset button for the currently loaded spools
-- SH_DEBUG: prints the current `Spoolman Helper` configuration. It takes an optional `SKU` parameter, if proviede it'll try to match it with `Article Number` and it'll print the spool that would be tracked against the proviede sku
+- `SH_CONFIG` with `MODE` and `LOGS` params: Allows you to change the module's behaviour at runtime without needing to restart Klipper or your printer.
+- SH_DETECT_SPOOLS: tells `Spoolman Helper` to re-detect the loaded spools. This is handy in case of unforeseen inconsistent spool states. Kind of like a big reset button for the currently loaded spools.
+- SH_DEBUG: prints the current `Spoolman Helper` configuration. It takes an optional `SKU` parameter; if provided, it'll try to match it with `Article Number`, and it'll print the spool that would be tracked against the provided SKU.
