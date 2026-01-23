@@ -10,16 +10,21 @@ STATE_DIR="/home/lava/printer_data/tailscale"
 EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
 TAILSCALE_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" tailscale enabled false)
 
-# Skip when not enabled
-[ "$TAILSCALE_ENABLED" = "true" ] || exit 0
-
 start() {
-    printf "Starting $NAME: "
 
-    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-        echo "already running"
+    # If user disabled tailscale, ensure it's stopped
+    if [ "$TAILSCALE_ENABLED" != "true" ]; then
+        echo "tailscale is disabled in $EXTENDED_CFG"
+        stop
         return 0
     fi
+
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "$NAME already running"
+        return 0
+    fi
+
+    printf "Starting $NAME: "
 
     mkdir -p "$STATE_DIR"
 
