@@ -121,15 +121,17 @@ class SpoolmanHelper:
         macro_spool = self.get_spool_for_tool(tool_id)
         mapped_spool = self.get_mapped_spool_for_tool(tool_id)
 
+        self.logs.verbose(f"Possible spools: macro->{macro_spool}, mapped->{mapped_spool}")
+
         match self.mode:
             case 'manual':
                 result = macro_spool or mapped_spool
                 self.logs.verbose(f"Tool T{tool_id} has filament {filament_info_to_string(result, self.logging)}")
 
             case 'auto':
-                return mapped_spool or macro_spool
+                return mapped_spool if mapped_spool and "SPOOL_ID" in mapped_spool else macro_spool
             case _:
-                return mapped_spool or macro_spool
+                return mapped_spool if mapped_spool and "SPOOL_ID" in mapped_spool else macro_spool
 
     def apply_spool_for_extruder(self, extruder):
         self.logs.verbose(f"Trying to bind spool to extruder {extruder}")
@@ -169,7 +171,7 @@ class SpoolmanHelper:
     def get_spool_for_tool(self, tool_id):
         spool_id = self.macros.get_spool_id_for_tool(tool_id)
         if spool_id:
-            return self.spools_by_id.get(spool_id, None)
+            return self.spools_by_id.get(spool_id, {"SPOOL_ID": spool_id})
 
     def get_mapped_spool_for_tool(self, tool_id):
         self.logs.verbose(f"Resvolving extruder for T{tool_id} thruought tools mapping")
@@ -188,6 +190,8 @@ class SpoolmanHelper:
 
     def set_active_tool(self, tool_id):
         spool = self.find_spool_for_tool(tool_id)
+
+        self.logs.verbose(f"Spool for requested tool: {spool}")
 
         if not (spool and spool.get("SPOOL_ID")):
             self.logs.warn("Cannot set active spool for tool T{tool_id}: unalble to resolve spool id. Please check logs, your tags, and configuration.")
