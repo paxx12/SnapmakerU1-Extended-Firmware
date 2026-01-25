@@ -80,7 +80,7 @@ for overlay; do
     while read -r patchfile; do
       echo "[+] Applying patch: $(basename "$patchfile") in subdir $(dirname "$patchfile")"
       patch -F 0 -d "$ROOTFS_DIR/$(dirname "$patchfile")" -p1 < "$patchfile"
-    done < <(find -type f -name "*.patch")
+    done < <(find -type f -name "*.patch" | sort)
     popd > /dev/null
   fi
 

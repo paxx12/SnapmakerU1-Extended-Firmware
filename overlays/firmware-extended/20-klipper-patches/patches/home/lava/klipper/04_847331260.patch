@@ -1,0 +1,80 @@
+From 847331260c84e9de00404aa98f0029184150a897 Mon Sep 17 00:00:00 2001
+From: Kevin O'Connor <kevin@koconnor.net>
+Date: Wed, 27 Nov 2024 22:34:17 -0500
+Subject: [PATCH] toolhead: Remove arbitrary constants controlling junction
+ deviation
+
+When calculating the junction speed between two moves the code checked
+for angles greater than 0.999999 or less than -0.999999 to avoid math
+issues (sqrt of a negative number and/or divide by zero).  However,
+these arbitrary constants could unnecessarily pessimize junction
+speeds when angles are close to 180 or 0 degrees.
+
+Change the code to explicitly check for negative numbers during sqrt
+and to explicilty check for zero values prior to division.  This
+simplifies the code and avoids unnecessarily reducing some junction
+speeds.
+
+Signed-off-by: Dmitry Butyugin <dmbutyugin@google.com>
+Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
+---
+ klippy/toolhead.py | 38 +++++++++++++++++++-------------------
+ 1 file changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/klippy/toolhead.py b/klippy/toolhead.py
+index 948ea974fd70..ed26092f651d 100644
+--- a/klippy/toolhead.py
++++ b/klippy/toolhead.py
+@@ -64,33 +64,33 @@ def calc_junction(self, prev_move):
+             return
+         # Allow extruder to calculate its maximum junction
+         extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
++        max_start_v2 = min(
++            extruder_v2, self.max_cruise_v2, prev_move.max_cruise_v2,
++            prev_move.max_start_v2 + prev_move.delta_v2)
+         # Find max velocity using "approximated centripetal velocity"
+         axes_r = self.axes_r
+         prev_axes_r = prev_move.axes_r
+         junction_cos_theta = -(axes_r[0] * prev_axes_r[0]
+                                + axes_r[1] * prev_axes_r[1]
+                                + axes_r[2] * prev_axes_r[2])
+-        if junction_cos_theta > 0.999999:
+-            return
+-        junction_cos_theta = max(junction_cos_theta, -0.999999)
+-        sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
+-        R_jd = sin_theta_d2 / (1. - sin_theta_d2)
+-        # Approximated circle must contact moves no further away than mid-move
+-        #   centripetal_v2 = .5 * self.move_d * self.accel * tan_theta_d2
+-        cos_theta_d2 = math.sqrt(0.5*(1.0+junction_cos_theta))
+-        quarter_tan_theta_d2 = .25 * sin_theta_d2 / cos_theta_d2
+-        move_centripetal_v2 = self.delta_v2 * quarter_tan_theta_d2
+-        prev_move_centripetal_v2 = prev_move.delta_v2 * quarter_tan_theta_d2
++        sin_theta_d2 = math.sqrt(max(0.5*(1.0-junction_cos_theta), 0.))
++        cos_theta_d2 = math.sqrt(max(0.5*(1.0+junction_cos_theta), 0.))
++        one_minus_sin_theta_d2 = 1. - sin_theta_d2
++        if one_minus_sin_theta_d2 > 0. and cos_theta_d2 > 0.:
++            R_jd = sin_theta_d2 / one_minus_sin_theta_d2
++            move_jd_v2 = R_jd * self.junction_deviation * self.accel
++            pmove_jd_v2 = R_jd * prev_move.junction_deviation * prev_move.accel
++            # Approximated circle must contact moves no further than mid-move
++            #   centripetal_v2 = .5 * self.move_d * self.accel * tan_theta_d2
++            quarter_tan_theta_d2 = .25 * sin_theta_d2 / cos_theta_d2
++            move_centripetal_v2 = self.delta_v2 * quarter_tan_theta_d2
++            pmove_centripetal_v2 = prev_move.delta_v2 * quarter_tan_theta_d2
++            max_start_v2 = min(max_start_v2, move_jd_v2, pmove_jd_v2,
++                               move_centripetal_v2, pmove_centripetal_v2)
+         # Apply limits
+-        self.max_start_v2 = min(
+-            R_jd * self.junction_deviation * self.accel,
+-            R_jd * prev_move.junction_deviation * prev_move.accel,
+-            move_centripetal_v2, prev_move_centripetal_v2,
+-            extruder_v2, self.max_cruise_v2, prev_move.max_cruise_v2,
+-            prev_move.max_start_v2 + prev_move.delta_v2)
++        self.max_start_v2 = max_start_v2
+         self.max_smoothed_v2 = min(
+-            self.max_start_v2
+-            , prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
++            max_start_v2, prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
+     def set_junction(self, start_v2, cruise_v2, end_v2):
+         # Determine accel, cruise, and decel portions of the move distance
+         half_inv_accel = .5 / self.accel
