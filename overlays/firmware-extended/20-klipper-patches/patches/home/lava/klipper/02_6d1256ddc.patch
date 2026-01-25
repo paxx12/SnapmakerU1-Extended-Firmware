@@ -1,0 +1,46 @@
+From 6d1256ddcc51cc62ab403fdc29d0b2688116a29e Mon Sep 17 00:00:00 2001
+From: MRX8024 <57844100+MRX8024@users.noreply.github.com>
+Date: Wed, 13 Nov 2024 02:55:32 +0200
+Subject: [PATCH] resonance_tester: Fix chips selection, add accel_per_hz
+ selection (#6726)
+
+Corrected issue where accelerometer names were incorrectly prefixed
+with "adxl345", preventing the selection of other chip types when running TEST_RESONANCES.
+
+Implemented support for selecting the `accel_per_hz` parameter when running TEST_RESONANCES.
+
+docs: Update TEST_RESONANCES + SHAPER_CALIBRATE with missing parameters and bracket corrections
+
+Signed-off-by: Maksim Bolgov <maksim8024@gmail.com>
+---
+ docs/Config_Changes.md            |  4 ++++
+ docs/G-Codes.md                   | 18 +++++++++---------
+ klippy/extras/resonance_tester.py |  8 +++-----
+ 3 files changed, 16 insertions(+), 14 deletions(-)
+
+diff --git a/klippy/extras/resonance_tester.py b/klippy/extras/resonance_tester.py
+index fe8717d58545..e9d4e9d92c53 100644
+--- a/klippy/extras/resonance_tester.py
++++ b/klippy/extras/resonance_tester.py
+@@ -65,6 +65,8 @@ def prepare_test(self, gcmd):
+         self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.)
+         self.freq_end = gcmd.get_float("FREQ_END", self.max_freq,
+                                        minval=self.freq_start, maxval=300.)
++        self.accel_per_hz = gcmd.get_float("ACCEL_PER_HZ",
++                                           self.accel_per_hz, above=0.)
+         self.hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
+                                          above=0., maxval=2.)
+     def run_test(self, axis, gcmd):
+@@ -212,11 +214,7 @@ def _run_test(self, gcmd, axes, helper, raw_name_suffix=None,
+     def _parse_chips(self, accel_chips):
+         parsed_chips = []
+         for chip_name in accel_chips.split(','):
+-            if "adxl345" in chip_name:
+-                chip_lookup_name = chip_name.strip()
+-            else:
+-                chip_lookup_name = "adxl345 " + chip_name.strip();
+-            chip = self.printer.lookup_object(chip_lookup_name)
++            chip = self.printer.lookup_object(chip_name.strip())
+             parsed_chips.append(chip)
+         return parsed_chips
+     def _get_max_calibration_freq(self):
