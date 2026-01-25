@@ -1,0 +1,29 @@
+From 16fc46fe5ff0dbbc5188ee6a7829eee5976c1eb9 Mon Sep 17 00:00:00 2001
+From: Kevin O'Connor <kevin@koconnor.net>
+Date: Tue, 30 Sep 2025 19:32:49 -0400
+Subject: [PATCH] toolhead: Reduce LOOKAHEAD_FLUSH_TIME to 0.150 seconds
+
+The current code is likely to perform a lazy flush of the lookahead
+queue around 4 times a second.  Increase that to around 6-7 times a
+second.  This change may slightly improve the responsiveness to user
+requests mid-print (eg, changing extrusion ratio) and may make a
+"print stall" less likely in some corner cases.
+
+Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
+---
+ klippy/toolhead.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/klippy/toolhead.py b/klippy/toolhead.py
+index 9163e82cc7a8..da297e966be4 100644
+--- a/klippy/toolhead.py
++++ b/klippy/toolhead.py
+@@ -113,7 +113,7 @@ def set_junction(self, start_v2, cruise_v2, end_v2):
+         self.cruise_t = cruise_d / cruise_v
+         self.decel_t = decel_d / ((end_v + cruise_v) * 0.5)
+ 
+-LOOKAHEAD_FLUSH_TIME = 0.250
++LOOKAHEAD_FLUSH_TIME = 0.150
+ 
+ # Class to track a list of pending move requests and to facilitate
+ # "look-ahead" across moves to reduce acceleration between moves.
