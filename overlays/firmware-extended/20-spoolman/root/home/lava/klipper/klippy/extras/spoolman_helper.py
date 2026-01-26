@@ -175,12 +175,17 @@ class SpoolmanHelper:
 
     def get_mapped_spool_for_tool(self, tool_id):
         self.logs.verbose(f"Resvolving extruder for T{tool_id} thruought tools mapping")
-        extruder= self.u1_tools.extruder_for_tool(tool_id)
+        extruder = self.u1_tools.extruder_for_tool(tool_id)
 
         if extruder is None:
+            self.logs.warn(f"Cannot find mapped extruder for T{tool_id}. This shuold not happen, please save your `configuration -> /snapmaker/print_task.json` for further analisys")
             return None
 
         spool = self.spool_holders[extruder]
+        if is_untagged_filament(spool):
+            self.logs.verbose(f"Filament for T{extruder} is untagged, falling back to manually configured one")
+            spool = self.get_spool_for_tool(extruder)
+
         if spool is None:
             self.logs.warn(f"Cannot find filament info for T{tool_id} on extruder {extruder}. This is normal if your spool does not have an RFID tag, please manually configure a spool for T{tool_id} or refer to logs and documentation for further informations")
             return None
@@ -203,7 +208,7 @@ class SpoolmanHelper:
     def sync_spools_tools(self):
         def manual_mode():
             for tool_id in len(MAX_TOOLS_COUNT):
-                spool_id = self.madro.get_spool_id_for_tool(tool_id)
+                spool_id = self.macros.get_spool_id_for_tool(tool_id)
                 def on_spool(spool):
                     self.spools_by_id[spool_id] = spool
                 self.spoolman.resolve_spool({"SPOOL_ID": spool_id}, on_spool)
