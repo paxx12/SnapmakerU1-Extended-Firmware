@@ -563,8 +563,7 @@
             try {
                 const resp = await fetch(`api/settings/${key}/${value}`, { method: 'POST' });
                 await streamResponse(resp);
-                await loadSettings();
-                await loadLinks();
+                refreshAll();
             } catch (e) {
                 appendLog(`\nERROR: ${e.message}`);
                 setMessage('Failed', 'var(--error)');
