@@ -66,10 +66,13 @@ for overlay; do
   fi
 
   if [[ -d "$overlay/patches/" ]]; then
-    for patchfile in "$overlay/patches/"*.patch; do
-      echo "[+] Applying patch: $(basename "$patchfile")"
-      patch -F 0 -d "$TEMP_DIR/rootfs" -p1 < "$patchfile"
-    done
+    pushd "$overlay/patches/" > /dev/null
+    # apply all .patch to their respective directories
+    while read -r patchfile; do
+      echo "[+] Applying patch: $(basename "$patchfile") in subdir $(dirname "$patchfile")"
+      patch -F 0 -d "$TEMP_DIR/rootfs/$(dirname "$patchfile")" -p1 < "$patchfile"
+    done < <(find -type f -name "*.patch")
+    popd > /dev/null
   fi
 
   if [[ -d "$overlay/scripts/" ]]; then

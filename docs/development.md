@@ -124,6 +124,35 @@ Overlays are applied in the following order:
 1. All overlays from `common/` (in numeric order)
 1. Profile-specific overlays from `firmware-${profile}/` (in numeric order)
 
+### Integrating Upstream Klipper Patches
+
+The `20-klipper-patches` overlay in `firmware-extended/` backports upstream Klipper commits. To add new patches:
+
+1. **Download the commit as a patch from GitHub:**
+   ```bash
+   wget https://github.com/Klipper3d/klipper/commit/16fc46fe5.patch -O 01_16fc46fe5.patch
+   ```
+   GitHub serves any commit as a patch by appending `.patch` to the commit URL.
+
+2. **Name with order prefix and commit hash:**
+   ```text
+   01_16fc46fe5.patch
+   02_6d1256ddc.patch
+   03_16b4b6b30.patch
+   ```
+
+3. **Place in the target path within the overlay:**
+   ```text
+   overlays/firmware-extended/20-klipper-patches/patches/home/lava/klipper/
+   ```
+   The `patches/` directory maps to the firmware root, so `patches/home/lava/klipper/` applies patches to `/home/lava/klipper/` where Klipper is installed.
+
+4. **Edit the patch to remove irrelevant hunks:**
+   Upstream commits often include `docs/` and config changes that don't apply. Remove those hunks, keeping only the Python code changes in `klippy/`.
+
+5. **Document in the overlay README:**
+   Update `20-klipper-patches/README.md` with links to the upstream commits.
+
 ## Project Structure
 
 ```text
