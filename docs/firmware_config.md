@@ -130,6 +130,10 @@ After saving, reboot the printer.
 - `true` - Enable RTSP streaming at `rtsp://<printer-ip>:8554/stream` (internal) and `rtsp://<printer-ip>:8555/stream` (USB)
 - `false` (default) - RTSP streaming disabled
 
+**usb** - Enable USB camera support (paxx12 stack only)
+- `true` - Enable USB camera streaming at `http://<printer-ip>/webcam2/`
+- `false` (default) - USB camera disabled
+
 #### [web]
 
 **frontend** - Web interface selection (only one can be active)
@@ -168,6 +172,7 @@ stack: paxx12
 # stack: snapmaker
 logs: syslog
 # rtsp: true
+# usb: true
 
 [web]
 frontend: fluidd

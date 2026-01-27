@@ -30,7 +30,7 @@ The internal camera is automatically configured and enabled.
 
 Access at: `http://<printer-ip>/webcam2/`
 
-USB cameras require configuration in Moonraker. See [Moonraker Camera Configuration](#moonraker-camera-configuration) below for setup instructions.
+USB cameras must be enabled in `extended.cfg`. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
 
 ## Moonraker Camera Configuration
 
@@ -128,6 +128,17 @@ rtsp: true
 RTSP streams will be available at:
 - Internal camera: `rtsp://<printer-ip>:8554/stream`
 - USB camera: `rtsp://<printer-ip>:8555/stream`
+
+### USB Camera Configuration
+
+Enable USB camera support (paxx12 stack only):
+
+```ini
+[camera]
+usb: true
+```
+
+When enabled, USB cameras are accessible at `http://<printer-ip>/webcam2/`.
 
 After any configuration changes, reboot the printer for changes to take effect.
 

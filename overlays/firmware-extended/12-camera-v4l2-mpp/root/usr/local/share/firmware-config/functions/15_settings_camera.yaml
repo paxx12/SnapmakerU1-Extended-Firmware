@@ -84,9 +84,9 @@ settings:
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
-          - /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg
-          - webcam usb
-          - enabled
+          - /home/lava/printer_data/config/extended/extended.cfg
+          - camera
+          - usb
           - "false"
         options:
           "true":
@@ -95,8 +95,10 @@ settings:
               - bash
               - -xc
               - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera usb true &&
                 /usr/local/bin/extended-config.py uncomment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
                 /usr/local/bin/extended-config.py update /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" enabled true &&
+                /etc/init.d/S99v4l2-mpp-usb restart &&
                 /etc/init.d/S61moonraker restart
           "false":
             label: Disabled
@@ -104,6 +106,8 @@ settings:
               - bash
               - -xc
               - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera usb false &&
                 /usr/local/bin/extended-config.py comment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
+                /etc/init.d/S99v4l2-mpp-usb stop &&
                 /etc/init.d/S61moonraker restart
         default: "false"
