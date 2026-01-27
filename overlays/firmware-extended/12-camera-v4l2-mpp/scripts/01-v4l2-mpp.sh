@@ -3,7 +3,7 @@
 ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=468fe35b159977a6e86f75f5e9024cb404eaa71d
+GIT_SHA=664e0891089a199d4fc6d9b50bb8f72b67aa4058
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <rootfs-dir>"
