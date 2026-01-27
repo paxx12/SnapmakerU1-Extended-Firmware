@@ -1,0 +1,31 @@
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      ssh:
+        label: SSH Access
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended.cfg
+          - ssh
+          - enabled
+          - "false"
+        options:
+          "true":
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg ssh enabled true &&
+                /etc/init.d/S50dropbear restart
+          "false":
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg ssh enabled false &&
+                /etc/init.d/S50dropbear stop
+        default: "false"
