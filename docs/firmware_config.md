@@ -46,7 +46,6 @@ Toggle settings directly from the web interface:
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
-| Data Persistence | Enabled, Disabled | Persist configuration across reboots |
 
 Changes are applied immediately and relevant services are restarted.
 
