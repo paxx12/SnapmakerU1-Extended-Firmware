@@ -253,12 +253,12 @@
                     `<div class="group-section">
                         <div class="group-title">${group.label}</div>
                         ${group.items.map(setting => {
-                            const options = Object.entries(setting.options).map(([optKey, optLabel]) =>
-                                `<option value="${optKey}"${optKey === setting.current ? ' selected' : ''}>${optLabel}</option>`
-                            ).join('');
+                            const options = Object.entries(setting.options).map(([optKey, optVal]) => {
+                                return `<option value="${optKey}" data-label="${encodeURIComponent(optVal.label)}" data-confirm="${encodeURIComponent(optVal.confirm || '')}"${optKey === setting.current ? ' selected' : ''}>${optVal.label}</option>`;
+                            }).join('');
                             return `<div class="row">
                                 <span class="row-label">${setting.label}</span>
-                                <select onchange="updateSetting('${setting.id}', '${setting.label}', this.value)">${options}</select>
+                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', '${setting.label}', this)">${options}</select>
                             </div>`;
                         }).join('')}
                     </div>`
@@ -319,15 +319,22 @@
         // Modal Functions
         // ========================================
 
-        function showConfirmModal(title, message, onConfirm) {
+        let confirmOnCancel = null;
+
+        function showConfirmModal(title, message, onConfirm, onCancel) {
             $('confirm-title').textContent = title;
             $('confirm-message').textContent = message;
             $('confirm-btn').onclick = () => { hideConfirmModal(); onConfirm(); };
+            confirmOnCancel = onCancel || null;
             $('confirm-modal').classList.add('visible');
         }
 
         function hideConfirmModal() {
             $('confirm-modal').classList.remove('visible');
+            if (confirmOnCancel) {
+                confirmOnCancel();
+                confirmOnCancel = null;
+            }
         }
 
         function showActionModal(title, message) {
@@ -575,10 +582,22 @@
         // Settings Functions
         // ========================================
 
-        function updateSetting(key, label, value) {
-            const message = `Change ${label} to "${value}"?\n\n⚠️ Warning: Changing settings will restart services and may interrupt printing.`;
+        function updateSetting(key, label, selectEl) {
+            const value = selectEl.value;
+            const prevValue = selectEl.dataset.prevValue || value;
+            const selectedOption = selectEl.selectedOptions[0];
+            const optLabel = decodeURIComponent(selectedOption.dataset.label || value);
+            const confirmMsg = decodeURIComponent(selectedOption.dataset.confirm || '');
 
-            showConfirmModal(`Update ${label}`, message, () => doUpdateSetting(key, value));
+            const message = confirmMsg || `Change ${label} to "${optLabel}"?`;
+            const warning = '⚠️ Warning: Changing settings will restart services and may interrupt printing.';
+
+            showConfirmModal(
+                `Update ${label}`,
+                `${message}\n\n${warning}`,
+                () => { selectEl.dataset.prevValue = value; doUpdateSetting(key, value); },
+                () => { selectEl.value = prevValue; }
+            );
         }
 
         async function doUpdateSetting(key, value) {
