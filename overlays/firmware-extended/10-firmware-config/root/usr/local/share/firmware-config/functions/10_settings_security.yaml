@@ -1,0 +1,70 @@
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      moonraker-auth:
+        label: Require Login/Password (Fluidd only)
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/moonraker/authorization.cfg
+          - authorization
+          - force_logins
+          - "false"
+        options:
+          "true":
+            label: Enabled
+            confirm: "Enable authentication? A new admin user with random password will be created. You will need to log in to access Fluidd and Firmware Config. Note: Mainsail does not support this feature."
+            cmd:
+              - bash
+              - -c
+              - |
+                FRONTEND=$(/usr/local/bin/extended-config.py get /home/lava/printer_data/config/extended/extended.cfg web frontend fluidd)
+                if [ "$FRONTEND" = "mainsail" ]; then
+                  echo "ERROR: Authentication requires Fluidd."
+                  echo "Mainsail does not support Moonraker authentication."
+                  echo "Please switch to Fluidd first."
+                  exit 1
+                fi
+                URL="http://127.0.0.1:7125"
+                echo "Deleting existing admin user..."
+                /usr/local/bin/curl -s -X DELETE "$URL/access/user" -H "Content-Type: application/json" -d '{"username": "admin"}' > /dev/null 2>&1
+                echo "Enabling force_logins in Moonraker..."
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/moonraker/authorization.cfg authorization force_logins true &&
+                echo "Restarting Moonraker..."
+                /etc/init.d/S61moonraker restart
+                echo "Waiting for Moonraker to restart..."
+                sleep 10
+                PASSWORD=$(head -c 12 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 16)
+                echo "Creating new admin user..."
+                RESULT=$(/usr/local/bin/curl -s -X POST "$URL/access/user" -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"$PASSWORD\"}")
+                if echo "$RESULT" | grep -q '"action": "user_created"'; then
+                  echo ""
+                  echo "============================================"
+                  echo "  IMPORTANT: Save these credentials!"
+                  echo "============================================"
+                  echo "  Username: admin"
+                  echo "  Password: $PASSWORD"
+                  echo "============================================"
+                  echo ""
+                  echo "You can change your password in Fluidd"
+                  echo "under Profile > Change Password."
+                  echo ""
+                  echo "If you forget your password, create a file"
+                  echo "named 'extended-recover.txt' on a USB drive"
+                  echo "and reboot to reset extended configuration."
+                  echo ""
+                else
+                  echo "Warning: Could not create admin user"
+                  echo "$RESULT"
+                fi
+          "false":
+            label: Disabled
+            confirm: "Disable authentication? Anyone on your network will be able to access the printer."
+            cmd:
+              - bash
+              - -vc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/moonraker/authorization.cfg authorization force_logins false &&
+                /etc/init.d/S61moonraker restart
+        default: "false"
