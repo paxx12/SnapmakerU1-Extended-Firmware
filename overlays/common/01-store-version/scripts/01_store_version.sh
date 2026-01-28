@@ -1,11 +1,9 @@
 #!/bin/bash
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <rootfs-dir>"
+if [[ -z "$CREATE_FIRMWARE" ]]; then
+  echo "Error: This script should be run within the create_firmware.sh environment."
   exit 1
 fi
-
-ROOTFS_DIR="$(realpath "$1")"
 
 ABBRV=$(git describe --abbrev --always)
 

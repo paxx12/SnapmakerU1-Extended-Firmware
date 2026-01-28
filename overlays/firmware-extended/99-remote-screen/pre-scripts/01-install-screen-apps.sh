@@ -1,16 +1,14 @@
 #!/bin/bash
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
-
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <rootfs-dir>"
+if [[ -z "$CREATE_FIRMWARE" ]]; then
+  echo "Error: This script should be run within the create_firmware.sh environment."
   exit 1
 fi
 
 set -eo pipefail
 
 echo ">> Installing screen-apps"
-make -C "$ROOT_DIR/deps/screen-apps" install DESTDIR="$1"
+make -C "$ROOT_DIR/deps/screen-apps" install DESTDIR="$ROOTFS_DIR"
 
 echo ">> Installing Python dependencies for fb-http"
-"$ROOT_DIR/scripts/helpers/chroot_firmware.sh" "$1" /usr/bin/pip3 install $(cat "$ROOT_DIR/deps/screen-apps/apps/fb-http/requirements.txt")
+chroot_firmware.sh "$ROOTFS_DIR" /usr/bin/pip3 install $(cat "$ROOT_DIR/deps/screen-apps/apps/fb-http/requirements.txt")
