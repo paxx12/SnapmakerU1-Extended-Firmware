@@ -1,0 +1,11 @@
+diff -uNr rootfs.original/home/lava/origin_printer_data/config/moonraker.conf rootfs/home/lava/origin_printer_data/config/moonraker.conf
+--- rootfs.original/home/lava/origin_printer_data/config/moonraker.conf
++++ rootfs/home/lava/origin_printer_data/config/moonraker.conf
+@@ -13,6 +13,7 @@
+     169.254.0.0/16
+     172.16.0.0/12
+     192.168.0.0/16
++    100.64.0.0/10
+     FE80::/10
+     ::1/128
+ cors_domains:
