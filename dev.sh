@@ -15,4 +15,4 @@ TTY_FLAG=""
 
 ENV_FLAGS="-e GIT_VERSION"
 
-exec docker run --rm $TTY_FLAG $ENV_FLAGS -w "$PWD" -v "$PWD:$PWD" "$IMAGE_NAME" "$@"
+exec docker run --rm $TTY_FLAG $ENV_FLAGS --cap-add=SYS_ADMIN -w "$PWD" -v "$PWD:$PWD" "$IMAGE_NAME" "$@"
