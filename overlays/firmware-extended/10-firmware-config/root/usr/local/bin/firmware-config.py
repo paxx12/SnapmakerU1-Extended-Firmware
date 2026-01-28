@@ -295,11 +295,18 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
                     except Exception:
                         current_value = config.get("default", "")
 
+                    options_data = {}
+                    for opt_key, opt_val in config["options"].items():
+                        opt_info = {"label": opt_val["label"]}
+                        if "confirm" in opt_val:
+                            opt_info["confirm"] = opt_val["confirm"]
+                        options_data[opt_key] = opt_info
+
                     settings_list.append({
                         "id": setting_id,
                         "label": config["label"],
                         "current": current_value,
-                        "options": {opt_key: opt_val["label"] for opt_key, opt_val in config["options"].items()}
+                        "options": options_data
                     })
                 if settings_list:
                     result[group_key] = {
