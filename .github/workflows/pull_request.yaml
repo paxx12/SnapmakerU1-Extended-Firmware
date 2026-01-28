@@ -83,10 +83,6 @@ jobs:
     - name: Build DEVEL version of Extended Fluidd firmware
       run: ./dev.sh make build PROFILE=extended-devel OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_devel.bin
 
-    - name: Clear Kernel Git Repo
-      continue-on-error: true
-      run: ./dev.sh git -C tmp/kernel/ clean -fdx
-
     - uses: actions/upload-artifact@v4
       with:
         name: basic-build

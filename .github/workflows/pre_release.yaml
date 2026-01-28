@@ -61,10 +61,6 @@ jobs:
     - name: Build with Extended Fluidd firmware
       run: ./dev.sh make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
 
-    - name: Clear Kernel Git Repo
-      continue-on-error: true
-      run: ./dev.sh git -C tmp/kernel/ clean -fdx
-
     - name: Generate Changelog
       run: make changelog >> RELEASE.md
 
