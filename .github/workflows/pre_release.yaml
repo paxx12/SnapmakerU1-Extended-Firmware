@@ -17,6 +17,18 @@ jobs:
         fetch-depth: 0
         submodules: recursive
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image with cache
+      uses: docker/build-push-action@v6
+      with:
+        context: .github/dev
+        load: true
+        tags: snapmaker-u1-dev:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
     - name: Load values vars.mk
       run: cat vars.mk >> "$GITHUB_ENV"
 

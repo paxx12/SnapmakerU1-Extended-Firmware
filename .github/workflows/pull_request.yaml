@@ -15,11 +15,27 @@ jobs:
       pull-requests: write
       contents: read
     steps:
+    - name: Record start time
+      run: echo "JOB_START=$(date +%s)" >> $GITHUB_ENV
+
     - name: Checkout
       uses: actions/checkout@v3
       with:
         fetch-depth: 0
         submodules: recursive
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image with cache
+      uses: docker/build-push-action@v6
+      with:
+        context: .github/dev
+        load: true
+        tags: snapmaker-u1-dev:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: BUILDKIT_INLINE_CACHE=1
 
     - name: Load values vars.mk
       run: cat vars.mk >> "$GITHUB_ENV"
@@ -102,6 +118,11 @@ jobs:
             run_id: ${{ github.run_id }}
           });
 
+          const durationSec = Math.floor(Date.now() / 1000) - ${{ env.JOB_START }};
+          const durationMin = Math.floor(durationSec / 60);
+          const durationRemSec = durationSec % 60;
+          const duration = `${durationMin}m ${durationRemSec}s`;
+
           const mergeCommitSha = '${{ github.sha }}'.substring(0, 7);
           const prHeadSha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
           const prHeadFullSha = '${{ github.event.pull_request.head.sha }}';
@@ -117,6 +138,7 @@ jobs:
             '',
             `**Version:** \`${{ env.GIT_VERSION }}\``,
             `**Build commit:** \`${mergeCommitSha}\` (merge of [${prHeadSha}](https://github.com/${{ github.repository }}/commit/${prHeadFullSha}) into \`${{ github.base_ref }}\`)`,
+            `**Build duration:** ${duration}`,
             '',
             '| Artifact | Size |',
             '|----------|------|',
