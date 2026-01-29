@@ -45,6 +45,7 @@ Stock firmware with SSH access and minimal debugging features:
 Heavily expanded firmware with extensive features and customization. Includes all basic features plus:
 
 - [Firmware Configuration](firmware_config.md) - Customize firmware behavior via web interface or config file
+- [USB Recovery](recovery.md) - Recovery options via USB drive for troubleshooting
 - [Camera Support](camera_support.md) - Hardware-accelerated camera stack with WebRTC streaming for internal and USB cameras
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
 - [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format

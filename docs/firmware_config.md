@@ -241,16 +241,11 @@ If you forget your Moonraker admin password when Require Login/Password (Fluidd 
 
 ### Recovery from Configuration Issues
 
-If an invalid configuration breaks Moonraker (printer won't connect to WiFi):
-
-1. Create an empty file named `extended-recover.txt` on a USB drive
-2. Insert the USB drive into the printer
-3. Restart the printer
-4. The extended configuration will be backed up to `extended.backup.N` and reset to defaults
-5. Remove the USB drive (the recovery file will be automatically deleted)
+If an invalid configuration breaks Moonraker (printer won't connect to WiFi), use the USB recovery option. See [USB Recovery](recovery.md) for detailed instructions.
 
 ## Related Documentation
 
+- [USB Recovery](recovery.md) - USB-based recovery options for troubleshooting
 - [Camera Support](camera_support.md) - Camera features and WebRTC streaming
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files
 - [Data Persistence](data_persistence.md) - Understanding persistent storage

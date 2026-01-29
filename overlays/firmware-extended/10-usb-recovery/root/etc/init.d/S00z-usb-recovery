@@ -1,0 +1,243 @@
+#!/bin/bash
+
+USB_DEV="/dev/sda1"
+USB_MOUNT="/tmp/usb-disk"
+OEM_DEV=$(blkid /dev/mmcblk0* | awk -F: '/PARTLABEL="oem"/{print $1}')
+USERDATA_DEV=$(blkid /dev/mmcblk0* | awk -F: '/PARTLABEL="userdata"/{print $1}')
+FB_DEV="/dev/fb0"
+FONT="/home/lava/resource/font/Roboto-Medium.ttf"
+
+# log stdout and stderr to /tmp/usb-recovery.log and stdout
+exec > >(tee /tmp/usb-recovery.log) 2>&1
+
+log() {
+	echo "[usb-recovery] $@"
+}
+
+fb_text() {
+	local bg_color="$1"
+	local fg_color="$2"
+	local header="$3"
+	shift 3
+
+	log "$header: $*"
+
+	[[ -c "$FB_DEV" ]] || return 0
+	[[ -f "$FONT" ]] || return 0
+
+	local vf="drawtext=fontfile=$FONT:text='$header':fontcolor=$fg_color:fontsize=36:x=(w-text_w)/2:y=100"
+	local y=160
+	for arg in "$@"; do
+		if [[ "$arg" == --* ]]; then
+			fg_color="${arg#--}"
+			continue
+		fi
+
+		vf="$vf,drawtext=fontfile=$FONT:text='$arg':fontcolor=$fg_color:fontsize=24:x=(w-text_w)/2:y=$y"
+		y=$((y + 32))
+	done
+
+	ffmpeg -v error -y -f lavfi -i "color=$bg_color:s=480x320" -frames:v 1 \
+		-vf "$vf" -pix_fmt bgra -f rawvideo "$FB_DEV"
+}
+
+fb_text_timer() {
+	local timer="$1"
+	shift
+
+	for i in $(seq $timer -1 1); do
+		fb_text "$@" --red "Starting in $i seconds..."
+		sleep 1
+	done
+	fb_text "$@" --green "Starting now..."
+}
+
+wait_for_usb() {
+	for (( i=0; i<=3; i++ )); do
+		if [[ -b "$USB_DEV" ]]; then
+			log "USB device found after $i seconds"
+			return 0
+		fi
+		sleep 1
+	done
+	return 1
+}
+
+mount_usb() {
+	[[ -b "$USB_DEV" ]] || return 1
+
+	if mountpoint -q "$USB_MOUNT" 2>/dev/null; then
+		return 0
+	fi
+
+	mkdir -p "$USB_MOUNT"
+	mount "$USB_DEV" "$USB_MOUNT" 2>/dev/null
+}
+
+umount_usb() {
+	mountpoint -q "$USB_MOUNT" 2>/dev/null && umount "$USB_MOUNT"
+	rmdir "$USB_MOUNT" 2>/dev/null
+}
+
+check_format_everything() {
+	[[ -f "$USB_MOUNT/disaster-recovery-do-not-use.txt" ]] || return 0
+
+	# This is safety check to prevent people from formatting their device
+	# for not legitimate reasons. This ensures that only users that truly
+	# do need this functionality can use it.
+	# The hash corresponds to a file that contains a warning message.
+	# Users must create this file manually to confirm they understand
+	# the consequences of using this feature. As such this feature
+	# is also intentionally hidden and not documented.
+	#
+	# The file contents using LF line endings.
+	# As such the below cannot be normally created on Windows due to line endings.
+	#
+	# echo "WARNING: This file confirms that I understand that using this recovery option will ERASE ALL DATA on the device, including OEM and USERDATA partitions. I understand that this action is NOT REVERSIBLE."
+	#
+	if ! echo "f2b699e8fdec3856d924c2465774f12b35c170877f1e58d30ade2d82b3113e79  $USB_MOUNT/disaster-recovery-do-not-use.txt" | sha256sum --check --status; then
+		fb_text black red "FORMAT ALL DATA" "The recovery file is corrupted or invalid"
+		sleep 5
+		return 0
+	fi
+
+	mv "$USB_MOUNT/disaster-recovery-do-not-use.txt" "$USB_MOUNT/disaster-recovery-do-not-use-done.txt"
+
+	fb_text_timer 60 black yellow "FORMAT ALL DATA" \
+		"THIS ACTION IS NOT REVERSIBLE" \
+		"THIS WILL ERASE ALL DATA" \
+		"DO NOT POWER OFF"
+
+	if [[ -b "$OEM_DEV" ]]; then
+		fb_text black white "Formatting oem..." --red "DO NOT POWER OFF"
+		umount "$OEM_DEV"
+		mkfs.ext4 -F -L oem -m 0 "$OEM_DEV"
+		sleep 1
+	else
+		log "OEM partition device not found, skipping format"
+	fi
+
+	if [[ -b "$USERDATA_DEV" ]]; then
+		fb_text black white "Formatting userdata..." --red "DO NOT POWER OFF"
+		umount "$USERDATA_DEV"
+		mkfs.ext4 -F -L userdata -m 0 "$USERDATA_DEV"
+		sleep 1
+	else
+		log "Userdata partition device not found, skipping format"
+	fi
+
+	sync
+	fb_text_timer 5 black green "Format Complete" "All data has been erased" "Printer will restart"
+	reboot
+}
+
+check_extended_recover() {
+	[[ -f "$USB_MOUNT/extended-recover.txt" ]] || return 0
+	mv "$USB_MOUNT/extended-recover.txt" "$USB_MOUNT/extended-recover-done.txt"
+
+	fb_text_timer 10 black white "RESET CONFIG" --yellow "Extended config will be backed up" "Debug mode will be disabled"
+
+	local extended_dir="/oem/printer_data/config/extended"
+	if [[ -d "$extended_dir" ]]; then
+		local backup_num=1
+		while [[ -d "$extended_dir.backup.$backup_num" ]]; do
+			backup_num=$((backup_num + 1))
+		done
+		fb_text black white "RESET CONFIG" --yellow "Backing up extended config to $extended_dir.backup.$backup_num" "Please wait"
+		mv "$extended_dir" "$extended_dir.backup.$backup_num"
+		sleep 3
+	fi
+
+	fb_text black white "RESET CONFIG" --yellow "Resetting printer changes to default" "Please wait"
+	rm -f /oem/.printer_data
+	sleep 1
+
+	if [[ -e /oem/.debug ]]; then
+		fb_text black white "RESET CONFIG" --yellow "Disabling Debug..." "Please wait"
+		rm -f /oem/.debug
+		sleep 1
+	fi
+
+	sync
+	fb_text_timer 5 black green "Config Reset" "Extended config backed up" "Debug mode disabled"
+}
+
+check_wpa_supplicant() {
+	[[ -f "$USB_MOUNT/wpa_supplicant.txt" ]] || return 0
+	[[ -d /oem/printer_data/gui ]] || return 0
+
+	fb_text_timer 10 black white "APPLY WIFI CONFIG" --yellow "WiFi settings will be updated"
+
+	fb_text black white "Applying WiFi..." --yellow "Please wait"
+	cp "$USB_MOUNT/wpa_supplicant.txt" /oem/printer_data/gui/wpa_supplicant.conf
+	mv "$USB_MOUNT/wpa_supplicant.txt" "$USB_MOUNT/wpa_supplicant-done.txt"
+	chmod 644 /oem/printer_data/gui/wpa_supplicant.conf
+	chown root:root /oem/printer_data/gui/wpa_supplicant.conf
+	sync
+	sleep 3
+
+	fb_text_timer 5 black green "WiFi Configured" "New settings applied"
+}
+
+check_firmware_upgrade() {
+	[[ -f "$USB_MOUNT/i_want_to_upgrade_my_u1.bin" ]] || return 0
+
+	fb_text_timer 10 black white "FIRMWARE UPGRADE" --yellow "System firmware will be updated"
+
+	fb_text black white "Upgrading Firmware..." --red "Do not power off" "This will take a few minutes"
+	if /home/lava/bin/systemUpgrade.sh upgrade all "$USB_MOUNT/i_want_to_upgrade_my_u1.bin" 2>&1 | tee "$USB_MOUNT/i_want_to_upgrade_my_u1.log"; then
+		fb_text black green "Upgrade Complete" "Firmware has been updated" "System will restart in a few seconds"
+	else
+		fb_text black green "Upgrade Failed" "Firmware has failed to be updated" "System will restart in a few seconds"
+	fi
+	mv "$USB_MOUNT/i_want_to_upgrade_my_u1.bin" "$USB_MOUNT/i_want_to_upgrade_my_u1-done.bin"
+	sync
+	sleep 5
+	reboot
+}
+
+start() {
+	log "Running USB recovery checks..."
+
+	if ! wait_for_usb; then
+		log "No USB device found within timeout, skipping USB recovery"
+		return 0
+	fi
+	if ! mount_usb; then
+		log "Failed to mount USB device, skipping USB recovery"
+		return 1
+	fi
+	trap umount_usb EXIT
+
+	if [[ -c "$FB_DEV" ]]; then
+		echo 0 > /sys/class/graphics/fb0/state
+		echo 0 > /sys/class/graphics/fb0/blank
+	else
+		log "Framebuffer device $FB_DEV not found, skipping framebuffer messages"
+	fi
+
+	[[ ! -f "$FONT" ]] && log "Font file $FONT not found, skipping framebuffer messages"
+
+	log "USB device mounted at $USB_MOUNT"
+	log "OEM partition device: $OEM_DEV"
+	log "Userdata partition device: $USERDATA_DEV"
+
+	check_format_everything
+	check_extended_recover
+	check_wpa_supplicant
+	check_firmware_upgrade
+
+	log "USB recovery checks complete"
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop|restart|reload|force-reload|status)
+		;;
+	*)
+		echo "Usage: $0 {start}" >&2
+		exit 3
+		;;
+esac
