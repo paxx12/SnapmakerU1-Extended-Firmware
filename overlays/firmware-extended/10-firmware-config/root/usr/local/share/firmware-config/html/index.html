@@ -71,13 +71,24 @@
         @keyframes indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
         .progress-info { display: none; color: #aaa; font-size: 12px; margin-bottom: 12px; justify-content: space-between; }
         .progress-info.visible { display: flex; }
+        .notice { display: none; background: var(--warning); color: #000; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+        .notice.visible { display: block; }
+        .notice a { color: #000; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Firmware Config <button class="btn btn-primary" onclick="refreshAll()">&#x21bb; Refresh</button></h1>
 
-        <div id="status-container"></div>
+        <div id="service-notice" class="notice">
+            Service unavailable. Ensure <strong>Advanced Mode</strong> is enabled, then restart the printer. <a href="https://github.com/paxx12/SnapmakerU1-Extended-Firmware/blob/main/docs/firmware_config.md" target="_blank">View docs</a>
+        </div>
+
+        <div id="main-content">
+        <div class="card">
+            <div class="card-header"><span class="card-title">Status</span></div>
+            <div id="status-container" class="info-grid"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+        </div>
 
         <div class="card">
             <div class="card-header"><span class="card-title">Quick Links</span></div>
@@ -106,6 +117,7 @@
                 <input type="text" class="input" id="file-display" placeholder="Click to select or drag & drop file" readonly onclick="$('file-input').click()">
                 <button class="btn btn-warning" id="upload-btn" disabled onclick="uploadUpgrade()">Upload & Upgrade</button>
             </div>
+        </div>
         </div>
     </div>
 
@@ -145,6 +157,24 @@
         let actionsData = [];
         let currentAction = '';
 
+        function showServiceNotice() {
+            $('service-notice').classList.add('visible');
+        }
+
+        function hideServiceNotice() {
+            $('service-notice').classList.remove('visible');
+        }
+
+        async function apiFetch(url, options = {}) {
+            const resp = await fetch(url, options);
+            if (resp.status === 502) {
+                showServiceNotice();
+                throw new Error('Service unavailable');
+            }
+            hideServiceNotice();
+            return resp;
+        }
+
         // ========================================
         // Data Loading Functions
         // ========================================
@@ -152,9 +182,9 @@
         async function loadStatus() {
             const container = $('status-container');
             try {
-                const status = await (await fetch('api/status')).json();
+                const status = await (await apiFetch('api/status')).json();
 
-                const sectionsHtml = Object.entries(status).map(([key, section]) => {
+                container.innerHTML = Object.entries(status).map(([key, section]) => {
                     const itemsHtml = section.items.map(item =>
                         `<div><strong>${item.label}:</strong> ${item.value || 'N/A'}</div>`
                     ).join('');
@@ -163,20 +193,15 @@
                         <div class="info-value" style="font-size:13px;line-height:1.6">${itemsHtml}</div>
                     </div>`;
                 }).join('');
-
-                container.innerHTML = `<div class="card">
-                    <div class="card-header"><span class="card-title">Status</span></div>
-                    <div class="info-grid">${sectionsHtml}</div>
-                </div>`;
             } catch (e) {
-                container.innerHTML = '<div class="card"><div class="loading" style="color:var(--error)">Failed to load status</div></div>';
+                container.innerHTML = `<div class="loading" style="color:var(--error)">Error: ${e.message}</div>`;
             }
         }
 
         async function loadLinks() {
             const container = $('links-container');
             try {
-                const links = await (await fetch('api/links')).json();
+                const links = await (await apiFetch('api/links')).json();
 
                 container.innerHTML = links.map(link =>
                     `<a class="link-item" href="${link.url}" target="_blank">
@@ -192,7 +217,7 @@
         async function loadActions() {
             const container = $('actions-container');
             try {
-                const grouped = await (await fetch('api/actions')).json();
+                const grouped = await (await apiFetch('api/actions')).json();
                 actionsData = Object.values(grouped).flatMap(g => g.items);
 
                 container.innerHTML = Object.entries(grouped).map(([_, group]) =>
@@ -215,7 +240,7 @@
             const container = $('settings-container');
             const card = container.closest('.card');
             try {
-                const grouped = await (await fetch('api/settings')).json();
+                const grouped = await (await apiFetch('api/settings')).json();
                 const groups = Object.entries(grouped);
 
                 if (groups.length === 0) {
@@ -363,7 +388,7 @@
             $('action-log').classList.add('visible');
 
             try {
-                const resp = await fetch('api/upgrade/url', {
+                const resp = await apiFetch('api/upgrade/url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url })
@@ -499,7 +524,7 @@
 
         async function execAction(id) {
             try {
-                const resp = await fetch(`api/action/${id}`, { method: 'POST' });
+                const resp = await apiFetch(`api/action/${id}`, { method: 'POST' });
                 await streamResponse(resp, id);
             } catch (e) {
                 appendLog(`\nERROR: ${e.message}`);
@@ -561,7 +586,7 @@
             $('action-log').classList.add('visible');
 
             try {
-                const resp = await fetch(`api/settings/${key}/${value}`, { method: 'POST' });
+                const resp = await apiFetch(`api/settings/${key}/${value}`, { method: 'POST' });
                 await streamResponse(resp);
                 refreshAll();
             } catch (e) {
@@ -578,7 +603,7 @@
             if (!currentAction) return;
 
             try {
-                const resp = await fetch(`api/action/${currentAction}/download`, { method: 'POST' });
+                const resp = await apiFetch(`api/action/${currentAction}/download`, { method: 'POST' });
                 if (!resp.ok) throw new Error(resp.statusText);
 
                 const blob = await resp.blob();
