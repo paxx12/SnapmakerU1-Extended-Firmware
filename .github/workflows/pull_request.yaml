@@ -54,7 +54,16 @@ jobs:
         path: tmp/kernel/
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
 
-    - name: Set GET_VERSION (for branch)
+    - name: Restore ccache
+      id: cache-ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: tmp/ccache/
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
+        restore-keys: |
+          ccache-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Set GIT_VERSION (for branch)
       shell: bash
       if: github.event_name == 'push'
       run: |
@@ -163,3 +172,9 @@ jobs:
       with:
         path: tmp/kernel/
         key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
+
+    - name: Save ccache
+      uses: actions/cache/save@v4
+      with:
+        path: tmp/ccache/
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
