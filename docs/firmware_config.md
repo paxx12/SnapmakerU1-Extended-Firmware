@@ -29,7 +29,7 @@ Displays system information including:
 
 Dynamic links based on current settings:
 - **Web Interface** - Opens Fluidd/Mainsail
-- **Internal Camera** - Camera stream (when paxx12 stack is enabled)
+- **Internal Camera** - Camera stream (when paxx12 service is enabled)
 - **USB Camera** - USB camera stream (when enabled)
 - **Remote Screen** - Remote screen access (when enabled)
 
@@ -39,8 +39,8 @@ Toggle settings directly from the web interface:
 
 | Setting | Options | Description |
 |---------|---------|-------------|
-| Web Frontend | Fluidd, Mainsail | Switch between web interfaces |
-| Camera Stack | Paxx12, Snapmaker | Select camera service |
+| Frontend | Fluidd, Mainsail | Switch between web interfaces |
+| Internal Camera | Paxx12, Snapmaker, Disabled | Select camera service |
 | Camera RTSP Stream | Enabled, Disabled | Enable RTSP streaming |
 | USB Camera | Enabled, Disabled | Enable USB camera support |
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
@@ -111,90 +111,90 @@ After saving, reboot the printer.
 
 ### Configuration Options
 
-#### [firmware_config]
-
-**enabled** - Enable or disable the Firmware Config web interface
-- `true` (default) - Firmware Config available at `/firmware-config/` when Advanced Mode is enabled
-- `false` - Firmware Config disabled even when Advanced Mode is enabled
-
-#### [vpn]
-
-**provider** - VPN provider for remote access (only one can be active)
-- `none` (default) - VPN disabled
-- `tailscale` - Connect to your Tailnet via [Tailscale](https://tailscale.com)
-
-See [VPN Remote Access](vpn.md) for setup instructions.
-
-#### [camera]
-
-**stack** - Camera stack selection (only one can be active)
-- `paxx12` (default) - Hardware-accelerated v4l2-mpp camera stack with WebRTC and timelapse
-- `snapmaker` - Native Snapmaker camera service
-
-**logs** - Camera service logging destination
-- `syslog` - Enable logging to `/var/log/messages`
-
-**rtsp** - Enable RTSP streaming support (paxx12 stack only)
-- `true` - Enable RTSP streaming at `rtsp://<printer-ip>:8554/stream` (internal) and `rtsp://<printer-ip>:8555/stream` (USB)
-- `false` (default) - RTSP streaming disabled
-
-**usb** - Enable USB camera support (paxx12 stack only)
-- `true` - Enable USB camera streaming at `http://<printer-ip>/webcam2/`
-- `false` (default) - USB camera disabled
-
 #### [web]
 
 **frontend** - Web interface selection (only one can be active)
 - `fluidd` (default) - Fluidd web interface
 - `mainsail` - Mainsail web interface
 
-#### [remote_screen]
+**firmware_config** - Enable or disable the Firmware Config web interface
+- `true` (default) - Firmware Config available at `/firmware-config/` when Advanced Mode is enabled
+- `false` - Firmware Config disabled even when Advanced Mode is enabled
 
-**enabled** - Enable remote screen access at `http://<printer-ip>/screen/`
+**remote_screen** - Enable remote screen access at `http://<printer-ip>/screen/`
 - `true` - Enable remote screen viewing and touch control in web browser
 - `false` (default) - Remote screen access disabled
 
-Note: Requires additional Moonraker configuration. See [Remote Screen Access](remote_screen.md) for complete setup.
+Note: Remote screen requires additional Moonraker configuration. See [Remote Screen Access](remote_screen.md) for complete setup.
+
+#### [camera]
+
+**internal** - Internal camera service selection (only one can be active)
+- `paxx12` (default) - Hardware-accelerated v4l2-mpp camera service with WebRTC and timelapse
+- `snapmaker` - Native Snapmaker camera service
+- `none` - Disable internal camera
+
+**usb** - USB camera service selection
+- `paxx12` - Enable USB camera with paxx12 service at `http://<printer-ip>/webcam2/`
+- `none` (default) - USB camera disabled
+
+**rtsp** - Enable RTSP streaming support (paxx12 service only)
+- `true` - Enable RTSP streaming at `rtsp://<printer-ip>:8554/stream` (internal) and `rtsp://<printer-ip>:8555/stream` (USB)
+- `false` (default) - RTSP streaming disabled
+
+**logs** - Camera service logging destination
+- `syslog` - Enable logging to `/var/log/messages`
+
+#### [remote_access]
+
+**ssh** - Enable SSH remote access via dropbear
+- `true` - Enable SSH access
+- `false` (default) - SSH disabled
+
+**vpn** - VPN provider for remote access (only one can be active)
+- `none` (default) - VPN disabled
+- `tailscale` - Connect to your Tailnet via [Tailscale](https://tailscale.com)
+
+See [VPN Remote Access](vpn.md) for setup instructions.
 
 #### [monitoring]
 
-**klipper_exporter_enabled** - Enable Prometheus metrics exporter for Klipper
-- `true` - Enable metrics at `http://<printer-ip>:9101/metrics`
-- `false` (default) - Klipper exporter disabled
-
-**klipper_exporter_address** - Metrics exporter listen address
-- `:9101` (default) - Listen on all interfaces, port 9101
+**klipper_exporter** - Enable Prometheus metrics exporter for Klipper
+- `:9101` - Enable metrics at `http://<printer-ip>:9101/metrics`
 - Custom format: `[host]:port` (e.g., `127.0.0.1:9101`, `:8080`)
+- Not set (default) - Klipper exporter disabled
 
 See [Monitoring](monitoring.md) for integration with Grafana, Home Assistant, or DataDog.
 
 ### Example Configuration
 
 ```ini
-[firmware_config]
-# enabled: true
-# enabled: false
+[web]
+# Web interface frontend: fluidd, mainsail
+frontend: fluidd
+# Enable access at http://<printer-ip>/firmware-config/: true, false
+firmware_config: true
+# Enable access at http://<printer-ip>/screen/: true, false
+remote_screen: false
 
 [camera]
-stack: paxx12
-# stack: snapmaker
-logs: syslog
-# rtsp: true
-# usb: true
+# Internal (Case) camera options: paxx12, snapmaker, none
+internal: paxx12
+# External (USB) camera options: paxx12, none
+usb: none
+# Enable RTSP streaming server: true, false
+rtsp: false
 
-[web]
-frontend: fluidd
-# frontend: mainsail
-
-[remote_screen]
-# enabled: true
+[remote_access]
+# Enable SSH access: true, false
+ssh: false
+# VPN provider for remote access: none, tailscale
+# Must SSH and run "tailscale up" to complete login flow
+vpn: none
 
 [monitoring]
-# klipper_exporter_enabled: true
-# klipper_exporter_address: :9101
-
-[vpn]
-# provider: tailscale
+# Enable Klipper Prometheus exporter on specified address
+# klipper_exporter: :9101
 ```
 
 ### Identifying Customized Settings
@@ -213,7 +213,7 @@ The `.default` files are updated on each boot to reflect the current firmware de
 - After making changes to `extended.cfg`, reboot the printer for changes to take effect
 - The file uses INI-style format with sections like `[camera]` and `[web]`
 - Lines starting with `#` are comments and ignored
-- Only one camera stack can be active at a time
+- Only one camera service can be active at a time for internal camera
 - Only one web interface can be active at a time
 - Changes made via the Firmware Config web interface are written to `extended.cfg`
 

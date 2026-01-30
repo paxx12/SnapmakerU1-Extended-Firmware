@@ -27,7 +27,7 @@ Exposes [Klipper metrics](https://github.com/scross01/prometheus-klipper-exporte
 **Disabled by default.** Enable in `extended.cfg`:
 ```ini
 [monitoring]
-klipper_exporter_enabled: true
+klipper_exporter: :9101
 ```
 Then reboot the printer.
 

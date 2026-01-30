@@ -13,8 +13,8 @@ The custom firmware enables SSH access to the Snapmaker U1 printer.
 In Extended firmware, SSH is **disabled by default** and can be enabled via the firmware-config web UI or by editing `extended.cfg`:
 
 ```ini
-[ssh]
-enabled: true
+[remote_access]
+ssh: true
 ```
 
 Changes take effect after restarting the SSH service or rebooting the printer.

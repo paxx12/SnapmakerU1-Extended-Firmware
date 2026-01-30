@@ -25,8 +25,8 @@ Remote screen is **disabled by default**. To enable:
 
 **Step 1:** Edit `extended/extended.cfg`, locate the setting below and set it to true:
 ```ini
-[remote_screen]
-enabled: true
+[web]
+remote_screen: true
 ```
 
 **Step 2:** Edit `extended/moonraker/04_remote_screen.cfg`, locate the setting below and set it to true:
