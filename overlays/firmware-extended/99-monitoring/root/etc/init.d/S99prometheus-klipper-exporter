@@ -1,15 +1,14 @@
 #!/bin/sh
 
 EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
-EXPORTER_ENABLED=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" monitoring klipper_exporter_enabled false)
-EXPORTER_ADDRESS=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" monitoring klipper_exporter_address ":9101")
+EXPORTER_ADDRESS=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" monitoring klipper_exporter "")
 
 NAME="prometheus-klipper-exporter"
 DAEMON="/usr/local/bin/prometheus-klipper-exporter"
 PIDFILE="/var/run/$NAME.pid"
 
 start() {
-    if [ "$EXPORTER_ENABLED" != "true" ]; then
+    if [ -z "$EXPORTER_ADDRESS" ]; then
         echo "prometheus-klipper-exporter is disabled in extended.cfg, not starting."
         return
     fi

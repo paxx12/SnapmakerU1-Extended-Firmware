@@ -6,11 +6,11 @@ links:
     condition: null
 
 settings:
-  remote_access:
-    label: Remote Access
+  web:
+    label: Web
     items:
       web-frontend:
-        label: Web Frontend
+        label: Frontend
         get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended.cfg, web, frontend, fluidd]
         options:
           mainsail:
