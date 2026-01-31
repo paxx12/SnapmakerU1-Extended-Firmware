@@ -1,0 +1,34 @@
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      cloud:
+        label: Cloud Services - Remote Access, AI Print Failure Detection, Notifications, Phone Apps, etc.
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - remote_access
+          - cloud
+          - none
+        options:
+          none:
+            label: None
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
+                /etc/init.d/S99cloud stop
+          octoeverywhere:
+            label: OctoEverywhere
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/octoeverywhere-pkg download &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere &&
+                /etc/init.d/S99cloud restart &&
+                sleep 5 &&
+                /usr/bin/python /usr/local/bin/display-octoeverywhere-account-link-url.py
+        default: none

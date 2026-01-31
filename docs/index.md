@@ -61,6 +61,7 @@ Heavily expanded firmware with extensive features and customization. Includes al
 - Moonraker Adaptive Mesh Support - Object processing for adaptive mesh features
 - Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - [Timelapse Recovery Tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos
+- [OctoEverywhere](cloud.md) - Free & unlimited secure remote access, AI print failure detection, notifications, and more
 
 ## Support
 

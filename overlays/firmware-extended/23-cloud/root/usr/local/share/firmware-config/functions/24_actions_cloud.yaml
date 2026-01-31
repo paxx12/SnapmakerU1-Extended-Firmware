@@ -1,0 +1,10 @@
+actions:
+  cloud:
+    label: Cloud
+    items:
+      get-octoeverywhere-link-url:
+        label: Get OctoEverywhere Account Link URL
+        cmd:
+          - /usr/bin/python
+          - /usr/local/bin/display-octoeverywhere-account-link-url.py
+        message: ""
