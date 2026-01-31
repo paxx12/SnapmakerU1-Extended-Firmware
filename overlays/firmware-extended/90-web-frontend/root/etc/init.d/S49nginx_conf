@@ -1,6 +1,6 @@
 #!/bin/sh
 
-EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
 SITES_ENABLED="/etc/nginx/sites-enabled"
 SITES_AVAILABLE="/etc/nginx/sites-available"
 

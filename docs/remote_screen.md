@@ -23,7 +23,7 @@ Once enabled: `http://<printer-ip>/screen/`
 
 Remote screen is **disabled by default**. To enable:
 
-**Step 1:** Edit `extended/extended.cfg`, locate the setting below and set it to true:
+**Step 1:** Edit `extended/extended2.cfg`, locate the setting below and set it to true:
 ```ini
 [web]
 remote_screen: true
@@ -46,7 +46,7 @@ enabled: true
 **Editing via SSH:**
 ```bash
 ssh lava@<printer-ip>
-vi /home/lava/printer_data/config/extended/extended.cfg
+vi /home/lava/printer_data/config/extended/extended2.cfg
 vi /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg
 ```
 

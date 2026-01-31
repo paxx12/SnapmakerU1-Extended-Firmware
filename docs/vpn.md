@@ -30,7 +30,7 @@ ssh root@<printer-ip>
 tailscale-pkg download
 ```
 
-**Step 2:** Edit `extended/extended.cfg`, set the `vpn`:
+**Step 2:** Edit `extended/extended2.cfg`, set the `vpn`:
 ```ini
 [remote_access]
 vpn: tailscale
