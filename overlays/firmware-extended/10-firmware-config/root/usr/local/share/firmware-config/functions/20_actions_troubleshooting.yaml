@@ -23,21 +23,35 @@ actions:
   recovery:
     label: Recovery
     items:
-      revert-changes:
-        label: Revert Changes
-        confirm: "Remove printer configuration changes, disable data persistence and reboot?"
+      reset-extended-to-defaults:
+        label: Reset Extended to Defaults
+        confirm: "Reset all extended settings to defaults and reboot?"
         background: true
         cmd:
           - /bin/bash
           - -xc
           - |
             rm -f /oem/.printer_data /oem/.debug &&
+            touch /oem/.extended-recover &&
             /sbin/reboot
-        message: "Reverting changes..."
+        message: "Resetting extended to defaults..."
 
-      recover-to-backup-firmware:
-        label: Recover to Backup Firmware
-        confirm: "Restore previous firmware version, remove printer configuration changes, disable data persistence and reboot?"
+      reset-to-backup-firmware:
+        label: Reset Extended to Backup Firmware
+        confirm: "Reset all extended settings to defaults, switch to backup firmware and reboot?"
+        background: true
+        cmd:
+          - /bin/bash
+          - -xc
+          - |
+            rm -f /oem/.printer_data /oem/.debug &&
+            touch /oem/.extended-recover &&
+            updateEngine --misc=other --reboot
+        message: "Resetting to backup firmware..."
+
+      switch-to-backup-firmware:
+        label: Switch to Backup Firmware
+        confirm: "Switch to backup firmware and reboot?"
         background: true
         cmd:
           - /bin/bash
@@ -45,4 +59,4 @@ actions:
           - |
             rm -f /oem/.printer_data /oem/.debug &&
             updateEngine --misc=other --reboot
-        message: "Recovering to backup firmware..."
+        message: "Switching to backup firmware..."
