@@ -30,7 +30,7 @@ The internal camera is automatically configured and enabled.
 
 Access at: `http://<printer-ip>/webcam2/`
 
-USB cameras must be enabled in `extended.cfg`. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
+USB cameras must be enabled in `extended2.cfg`. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
 
 ## Moonraker Camera Configuration
 
@@ -92,7 +92,7 @@ To reset camera settings to defaults, delete the corresponding JSON file and reb
 
 ## Configuration
 
-All camera configuration is done through `/home/lava/printer_data/config/extended/extended.cfg`. See [Firmware Configuration](firmware_config.md) for editing instructions.
+All camera configuration is done through `/home/lava/printer_data/config/extended/extended2.cfg`. See [Firmware Configuration](firmware_config.md) for editing instructions.
 
 ### Internal Camera Selection
 

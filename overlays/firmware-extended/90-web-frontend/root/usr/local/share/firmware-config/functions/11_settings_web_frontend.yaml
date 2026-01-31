@@ -11,7 +11,7 @@ settings:
     items:
       web-frontend:
         label: Frontend
-        get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended.cfg, web, frontend, fluidd]
+        get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended2.cfg, web, frontend, fluidd]
         options:
           mainsail:
             label: Mainsail
@@ -19,7 +19,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg web frontend mainsail &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web frontend mainsail &&
                 /etc/init.d/S49nginx_conf restart &&
                 /usr/sbin/nginx -s reload
           fluidd:
@@ -28,7 +28,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg web frontend fluidd &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web frontend fluidd &&
                 /etc/init.d/S49nginx_conf restart &&
                 /usr/sbin/nginx -s reload
         default: fluidd

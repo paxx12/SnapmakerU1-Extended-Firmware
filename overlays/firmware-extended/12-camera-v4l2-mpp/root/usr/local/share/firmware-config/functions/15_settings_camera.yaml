@@ -24,7 +24,7 @@ settings:
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
-          - /home/lava/printer_data/config/extended/extended.cfg
+          - /home/lava/printer_data/config/extended/extended2.cfg
           - camera
           - internal
           - paxx12
@@ -35,7 +35,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera internal paxx12 &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal paxx12 &&
                 /etc/init.d/S91unisrv stop &&
                 /etc/init.d/S99v4l2-mpp-mipi restart
           snapmaker:
@@ -44,7 +44,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera internal snapmaker &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal snapmaker &&
                 /etc/init.d/S99v4l2-mpp-mipi stop &&
                 /etc/init.d/S91unisrv start
           none:
@@ -53,7 +53,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera internal none &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal none &&
                 /etc/init.d/S99v4l2-mpp-mipi stop &&
                 /etc/init.d/S91unisrv stop
         default: paxx12
@@ -63,7 +63,7 @@ settings:
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
-          - /home/lava/printer_data/config/extended/extended.cfg
+          - /home/lava/printer_data/config/extended/extended2.cfg
           - camera
           - usb
           - none
@@ -74,7 +74,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera usb paxx12 &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera usb paxx12 &&
                 /usr/local/bin/extended-config.py uncomment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
                 /usr/local/bin/extended-config.py update /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" enabled true &&
                 /etc/init.d/S99v4l2-mpp-usb restart &&
@@ -85,7 +85,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera usb none &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera usb none &&
                 /usr/local/bin/extended-config.py comment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
                 /etc/init.d/S99v4l2-mpp-usb stop &&
                 /etc/init.d/S61moonraker restart
@@ -96,7 +96,7 @@ settings:
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
-          - /home/lava/printer_data/config/extended/extended.cfg
+          - /home/lava/printer_data/config/extended/extended2.cfg
           - camera
           - rtsp
           - "false"
@@ -107,7 +107,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera rtsp true &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera rtsp true &&
                 /etc/init.d/S99v4l2-mpp-mipi restart &&
                 /etc/init.d/S99v4l2-mpp-usb restart
           "false":
@@ -116,7 +116,7 @@ settings:
               - bash
               - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended.cfg camera rtsp false &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera rtsp false &&
                 /etc/init.d/S99v4l2-mpp-mipi restart &&
                 /etc/init.d/S99v4l2-mpp-usb restart
         default: "false"

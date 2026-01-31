@@ -6,10 +6,12 @@ title: Firmware Configuration
 
 **Available in: Extended firmware**
 
+> **Note for users upgrading to v1.1.0:** The configuration file has been renamed from `extended.cfg` to `extended2.cfg`. During the first boot after upgrading a new `extended2.cfg` will be created with default settings. You will need to migrate your custom settings from `extended.cfg` to `extended2.cfg` manually or use `http://IP/firmware-config`
+
 The extended firmware provides two ways to configure firmware behavior:
 
 1. **Firmware Config Web Interface** - A web-based tool for managing settings, firmware upgrades, and troubleshooting
-2. **extended.cfg** - A configuration file for customizing firmware behavior
+2. **extended2.cfg** - A configuration file for customizing firmware behavior
 
 ## Firmware Config Web Interface
 
@@ -76,26 +78,26 @@ Upgrade firmware using one of two methods:
 
 The system reboots automatically after a successful upgrade.
 
-## Configuration File (extended.cfg)
+## Configuration File (extended2.cfg)
 
 For advanced configuration, edit the configuration file directly.
 
 ### File Location
 
 ```
-/home/lava/printer_data/config/extended/extended.cfg
+/home/lava/printer_data/config/extended/extended2.cfg
 ```
 
 ### Editing the Configuration File
 
-The `extended.cfg` file is automatically created by the firmware.
+The `extended2.cfg` file is automatically created by the firmware.
 
 #### Via Fluidd/Mainsail
 
 1. On the printer, go to **Settings > Maintenance > Advanced Mode** and enable it
 2. Open Fluidd or Mainsail in your web browser (`http://<printer-ip>`)
 3. Go to the **Configuration** tab
-4. Navigate to the `extended` directory and open `extended.cfg`
+4. Navigate to the `extended` directory and open `extended2.cfg`
 5. Add or modify your configuration options (see below)
 6. Save the file
 7. Reboot the printer
@@ -104,7 +106,7 @@ The `extended.cfg` file is automatically created by the firmware.
 
 ```bash
 ssh lava@<printer-ip>
-vi /home/lava/printer_data/config/extended/extended.cfg
+vi /home/lava/printer_data/config/extended/extended2.cfg
 ```
 
 After saving, reboot the printer.
@@ -199,7 +201,7 @@ vpn: none
 
 ### Identifying Customized Settings
 
-When you modify a configuration file, the system automatically creates a `.default` file alongside it containing the original default values. For example, if you customize `extended.cfg`, you'll find `extended.cfg.default` in the same directory.
+When you modify a configuration file, the system automatically creates a `.default` file alongside it containing the original default values. For example, if you customize `extended2.cfg`, you'll find `extended2.cfg.default` in the same directory.
 
 This makes it easy to:
 - See which files you have customized
@@ -210,12 +212,12 @@ The `.default` files are updated on each boot to reflect the current firmware de
 
 ## Important Notes
 
-- After making changes to `extended.cfg`, reboot the printer for changes to take effect
+- After making changes to `extended2.cfg`, reboot the printer for changes to take effect
 - The file uses INI-style format with sections like `[camera]` and `[web]`
 - Lines starting with `#` are comments and ignored
 - Only one camera service can be active at a time for internal camera
 - Only one web interface can be active at a time
-- Changes made via the Firmware Config web interface are written to `extended.cfg`
+- Changes made via the Firmware Config web interface are written to `extended2.cfg`
 
 ## Recovery & Reset
 
