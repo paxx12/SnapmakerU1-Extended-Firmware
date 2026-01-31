@@ -1,7 +1,5 @@
 include vars.mk
 
-export CCACHE_DIR ?= $(CURDIR)/tmp/ccache
-
 all: tools
 
 # ================= Build Tools =================
