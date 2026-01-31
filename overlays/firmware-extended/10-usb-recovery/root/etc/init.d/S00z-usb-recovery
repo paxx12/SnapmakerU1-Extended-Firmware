@@ -109,6 +109,11 @@ check_format_everything() {
 		"DO NOT POWER OFF"
 
 	if [[ -b "$OEM_DEV" ]]; then
+		fb_text black white "Creating backup of oem..." --yellow "Please wait"
+		tar -czf "$USB_MOUNT/oem-backup.tar.gz" -C /oem . 2>/dev/null
+		sync
+		sleep 1
+
 		fb_text black white "Formatting oem..." --red "DO NOT POWER OFF"
 		umount "$OEM_DEV"
 		mkfs.ext4 -F -L oem -m 0 "$OEM_DEV"
@@ -118,6 +123,10 @@ check_format_everything() {
 	fi
 
 	if [[ -b "$USERDATA_DEV" ]]; then
+		fb_text black white "Creating backup of userdata..." --yellow "Please wait"
+		tar -czf "$USB_MOUNT/userdata-backup.tar.gz" -C /userdata . 2>/dev/null
+		sync
+		sleep 1
 		fb_text black white "Formatting userdata..." --red "DO NOT POWER OFF"
 		umount "$USERDATA_DEV"
 		mkfs.ext4 -F -L userdata -m 0 "$USERDATA_DEV"
