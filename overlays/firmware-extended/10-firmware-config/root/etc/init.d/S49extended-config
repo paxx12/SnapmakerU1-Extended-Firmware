@@ -1,12 +1,10 @@
 #!/bin/sh
 
-DEFAULT_DIR="/home/lava/default-config"
-CONFIG_DIR="/home/lava/printer_data/config"
+DEFAULT_DIR="/usr/local/share/firmware-config/extended"
+EXTENDED_DIR="/home/lava/printer_data/config/extended"
 
 start() {
     if [ -f /mnt/udisk/extended-recover.txt ]; then
-        EXTENDED_DIR="$CONFIG_DIR/extended"
-
         # Move existing extended config to a backup location
         # find the next available backup number
         if [ -d "$EXTENDED_DIR" ]; then
@@ -19,11 +17,11 @@ start() {
         rm -f /mnt/udisk/extended-recover.txt
     fi
 
-    mkdir -p "$CONFIG_DIR"
+    mkdir -p "$EXTENDED_DIR"
 
     # Delete old files with matching checksums to force cleanup
     echo "Performing forced cleanup of old config files..."
-    pushd "$CONFIG_DIR"
+    pushd "$EXTENDED_DIR"
     sha256sum -c /usr/local/share/firmware-config/force-cleanup.sha256 | \
         awk -F':' '/: OK/{print $1}' |
         xargs -r rm -v --
@@ -31,19 +29,19 @@ start() {
 
     # Copy default config files without overwriting existing ones
     echo "Copying default config files..."
-    cp -rn "$DEFAULT_DIR/." "$CONFIG_DIR/"
+    cp -rn "$DEFAULT_DIR/." "$EXTENDED_DIR/"
 
     # Remove old .default files and create new ones for files that differ
     echo "Updating .default files..."
-    find "$CONFIG_DIR/extended" -name "*.default" -exec rm -v {} +
-    pushd "$DEFAULT_DIR/extended" > /dev/null
-    diff -rq . "$CONFIG_DIR/extended" \
+    find "$EXTENDED_DIR" -name "*.default" -exec rm -v {} +
+    pushd "$DEFAULT_DIR" > /dev/null
+    diff -rq . "$EXTENDED_DIR" \
         | sed -n 's/^Files \.\/\(.*\) and .* differ$/\1/p' \
-        | xargs -I{} cp -v {} "$CONFIG_DIR/extended/{}.default"
+        | xargs -I{} cp -v {} "$EXTENDED_DIR/{}.default"
     popd > /dev/null
 
     echo "Setting ownership to lava user..."
-    chown -R lava:lava "$CONFIG_DIR"
+    chown -R lava:lava "$EXTENDED_DIR"
 }
 
 case "$1" in
