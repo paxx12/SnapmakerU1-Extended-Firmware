@@ -63,6 +63,19 @@ jobs:
         restore-keys: |
           ccache-${{ runner.os }}-${{ runner.arch }}-
 
+    - name: Restore downloads cache
+      id: cache-downloads
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          tmp/cache/**/.git
+          tmp/cache/**/*.zip
+          tmp/cache/**/*.gz
+          tmp/cache/**/*.xz
+        key: downloads-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
+        restore-keys: |
+          downloads-${{ runner.os }}-${{ runner.arch }}-
+
     - name: Set GIT_VERSION (for branch)
       shell: bash
       if: github.event_name == 'push'
@@ -178,3 +191,13 @@ jobs:
       with:
         path: tmp/ccache/
         key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
+
+    - name: Save downloads cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          tmp/cache/**/.git
+          tmp/cache/**/*.zip
+          tmp/cache/**/*.gz
+          tmp/cache/**/*.xz
+        key: downloads-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
