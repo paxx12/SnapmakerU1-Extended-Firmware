@@ -1,0 +1,11 @@
+actions:
+  system:
+    label: System
+    items:
+      reboot-system:
+        label: Reboot System
+        confirm: true
+        cmd:
+          - /sbin/reboot
+        background: true
+        message: "Rebooting system..."

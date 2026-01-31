@@ -24,10 +24,10 @@ You can create custom metrics collection using the Moonraker API.
 
 Exposes [Klipper metrics](https://github.com/scross01/prometheus-klipper-exporter) via HTTP endpoint for [OpenMetrics/Prometheus](https://github.com/prometheus/OpenMetrics) systems.
 
-**Disabled by default.** Enable in `extended.cfg`:
+**Disabled by default.** Enable in `extended2.cfg`:
 ```ini
 [monitoring]
-klipper_exporter_enabled: true
+klipper_exporter: :9101
 ```
 Then reboot the printer.
 

@@ -1,0 +1,69 @@
+#!/bin/sh
+
+NAME="firmware-config"
+DAEMON="/usr/local/bin/firmware-config.py"
+PIDFILE="/var/run/$NAME.pid"
+
+SHAREDIR="/usr/local/share/firmware-config"
+PORT=9091
+BIND=127.0.0.1
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
+FIRMWARE_CONFIG_ENABLED=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" web firmware_config true)
+
+start() {
+    if [ "$FIRMWARE_CONFIG_ENABLED" != "true" ]; then
+        echo "[firmware_config] is disabled in extended2.cfg, not starting."
+        return
+    fi
+
+    printf "Starting $NAME: "
+    if [ ! -f /oem/printer_data/.fluidd ]; then
+        echo "SKIPPED (no /oem/printer_data/.fluidd)"
+        return 0
+    fi
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "already running"
+        return 1
+    fi
+    start-stop-daemon -S -b -m -p "$PIDFILE" -x /usr/bin/python3 -- \
+        "$DAEMON" --bind "$BIND" --port "$PORT" \
+        --html-dir "$SHAREDIR/html" \
+        --functions-dir "$SHAREDIR/functions"
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping $NAME: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?

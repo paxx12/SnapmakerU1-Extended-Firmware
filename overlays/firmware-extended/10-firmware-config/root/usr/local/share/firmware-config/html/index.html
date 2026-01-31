@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Firmware Config</title>
+    <meta name="theme-color" content="#1a1a1a">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --item: #3d3d3d; --hover: #4d4d4d; --accent: #4fc3f7; --text: #e0e0e0; --muted: #888; --success: #81c784; --error: #e57373; --warning: #ff9800; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: var(--accent); margin-bottom: 20px; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: var(--card); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-title { font-weight: 600; color: #fff; }
+        .btn { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-height: 34px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover:not(:disabled) { background: #29b6f6; }
+        .btn-danger { background: var(--error); color: #000; }
+        .btn-danger:hover:not(:disabled) { background: #ef5350; }
+        .btn-secondary { background: #555; color: #fff; }
+        .btn-secondary:hover:not(:disabled) { background: #666; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-warning:hover:not(:disabled) { background: #ffa726; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .group-section { margin-bottom: 16px; }
+        .group-section:last-child { margin-bottom: 0; }
+        .group-title { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-item { background: var(--item); padding: 12px; border-radius: 6px; }
+        .info-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .info-value { font-family: monospace; font-size: 14px; word-break: break-all; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--item); border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
+        .row:hover { background: var(--hover); }
+        .row-label { color: #fff; font-size: 14px; font-weight: 500; flex: 1; }
+        .row select { background: var(--card); border: 1px solid #555; border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 13px; cursor: pointer; min-width: 150px; }
+        .row select:focus { outline: none; border-color: var(--accent); }
+        .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .link-item { background: var(--item); padding: 12px 16px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
+        .link-item:hover { background: var(--hover); }
+        .link-icon { font-size: 20px; }
+        .link-text { color: #fff; font-size: 14px; font-weight: 500; }
+        .input-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .input { flex: 1; background: var(--item); border: 1px solid #555; border-radius: 6px; padding: 12px; color: var(--text); font-size: 14px; font-family: monospace; }
+        .input:focus { outline: none; border-color: var(--accent); }
+        .separator { text-align: center; color: #666; margin: 8px 0 16px; font-size: 12px; font-weight: 600; position: relative; }
+        .separator::before, .separator::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #444; }
+        .separator::before { left: 0; }
+        .separator::after { right: 0; }
+        .file-drop.dragover .input { border-color: var(--success); background: var(--item); }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #555; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading { color: var(--muted); font-size: 13px; padding: 12px; text-align: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.visible { display: flex; }
+        .modal { background: var(--card); border-radius: 12px; padding: 24px; width: 720px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-title { color: #fff; font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-message { color: var(--text); margin-bottom: 20px; }
+        .modal-status { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+        .modal-status.success { color: var(--success); }
+        .modal-status.error { color: var(--error); }
+        .modal-log { background: #0d0d0d; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; height: 300px; overflow-y: auto; margin-bottom: 16px; display: none; }
+        .modal-log.visible { display: block; }
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
+        .modal-buttons .btn { padding: 10px 20px; font-size: 14px; }
+        .progress-bar { height: 4px; background: var(--item); border-radius: 2px; margin-bottom: 12px; overflow: hidden; display: none; }
+        .progress-bar.visible { display: block; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+        .progress-fill.indeterminate { width: 30%; animation: indeterminate 1.5s infinite linear; }
+        @keyframes indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+        .progress-info { display: none; color: #aaa; font-size: 12px; margin-bottom: 12px; justify-content: space-between; }
+        .progress-info.visible { display: flex; }
+        .notice { display: none; background: var(--warning); color: #000; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+        .notice.visible { display: block; }
+        .notice a { color: #000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Firmware Config <button class="btn btn-primary" onclick="refreshAll()">&#x21bb; Refresh</button></h1>
+
+        <div id="service-notice" class="notice">
+            Service unavailable. Ensure <strong>Advanced Mode</strong> is enabled, then restart the printer. <a href="https://github.com/paxx12/SnapmakerU1-Extended-Firmware/blob/main/docs/firmware_config.md" target="_blank">View docs</a>
+        </div>
+
+        <div id="main-content">
+        <div class="card">
+            <div class="card-header"><span class="card-title">Status</span></div>
+            <div id="status-container" class="info-grid"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-title">Quick Links</span></div>
+            <div id="links-container" class="links-grid"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-title">Settings</span></div>
+            <div id="settings-container"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-title">Actions</span></div>
+            <div id="actions-container"><div class="loading"><span class="spinner"></span> Loading...</div></div>
+        </div>
+
+        <div class="card" id="upgrade-card">
+            <div class="card-header"><span class="card-title">Firmware Upgrade</span></div>
+            <div class="input-row">
+                <input type="text" class="input" id="url-input" placeholder="Enter firmware URL" oninput="validateURL()">
+                <button class="btn btn-primary" id="download-btn" disabled onclick="downloadUpgrade()">Download & Upgrade</button>
+            </div>
+            <div class="separator">OR</div>
+            <div class="input-row file-drop" id="file-drop">
+                <input type="file" id="file-input" onchange="handleFile(this)" style="display:none">
+                <input type="text" class="input" id="file-display" placeholder="Click to select or drag & drop file" readonly onclick="$('file-input').click()">
+                <button class="btn btn-warning" id="upload-btn" disabled onclick="uploadUpgrade()">Upload & Upgrade</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-title" id="confirm-title"></div>
+            <div class="modal-message" id="confirm-message" style="white-space:pre-wrap"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="hideConfirmModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action/Progress Modal -->
+    <div class="modal-overlay" id="action-modal">
+        <div class="modal">
+            <div class="modal-title" id="action-title"></div>
+            <div class="modal-message" id="action-message"></div>
+            <div class="progress-bar" id="action-progress"><div class="progress-fill" id="action-progress-fill"></div></div>
+            <div class="progress-info" id="action-progress-info"><span id="action-progress-text"></span><span id="action-speed"></span></div>
+            <pre class="modal-log" id="action-log"></pre>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" id="action-download-btn" style="display:none" onclick="downloadFile()">Download File</button>
+                <button class="btn btn-secondary" id="action-close-btn" disabled onclick="hideActionModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to get element by ID
+        const $ = id => document.getElementById(id);
+
+        // Global state
+        let selectedFile = null;
+        let actionsData = [];
+        let currentAction = '';
+
+        function showServiceNotice() {
+            $('service-notice').classList.add('visible');
+        }
+
+        function hideServiceNotice() {
+            $('service-notice').classList.remove('visible');
+        }
+
+        async function apiFetch(url, options = {}) {
+            const resp = await fetch(url, options);
+            if (resp.status === 502) {
+                showServiceNotice();
+                throw new Error('Service unavailable');
+            }
+            hideServiceNotice();
+            return resp;
+        }
+
+        // ========================================
+        // Data Loading Functions
+        // ========================================
+
+        async function loadStatus() {
+            const container = $('status-container');
+            try {
+                const status = await (await apiFetch('api/status')).json();
+
+                container.innerHTML = Object.entries(status).map(([key, section]) => {
+                    const itemsHtml = section.items.map(item =>
+                        `<div><strong>${item.label}:</strong> ${item.value || 'N/A'}</div>`
+                    ).join('');
+                    return `<div class="info-item">
+                        <div class="info-label">${section.title}</div>
+                        <div class="info-value" style="font-size:13px;line-height:1.6">${itemsHtml}</div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="loading" style="color:var(--error)">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadLinks() {
+            const container = $('links-container');
+            try {
+                const links = await (await apiFetch('api/links')).json();
+
+                container.innerHTML = links.map(link =>
+                    `<a class="link-item" href="${link.url}" target="_blank">
+                        <span class="link-icon">${link.icon}</span>
+                        <span class="link-text">${link.label}</span>
+                    </a>`
+                ).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="loading" style="color:var(--error)">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadActions() {
+            const container = $('actions-container');
+            try {
+                const grouped = await (await apiFetch('api/actions')).json();
+                actionsData = Object.values(grouped).flatMap(g => g.items);
+
+                container.innerHTML = Object.entries(grouped).map(([_, group]) =>
+                    `<div class="group-section">
+                        <div class="group-title">${group.label}</div>
+                        ${group.items.map(action =>
+                            `<div class="row" onclick="runAction('${action.id}')">
+                                <span class="row-label">${action.label}</span>
+                                <button class="btn btn-primary" style="pointer-events:none">Run</button>
+                            </div>`
+                        ).join('')}
+                    </div>`
+                ).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="loading" style="color:var(--error)">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadSettings() {
+            const container = $('settings-container');
+            const card = container.closest('.card');
+            try {
+                const grouped = await (await apiFetch('api/settings')).json();
+                const groups = Object.entries(grouped);
+
+                if (groups.length === 0) {
+                    card.style.display = 'none';
+                    return;
+                }
+
+                card.style.display = 'block';
+                container.innerHTML = groups.map(([_, group]) =>
+                    `<div class="group-section">
+                        <div class="group-title">${group.label}</div>
+                        ${group.items.map(setting => {
+                            const options = Object.entries(setting.options).map(([optKey, optVal]) => {
+                                return `<option value="${optKey}" data-label="${encodeURIComponent(optVal.label)}" data-confirm="${encodeURIComponent(optVal.confirm || '')}"${optKey === setting.current ? ' selected' : ''}>${optVal.label}</option>`;
+                            }).join('');
+                            return `<div class="row">
+                                <span class="row-label">${setting.label}</span>
+                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', '${setting.label}', this)">${options}</select>
+                            </div>`;
+                        }).join('')}
+                    </div>`
+                ).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="loading" style="color:var(--error)">Error: ${e.message}</div>`;
+            }
+        }
+
+        // ========================================
+        // URL & File Handling
+        // ========================================
+
+        function validateURL() {
+            const url = $('url-input').value.trim();
+            try {
+                const isValid = url && ['http:', 'https:'].includes(new URL(url).protocol);
+                $('download-btn').disabled = !isValid;
+            } catch {
+                $('download-btn').disabled = true;
+            }
+        }
+
+        function handleFile(input) {
+            if (input.files[0]) {
+                selectedFile = input.files[0];
+                $('file-display').value = `${selectedFile.name} (${formatSize(selectedFile.size)})`;
+                $('upload-btn').disabled = false;
+            }
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // File drag & drop
+        const fileDrop = $('file-drop');
+        fileDrop.ondragover = (e) => {
+            e.preventDefault();
+            fileDrop.classList.add('dragover');
+        };
+        fileDrop.ondragleave = () => {
+            fileDrop.classList.remove('dragover');
+        };
+        fileDrop.ondrop = (e) => {
+            e.preventDefault();
+            fileDrop.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) {
+                selectedFile = e.dataTransfer.files[0];
+                $('file-display').value = `${selectedFile.name} (${formatSize(selectedFile.size)})`;
+                $('upload-btn').disabled = false;
+            }
+        };
+
+        // ========================================
+        // Modal Functions
+        // ========================================
+
+        let confirmOnCancel = null;
+
+        function showConfirmModal(title, message, onConfirm, onCancel) {
+            $('confirm-title').textContent = title;
+            $('confirm-message').textContent = message;
+            $('confirm-btn').onclick = () => { hideConfirmModal(); onConfirm(); };
+            confirmOnCancel = onCancel || null;
+            $('confirm-modal').classList.add('visible');
+        }
+
+        function hideConfirmModal() {
+            $('confirm-modal').classList.remove('visible');
+            if (confirmOnCancel) {
+                confirmOnCancel();
+                confirmOnCancel = null;
+            }
+        }
+
+        function showActionModal(title, message) {
+            $('action-title').textContent = title;
+            $('action-message').textContent = message;
+            $('action-message').style.color = '';
+            $('action-log').textContent = '';
+            $('action-log').classList.remove('visible');
+            $('action-progress').classList.remove('visible');
+            $('action-progress-fill').style.width = '0%';
+            $('action-progress-fill').classList.remove('indeterminate');
+            $('action-progress-info').classList.remove('visible');
+            $('action-download-btn').style.display = 'none';
+            $('action-close-btn').disabled = true;
+            $('action-modal').classList.add('visible');
+        }
+
+        function hideActionModal() {
+            $('action-modal').classList.remove('visible');
+        }
+
+        function enableCloseButton() {
+            $('action-close-btn').disabled = false;
+        }
+
+        function appendLog(text) {
+            const el = $('action-log');
+            el.textContent += text;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function setMessage(text, color) {
+            $('action-message').textContent = text;
+            $('action-message').style.color = color || '';
+        }
+
+        // ========================================
+        // Upgrade Functions
+        // ========================================
+
+        function downloadUpgrade() {
+            const url = $('url-input').value.trim();
+            if (!url) return;
+
+            showConfirmModal(
+                'Confirm Download & Upgrade',
+                'Download and upgrade from URL? System may reboot.',
+                () => doDownloadUpgrade(url)
+            );
+        }
+
+        async function doDownloadUpgrade(url) {
+            const btn = $('download-btn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            showActionModal('Download & Upgrade', 'Downloading and upgrading...');
+            $('action-log').classList.add('visible');
+
+            try {
+                const resp = await apiFetch('api/upgrade/url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                await streamResponse(resp);
+            } catch (e) {
+                appendLog(`\nERROR: ${e.message}`);
+                setMessage('Failed', 'var(--error)');
+            } finally {
+                enableCloseButton();
+                btn.disabled = false;
+                btn.textContent = 'Download & Upgrade';
+            }
+        }
+
+        function uploadUpgrade() {
+            if (!selectedFile) return;
+
+            showConfirmModal(
+                'Confirm Upgrade',
+                'Upload and upgrade? System may reboot.',
+                doUploadUpgrade
+            );
+        }
+
+        async function doUploadUpgrade() {
+            if (!selectedFile) return;
+
+            const btn = $('upload-btn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+
+            showActionModal('Upgrade', 'Uploading...');
+            $('action-log').classList.add('visible');
+            $('action-progress').classList.add('visible');
+            $('action-progress-info').classList.add('visible');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const xhr = new XMLHttpRequest();
+            let lastIdx = 0;
+            const startTime = performance.now();
+
+            xhr.open('POST', 'api/upgrade/upload');
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const pct = (e.loaded / e.total) * 100;
+                    $('action-progress-fill').classList.remove('indeterminate');
+                    $('action-progress-fill').style.width = pct.toFixed(1) + '%';
+                    $('action-progress-text').textContent = `${pct.toFixed(1)}% (${formatSize(e.loaded)} / ${formatSize(e.total)})`;
+                } else {
+                    $('action-progress-fill').classList.add('indeterminate');
+                    $('action-progress-text').textContent = 'Uploading...';
+                }
+
+                const elapsed = (performance.now() - startTime) / 1000;
+                if (elapsed > 0) {
+                    const speedMbps = ((e.loaded * 8 / 1e6) / elapsed).toFixed(2);
+                    $('action-speed').textContent = speedMbps + ' Mbit/s';
+                }
+            };
+
+            xhr.upload.onload = () => {
+                setMessage('Installing firmware...');
+                btn.textContent = 'Upgrading...';
+                $('action-progress').classList.remove('visible');
+                $('action-progress-info').classList.remove('visible');
+            };
+
+            xhr.onprogress = () => {
+                const newText = xhr.responseText.substring(lastIdx);
+                if (newText) {
+                    appendLog(newText);
+                    lastIdx = xhr.responseText.length;
+                }
+            };
+
+            xhr.onload = () => {
+                const newText = xhr.responseText.substring(lastIdx);
+                if (newText) appendLog(newText);
+
+                const lastLine = (xhr.responseText.trim().split('\n').pop() || '');
+                if (lastLine.startsWith('SUCCESS:')) {
+                    setMessage('Success - System will reboot', 'var(--success)');
+                } else if (lastLine.startsWith('ERROR:')) {
+                    setMessage('Upgrade failed', 'var(--error)');
+                } else {
+                    setMessage('Completed');
+                }
+
+                enableCloseButton();
+                btn.disabled = false;
+                btn.textContent = 'Upload & Upgrade';
+            };
+
+            xhr.onerror = () => {
+                appendLog('\nERROR: Upload failed\n');
+                setMessage('Upload failed', 'var(--error)');
+                enableCloseButton();
+                btn.disabled = false;
+                btn.textContent = 'Upload & Upgrade';
+            };
+
+            xhr.send(formData);
+        }
+
+        // ========================================
+        // Action Functions
+        // ========================================
+
+        function runAction(id) {
+            currentAction = id;
+            const actionConfig = actionsData.find(a => a.id === id);
+            const title = actionConfig?.label || id;
+
+            if (actionConfig?.confirm) {
+                const message = typeof actionConfig.confirm === 'string'
+                    ? actionConfig.confirm
+                    : `Are you sure you want to run "${title}"?`;
+                showConfirmModal(title, message, () => doRunAction(id, title));
+            } else {
+                doRunAction(id, title);
+            }
+        }
+
+        function doRunAction(id, title) {
+            showActionModal(title, 'Executing...');
+            $('action-log').classList.add('visible');
+            execAction(id);
+        }
+
+        async function execAction(id) {
+            try {
+                const resp = await apiFetch(`api/action/${id}`, { method: 'POST' });
+                await streamResponse(resp, id);
+            } catch (e) {
+                appendLog(`\nERROR: ${e.message}`);
+                setMessage('Failed', 'var(--error)');
+                enableCloseButton();
+            }
+        }
+
+        async function streamResponse(resp, actionId = null) {
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let fullLog = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const text = decoder.decode(value, { stream: true });
+                fullLog += text;
+                appendLog(text);
+            }
+
+            // Parse last line for SUCCESS/ERROR status
+            const lastLine = fullLog.trim().split('\n').pop() || '';
+            const isSuccess = lastLine.startsWith('SUCCESS:');
+            const isFailed = lastLine.startsWith('ERROR:');
+
+            if (isSuccess) {
+                setMessage('Completed successfully', 'var(--success)');
+            } else if (isFailed) {
+                setMessage('Failed', 'var(--error)');
+            } else {
+                setMessage('Completed');
+            }
+
+            enableCloseButton();
+
+            // Show download button if action has downloadable file
+            if (actionId) {
+                const actionConfig = actionsData.find(a => a.id === actionId);
+                if (actionConfig?.download_file && isSuccess) {
+                    $('action-download-btn').style.display = 'inline-block';
+                }
+            }
+        }
+
+        // ========================================
+        // Settings Functions
+        // ========================================
+
+        function updateSetting(key, label, selectEl) {
+            const value = selectEl.value;
+            const prevValue = selectEl.dataset.prevValue || value;
+            const selectedOption = selectEl.selectedOptions[0];
+            const optLabel = decodeURIComponent(selectedOption.dataset.label || value);
+            const confirmMsg = decodeURIComponent(selectedOption.dataset.confirm || '');
+
+            const message = confirmMsg || `Change ${label} to "${optLabel}"?`;
+            const warning = '⚠️ Warning: Changing settings will restart services and may interrupt printing.';
+
+            showConfirmModal(
+                `Update ${label}`,
+                `${message}\n\n${warning}`,
+                () => { selectEl.dataset.prevValue = value; doUpdateSetting(key, value); },
+                () => { selectEl.value = prevValue; }
+            );
+        }
+
+        async function doUpdateSetting(key, value) {
+            showActionModal('Updating Setting', 'Applying changes...');
+            $('action-log').classList.add('visible');
+
+            try {
+                const resp = await apiFetch(`api/settings/${key}/${value}`, { method: 'POST' });
+                await streamResponse(resp);
+                refreshAll();
+            } catch (e) {
+                appendLog(`\nERROR: ${e.message}`);
+                setMessage('Failed', 'var(--error)');
+            }
+        }
+
+        // ========================================
+        // File Download Function
+        // ========================================
+
+        async function downloadFile() {
+            if (!currentAction) return;
+
+            try {
+                const resp = await apiFetch(`api/action/${currentAction}/download`, { method: 'POST' });
+                if (!resp.ok) throw new Error(resp.statusText);
+
+                const blob = await resp.blob();
+                const contentDisposition = resp.headers.get('content-disposition');
+
+                let filename = 'download.bin';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                    if (match) filename = match[1];
+                }
+
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } catch (e) {
+                alert('Download failed: ' + e.message);
+            }
+        }
+
+        // ========================================
+        // Refresh All
+        // ========================================
+
+        async function refreshAll() {
+            const btn = document.querySelector('h1 .btn');
+            btn.innerHTML = '<span class="spinner"></span> Refresh';
+            btn.disabled = true;
+            try {
+                await Promise.all([loadStatus(), loadLinks(), loadSettings(), loadActions()]);
+            } finally {
+                btn.innerHTML = '&#x21bb; Refresh';
+                btn.disabled = false;
+            }
+        }
+
+        // ========================================
+        // Initialize
+        // ========================================
+
+        refreshAll();
+    </script>
+</body>
+</html>

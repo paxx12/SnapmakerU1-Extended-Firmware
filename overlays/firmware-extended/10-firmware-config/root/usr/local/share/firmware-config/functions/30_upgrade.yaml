@@ -1,0 +1,33 @@
+upgrade_url:
+  title: Firmware Upgrade (URL)
+  shell: |
+    # Validate URL
+    case "$1" in
+      *github.com*/artifacts/*)
+        echo "ERROR: GitHub Actions artifact URLs require authentication."
+        echo "Please download the artifact manually."
+        exit 1
+        ;;
+      *.bin) ;;
+      *)
+        echo "WARNING: URL does not end with .bin - firmware files should be .bin files."
+        echo "Continuing in 5 seconds..."
+        sleep 5
+        ;;
+    esac
+
+    echo "Downloading upgrade..."
+    if ! /usr/local/bin/curl -L -f -o /userdata/url_upgrade.bin "$1"; then
+      echo "Failed to download upgrade file."
+      exit 1
+    fi
+
+    echo "Download complete. Starting upgrade..."
+    /home/lava/bin/systemUpgrade.sh upgrade all /userdata/url_upgrade.bin
+  stop_token: "upgrade soc finish, prepare to reboot"
+
+upgrade_upload:
+  title: Firmware Upgrade (Upload)
+  upload_path: /userdata/web_upgrade.bin
+  shell: /home/lava/bin/systemUpgrade.sh upgrade all "$1"
+  stop_token: "upgrade soc finish, prepare to reboot"

@@ -1,0 +1,34 @@
+links:
+  web-interface:
+    url: /
+    icon: "🌐"
+    label: Web Interface
+    condition: null
+
+settings:
+  web:
+    label: Web
+    items:
+      web-frontend:
+        label: Frontend
+        get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended2.cfg, web, frontend, fluidd]
+        options:
+          mainsail:
+            label: Mainsail
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web frontend mainsail &&
+                /etc/init.d/S49nginx_conf restart &&
+                /usr/sbin/nginx -s reload
+          fluidd:
+            label: Fluidd
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web frontend fluidd &&
+                /etc/init.d/S49nginx_conf restart &&
+                /usr/sbin/nginx -s reload
+        default: fluidd

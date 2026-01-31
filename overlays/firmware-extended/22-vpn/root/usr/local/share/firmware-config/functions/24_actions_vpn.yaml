@@ -1,0 +1,8 @@
+actions:
+  troubleshooting:
+    label: Troubleshooting
+    items:
+      tailscale-status:
+        label: Tailscale Status
+        cmd: [/usr/local/bin/tailscale, status]
+        message: "Checking Tailscale status..."

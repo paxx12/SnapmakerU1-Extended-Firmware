@@ -1,0 +1,19 @@
+actions:
+  services:
+    label: Services
+    items:
+      restart-klipper:
+        label: Restart Klipper
+        confirm: true
+        cmd:
+          - /etc/init.d/S60klipper
+          - restart
+        message: "Restarting Klipper..."
+
+      restart-moonraker:
+        label: Restart Moonraker
+        confirm: true
+        cmd:
+          - /etc/init.d/S61moonraker
+          - restart
+        message: "Restarting Moonraker..."

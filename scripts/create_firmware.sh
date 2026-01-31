@@ -13,12 +13,21 @@ fi
 set -eo pipefail
 
 IN_FIRMWARE="$(realpath "$1")"
-TEMP_DIR="$(realpath -m "$2")"
 OUT_FIRMWARE="$(realpath -m "$3")"
-ROOT_DIR="$(realpath "$(dirname "$0")/..")"
-shift 3
 
-rm -rf "$TEMP_DIR"
+export CREATE_FIRMWARE=1
+export ROOT_DIR="$(realpath "$(dirname "$0")/..")"
+export CACHE_DIR="$ROOT_DIR/tmp/cache"
+export PATH="$ROOT_DIR/scripts/helpers:$PATH"
+export BUILD_DIR="$(realpath -m "$2")"
+export ROOTFS_DIR="$BUILD_DIR/rootfs"
+export BOOT_IMG="$BUILD_DIR/rk-unpacked/boot.img"
+export ROOTFS_IMG="$BUILD_DIR/rk-unpacked/rootfs.img"
+export GOPATH="$CACHE_DIR/host-go"
+
+rm -rf "$BUILD_DIR"
+
+shift 3
 
 check_perms() {
   local file="$1"
@@ -41,14 +50,14 @@ check_perms() {
 }
 
 echo ">> Unpacking firmware..."
-"$ROOT_DIR/scripts/helpers/unpack_firmware.sh" "$IN_FIRMWARE" "$TEMP_DIR"
+"$ROOT_DIR/scripts/helpers/unpack_firmware.sh" "$IN_FIRMWARE" "$BUILD_DIR"
 
 echo ">> Extracting squashfs from rootfs.img..."
-unsquashfs -d "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs.img"
+unsquashfs -d "$ROOTFS_DIR" "$BUILD_DIR/rk-unpacked/rootfs.img"
 
 echo ">> Verifying ownership preservation..."
-check_perms "$TEMP_DIR/rootfs/etc/passwd" 0 0
-check_perms "$TEMP_DIR/rootfs/home/lava/bin/hwver.sh" 1000 1000
+check_perms "$ROOTFS_DIR/etc/passwd" 0 0
+check_perms "$ROOTFS_DIR/home/lava/bin/hwver.sh" 1000 1000
 echo "   Ownership check passed"
 
 for overlay; do
@@ -60,48 +69,51 @@ for overlay; do
   echo ">> Applying overlay $overlay..."
   if [[ -d "$overlay/pre-scripts/" ]]; then
     for scriptfile in "$overlay/pre-scripts/"*.sh; do
-      echo "[+] Running pre-scripts: $(basename "$scriptfile")"
-      ./"$scriptfile" "$TEMP_DIR/rootfs"
+      echo "[+] Running pre-script: $(basename "$scriptfile")"
+      ./"$scriptfile" "$ROOTFS_DIR"
     done
   fi
 
   if [[ -d "$overlay/patches/" ]]; then
-    for patchfile in "$overlay/patches/"*.patch; do
-      echo "[+] Applying patch: $(basename "$patchfile")"
-      patch -F 0 -d "$TEMP_DIR/rootfs" -p1 < "$patchfile"
-    done
+    pushd "$overlay/patches/" > /dev/null
+    # apply all .patch to their respective directories
+    while read -r patchfile; do
+      echo "[+] Applying patch: $(basename "$patchfile") in subdir $(dirname "$patchfile")"
+      patch -F 0 -d "$ROOTFS_DIR/$(dirname "$patchfile")" -p1 < "$patchfile"
+    done < <(find -type f -name "*.patch")
+    popd > /dev/null
   fi
 
   if [[ -d "$overlay/scripts/" ]]; then
     for scriptfile in "$overlay/scripts/"*.sh; do
       echo "[+] Running script: $(basename "$scriptfile")"
-      ./"$scriptfile" "$TEMP_DIR/rootfs"
+      ./"$scriptfile" "$ROOTFS_DIR"
     done
   fi
 
   if [[ -d "$overlay/root/" ]]; then
     echo ">> Copying custom files..."
-    cp -rv "$overlay/root/." "$TEMP_DIR/rootfs/"
+    cp -rv "$overlay/root/." "$ROOTFS_DIR/"
   fi
 done
 
 echo ">> Checking for non-ARM binaries in rootfs..."
-if FILES=$(find "$TEMP_DIR/rootfs" -type f -exec file {} + | grep "ELF" | grep -v "ARM"); then
+if FILES=$(find "$ROOTFS_DIR" -type f -exec file {} + | grep "ELF" | grep -v "ARM"); then
   echo "!! Error: Found non-ARM binaries in the rootfs:"
   echo "$FILES"
   exit 1
 fi
 
 echo ">> Create squash filesystem..."
-mksquashfs "$TEMP_DIR/rootfs" "$TEMP_DIR/rk-unpacked/rootfs-v2.img" -comp gzip
+mksquashfs "$ROOTFS_DIR" "$BUILD_DIR/rk-unpacked/rootfs-v2.img" -comp gzip
 
 echo ">> Replace rootfs.img in firmware..."
-mv -v "$TEMP_DIR/rk-unpacked"/{rootfs-v2,rootfs}.img
+mv -v "$BUILD_DIR/rk-unpacked"/{rootfs-v2,rootfs}.img
 
 echo ">> Update version..."
-git rev-parse --short HEAD >> "$TEMP_DIR/UPFILE_VERSION"
+git rev-parse --short HEAD >> "$BUILD_DIR/UPFILE_VERSION"
 
 echo ">> Repacking firmware..."
-"$ROOT_DIR/scripts/helpers/pack_firmware.sh" "$TEMP_DIR" "$OUT_FIRMWARE"
+"$ROOT_DIR/scripts/helpers/pack_firmware.sh" "$BUILD_DIR" "$OUT_FIRMWARE"
 
 echo ">> Done: $OUT_FIRMWARE"

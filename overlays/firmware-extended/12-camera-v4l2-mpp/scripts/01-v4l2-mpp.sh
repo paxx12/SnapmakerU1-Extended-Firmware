@@ -1,26 +1,17 @@
 #!/bin/bash
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
-
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=468fe35b159977a6e86f75f5e9024cb404eaa71d
+GIT_SHA=664e0891089a199d4fc6d9b50bb8f72b67aa4058
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <rootfs-dir>"
+if [[ -z "$CREATE_FIRMWARE" ]]; then
+  echo "Error: This script should be run within the create_firmware.sh environment."
   exit 1
 fi
 
 set -eo pipefail
 
-TARGET_DIR="$ROOT_DIR/tmp/v4l2-mpp"
-
-if [[ ! -d "$TARGET_DIR" ]]; then
-  git clone "$GIT_URL" "$TARGET_DIR" --recursive
-  if ! git -C "$TARGET_DIR" checkout "$GIT_SHA"; then
-    git fetch origin "$GIT_SHA"
-    git -C "$TARGET_DIR" checkout "$GIT_SHA"
-  fi
-fi
+TARGET_DIR="$CACHE_DIR/v4l2-mpp"
+cache_git.sh "$TARGET_DIR" "$GIT_URL" "$GIT_SHA"
 
 echo ">> Setting up cross-compilation environment..."
 export CROSS_COMPILE=aarch64-linux-gnu-

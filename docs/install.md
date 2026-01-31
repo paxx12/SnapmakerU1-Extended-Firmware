@@ -40,7 +40,7 @@ After installation, the printer will automatically reboot.
 
 **Next Steps:**
 - [SSH Access](ssh_access.md) - Access printer via SSH
-- [Extended Configuration](extended_config.md) - Customize firmware behavior (Extended only)
+- [Firmware Configuration](firmware_config.md) - Customize firmware behavior (Extended only)
 - [Camera Support](camera_support.md) - Configure WebRTC camera streaming (Extended only)
 - [Remote Screen](remote_screen.md) - Enable remote screen access (Extended only)
 

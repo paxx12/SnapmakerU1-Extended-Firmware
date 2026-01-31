@@ -1,0 +1,9 @@
+status:
+  eth:
+    title: Ethernet Network
+    if_cmd: test -d /sys/class/net/eth0
+    items:
+      - label: IP
+        cmd: ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1
+      - label: MAC
+        cmd: cat /sys/class/net/eth0/address

@@ -30,7 +30,7 @@ The internal camera is automatically configured and enabled.
 
 Access at: `http://<printer-ip>/webcam2/`
 
-USB cameras require configuration in Moonraker. See [Moonraker Camera Configuration](#moonraker-camera-configuration) below for setup instructions.
+USB cameras must be enabled in `extended2.cfg`. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
 
 ## Moonraker Camera Configuration
 
@@ -72,9 +72,9 @@ aspect_ratio: 16:9
 
 ## Camera Controls
 
-**Note: Camera controls and RTSP streaming are only available with the paxx12 camera stack.**
+**Note: Camera controls and RTSP streaming are only available with the paxx12 camera service.**
 
-The paxx12 camera stack includes a web-based interface for adjusting camera settings in real-time. Available controls depend on your camera hardware capabilities.
+The paxx12 camera service includes a web-based interface for adjusting camera settings in real-time. Available controls depend on your camera hardware capabilities.
 
 ### Accessing Camera Controls
 
@@ -92,18 +92,25 @@ To reset camera settings to defaults, delete the corresponding JSON file and reb
 
 ## Configuration
 
-All camera configuration is done through `/home/lava/printer_data/config/extended/extended.cfg`. See [Extended Configuration](extended_config.md) for editing instructions.
+All camera configuration is done through `/home/lava/printer_data/config/extended/extended2.cfg`. See [Firmware Configuration](firmware_config.md) for editing instructions.
 
-### Camera Stack Selection
+### Internal Camera Selection
 
-By default, the extended firmware uses a custom hardware-accelerated camera stack (paxx12). To switch to Snapmaker's original camera stack:
+By default, the extended firmware uses a custom hardware-accelerated camera service (paxx12). To switch to Snapmaker's original camera service:
 
 ```ini
 [camera]
-stack: snapmaker
+internal: snapmaker
 ```
 
-Note: Only one camera stack can be operational at a time.
+To disable the internal camera entirely (also disables timelapses):
+
+```ini
+[camera]
+internal: none
+```
+
+Note: Only one camera service can be operational at a time for the internal camera.
 
 ### Camera Logging
 
@@ -118,7 +125,7 @@ Logs are available in `/var/log/messages`.
 
 ### RTSP Streaming
 
-Enable RTSP streaming (paxx12 stack only):
+RTSP streaming is disabled by default (paxx12 service only). To enable:
 
 ```ini
 [camera]
@@ -128,6 +135,24 @@ rtsp: true
 RTSP streams will be available at:
 - Internal camera: `rtsp://<printer-ip>:8554/stream`
 - USB camera: `rtsp://<printer-ip>:8555/stream`
+
+### USB Camera Configuration
+
+Enable USB camera support (paxx12 service only):
+
+```ini
+[camera]
+usb: paxx12
+```
+
+To disable USB camera:
+
+```ini
+[camera]
+usb: none
+```
+
+When enabled, USB cameras are accessible at `http://<printer-ip>/webcam2/`.
 
 After any configuration changes, reboot the printer for changes to take effect.
 

@@ -1,0 +1,122 @@
+links:
+  internal-camera:
+    url: /webcam
+    icon: "📷"
+    label: Internal Camera
+    condition:
+      setting: camera-internal
+      value: paxx12
+
+  usb-camera:
+    url: /webcam2
+    icon: "📹"
+    label: USB Camera
+    condition:
+      setting: camera-usb
+      value: paxx12
+
+settings:
+  camera:
+    label: Camera
+    items:
+      camera-internal:
+        label: Internal Camera
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - camera
+          - internal
+          - paxx12
+        options:
+          paxx12:
+            label: Paxx12
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal paxx12 &&
+                /etc/init.d/S91unisrv stop &&
+                /etc/init.d/S99v4l2-mpp-mipi restart
+          snapmaker:
+            label: Snapmaker
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal snapmaker &&
+                /etc/init.d/S99v4l2-mpp-mipi stop &&
+                /etc/init.d/S91unisrv start
+          none:
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera internal none &&
+                /etc/init.d/S99v4l2-mpp-mipi stop &&
+                /etc/init.d/S91unisrv stop
+        default: paxx12
+
+      camera-usb:
+        label: USB Camera
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - camera
+          - usb
+          - none
+        options:
+          paxx12:
+            label: Paxx12
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera usb paxx12 &&
+                /usr/local/bin/extended-config.py uncomment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
+                /usr/local/bin/extended-config.py update /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" enabled true &&
+                /etc/init.d/S99v4l2-mpp-usb restart &&
+                /etc/init.d/S61moonraker restart
+          none:
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera usb none &&
+                /usr/local/bin/extended-config.py comment /home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg "webcam usb" &&
+                /etc/init.d/S99v4l2-mpp-usb stop &&
+                /etc/init.d/S61moonraker restart
+        default: none
+
+      camera-rtsp:
+        label: RTSP Stream (paxx12 only)
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - camera
+          - rtsp
+          - "false"
+        options:
+          "true":
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera rtsp true &&
+                /etc/init.d/S99v4l2-mpp-mipi restart &&
+                /etc/init.d/S99v4l2-mpp-usb restart
+          "false":
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg camera rtsp false &&
+                /etc/init.d/S99v4l2-mpp-mipi restart &&
+                /etc/init.d/S99v4l2-mpp-usb restart
+        default: "false"

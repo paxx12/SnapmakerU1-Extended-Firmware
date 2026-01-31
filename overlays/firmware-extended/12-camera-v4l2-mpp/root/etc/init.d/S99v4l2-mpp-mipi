@@ -1,21 +1,15 @@
 #!/bin/sh
 
-EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
-CAMERA_STACK=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera stack paxx12)
-
-[ "$CAMERA_STACK" != "snapmaker" ] || exit 0
-
-umask 0022
-mkdir -p /userdata/.tmp_timelapse
-chown -R lava:lava /userdata/.tmp_timelapse
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
+CAMERA_INTERNAL=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" camera internal paxx12)
 
 CMD_FAKE_SERVICE=/usr/local/bin/fake-service
 CMD_FAKE_SERVICE_ARGS="--retry 3"
-CAMERA_LOGS=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera logs "")
+CAMERA_LOGS=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" camera logs "")
 if [ "$CAMERA_LOGS" = "syslog" ]; then
     CMD_FAKE_SERVICE_ARGS="$CMD_FAKE_SERVICE_ARGS --syslog"
 fi
-RTSP_ENABLED=$(/usr/local/bin/extended-config.py "$EXTENDED_CFG" camera rtsp false)
+RTSP_ENABLED=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" camera rtsp false)
 
 CMD_CAPTURE="/usr/local/bin/capture-v4l2-raw-mpp --device /dev/video11 --format nv12 --jpeg-quality 7 --jpeg-sock /tmp/capture-mipi-jpeg.sock --mjpeg-sock /tmp/capture-mipi-mjpeg.sock --h264-sock /tmp/capture-mipi-h264.sock --raw-frame-sock /tmp/capture-mipi-raw.sock --width 1920 --height 1080 --fps 30"
 
@@ -32,10 +26,19 @@ CMD_UNISRV="/usr/bin/unisrv"
 CMD_UNISRV_ARGS="-t MIPI"
 
 start() {
+    if [ "$CAMERA_INTERNAL" != "paxx12" ]; then
+        echo "Internal MIPI camera is not set to 'paxx12', not starting."
+        return
+    fi
+
     if [ ! -e /dev/video11 ]; then
         echo "MIPI camera device /dev/video11 not found, not starting."
         return
     fi
+
+    umask 0022
+    mkdir -p /userdata/.tmp_timelapse
+    chown -R lava:lava /userdata/.tmp_timelapse
 
     printf "Starting capture-mipi-mpp: "
     start-stop-daemon -S -b -q -m -p /var/run/capture-mipi-mpp.pid -x $CMD_FAKE_SERVICE -- $CMD_FAKE_SERVICE_ARGS $CMD_CAPTURE

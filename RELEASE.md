@@ -4,6 +4,10 @@
 >
 > Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
 
+## Upgrading to v1.1.0
+
+The configuration file has been renamed from `extended.cfg` to `extended2.cfg`. During the first boot after upgrading a new `extended2.cfg` will be created with default settings. You will need to migrate your custom settings from `extended.cfg` to `extended2.cfg` manually or use `http://IP/firmware-config`.
+
 ## Install
 
 For detailed installation instructions, see the [Installation Guide](docs/install.md).

@@ -1,0 +1,10 @@
+--- a/etc/nginx/sites-available/fluidd
++++ b/etc/nginx/sites-available/fluidd
+@@ -93,4 +93,7 @@
+         error_log off;
+         proxy_pass http://mjpgstreamer4/;
+     }
++
++    # Include additional location configs from fluidd.d
++    include /etc/nginx/fluidd.d/*.conf;
+ }

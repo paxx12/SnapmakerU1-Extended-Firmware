@@ -12,9 +12,9 @@ case "$1" in
   start)
     log "Starting camera capture loop..."
 
-    mkdir -p /tmp/capture /tmp/camera
+    ln -s /tmp/.monitor.jpg /oem/printer_data/camera/monitor.jpg
 
-    json_content='{"jsonrpc":"2.0","method":"camera.take_a_photo","params":{"reason":"debug","timestamp":false,"filepath":"/tmp/camera/capture.jpg"},"id":1}'
+    json_content='{"jsonrpc":"2.0","method":"camera.take_a_photo","params":{"reason":"debug","timestamp":false,"filepath":"/tmp/.monitor.jpg"},"id":1}'
 
     (
         while sleep 1; do

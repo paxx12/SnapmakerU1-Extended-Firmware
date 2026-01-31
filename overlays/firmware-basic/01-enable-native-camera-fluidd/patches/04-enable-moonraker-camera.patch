@@ -7,8 +7,8 @@
 +
 +[webcam case]
 +service: mjpegstreamer-adaptive
-+stream_url: /camera/capture.jpg
-+snapshot_url: /camera/capture.jpg
++stream_url: /server/files/camera/monitor.jpg
++snapshot_url: /server/files/camera/monitor.jpg
 +target_fps: 2
 +target_fps_idle: 1
 +aspect_ratio: 16:9

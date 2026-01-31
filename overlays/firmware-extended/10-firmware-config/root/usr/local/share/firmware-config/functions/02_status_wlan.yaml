@@ -1,0 +1,15 @@
+status:
+  wlan:
+    title: WLAN Network
+    if_cmd: test -d /sys/class/net/wlan0
+    items:
+      - label: SSID
+        cmd: iwconfig wlan0 2>/dev/null | awk -F'"' '/ESSID/{print $2}'
+      - label: BSSID
+        cmd: iwconfig wlan0 2>/dev/null | awk -F'Access Point:' '/Access Point/{print $2}'
+      - label: Signal
+        cmd: iwconfig wlan0 2>/dev/null | awk -F'=' '/Signal level/{print $3}' | cut -d' ' -f1
+      - label: IP
+        cmd: ip -4 addr show wlan0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1
+      - label: MAC
+        cmd: cat /sys/class/net/wlan0/address

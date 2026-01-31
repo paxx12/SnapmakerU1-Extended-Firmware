@@ -1,0 +1,32 @@
+settings:
+  web:
+    label: Web
+    items:
+      firmware-config:
+        label: Firmware Config
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - web
+          - firmware_config
+          - "true"
+        options:
+          "true":
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web firmware_config true &&
+                /etc/init.d/S99firmware-config restart
+          "false":
+            label: Disabled
+            confirm: Disabling will remove access to this page. Re-enabling requires editing extended2.cfg manually.
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg web firmware_config false &&
+                /etc/init.d/S99firmware-config stop
+        default: "true"

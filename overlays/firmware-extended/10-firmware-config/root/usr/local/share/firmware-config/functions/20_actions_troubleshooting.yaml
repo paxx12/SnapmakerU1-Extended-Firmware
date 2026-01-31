@@ -1,0 +1,48 @@
+actions:
+  troubleshooting:
+    label: Troubleshooting
+    items:
+      show-status:
+        label: Show MCUs Version
+        cmd:
+          - /home/lava/bin/systemUpgrade.sh
+          - show-status
+        background: false
+        message: "System status:"
+
+      collect-logs:
+        label: Collect System Logs
+        confirm: "Collecting system logs might take a few minutes. Do not close the window until done. Continue?"
+        cmd:
+          - /home/lava/bin/sysinfoCollection.sh
+          - "no"
+          - /userdata/logs.tar.gz
+        message: "Collecting system logs..."
+        download_file: /userdata/logs.tar.gz
+
+  recovery:
+    label: Recovery
+    items:
+      revert-changes:
+        label: Revert Changes
+        confirm: "Remove printer configuration changes, disable data persistence and reboot?"
+        background: true
+        cmd:
+          - /bin/bash
+          - -xc
+          - |
+            rm -f /oem/.printer_data /oem/.debug &&
+            /sbin/reboot
+        message: "Reverting changes..."
+
+      recover-to-backup-firmware:
+        label: Recover to Backup Firmware
+        confirm: "Restore previous firmware version, remove printer configuration changes, disable data persistence and reboot?"
+        background: true
+        cmd:
+          - /bin/bash
+          - -xc
+          - |
+            rm -f /oem/.printer_data /oem/.debug &&
+            updateEngine --misc=other --reboot
+        message: "Recovering to backup firmware..."

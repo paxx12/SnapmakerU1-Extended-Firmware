@@ -2,15 +2,12 @@
 
 set -e
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <rootfs-dir>"
+if [[ -z "$CREATE_FIRMWARE" ]]; then
+  echo "Error: This script should be run within the create_firmware.sh environment."
   exit 1
 fi
 
-ROOT_DIR="$(realpath "$(dirname "$0")/../../../..")"
-ROOTFS_DIR="$(realpath "$1")"
-BOOT_IMG="$ROOTFS_DIR/../rk-unpacked/boot.img"
-UNPACK_DIR="$ROOTFS_DIR/../boot-unpacked"
+UNPACK_DIR="$BUILD_DIR/boot-unpacked"
 
 if [[ ! -f "$BOOT_IMG" ]]; then
   echo "Error: boot.img not found at $BOOT_IMG"
@@ -20,7 +17,7 @@ fi
 rm -rf "$UNPACK_DIR"
 
 echo ">> Unpacking boot.img to $UNPACK_DIR"
-"$ROOT_DIR/scripts/boot_fit.sh" extract "$BOOT_IMG" "$UNPACK_DIR"
+boot_fit.sh extract "$BOOT_IMG" "$UNPACK_DIR"
 
 PROFILE_STR="custom"
 [[ -n "$PROFILE" ]] && PROFILE_STR="$PROFILE"
@@ -59,4 +56,4 @@ for i in "$UNPACK_DIR/resources/"*.bmp; do
 done
 
 echo ">> Repacking boot.img"
-"$ROOT_DIR/scripts/boot_fit.sh" repack "$UNPACK_DIR" "$BOOT_IMG"
+boot_fit.sh repack "$UNPACK_DIR" "$BOOT_IMG"
