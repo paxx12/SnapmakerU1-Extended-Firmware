@@ -18,6 +18,10 @@ Quick steps:
 2. On the printer go to `Settings` > `About` > `Firmware Version` > `Local Update`
 3. Select `.bin` and confirm.
 
+## Troubleshooting
+
+- **Klipper failed to start**: Open Firmware Config at `http://IP/firmware-config`, go to `Recovery` and select `Reset Extended to Defaults`. This will reset all extended settings and reboot the printer.
+
 ## Revert
 
 1. Download `.bin` from the [Snapmaker U1 Wiki](https://wiki.snapmaker.com/en/snapmaker_u1/firmware/release_notes).
