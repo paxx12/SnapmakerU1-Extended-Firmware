@@ -56,4 +56,5 @@ If you need to revert to the original Snapmaker firmware:
 - **Update fails**: Ensure the USB drive is formatted as FAT32
 - **File not found**: Make sure the `.bin` file is in the root directory of the USB drive
 - **Printer won't boot**: Try reverting to stock firmware
+- **Klipper failed to start** (Extended only): Open Firmware Config at `http://IP/firmware-config`, go to `Recovery` and select `Reset Extended to Defaults`. This will reset all extended settings and reboot the printer.
 - For additional help, open an issue on the [GitHub repository](https://github.com/paxx12/SnapmakerU1/issues)
