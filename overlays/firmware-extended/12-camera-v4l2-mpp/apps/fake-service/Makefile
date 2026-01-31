@@ -1,9 +1,11 @@
+CROSS_COMPILE ?=
+CC = $(CROSS_COMPILE)gcc
+
 TARGET = fake-service
 SRCS = main.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
-CC ?= gcc
 CFLAGS ?= -Wall -Wextra -O2 -MMD -I../../common
 LDFLAGS ?=
 
