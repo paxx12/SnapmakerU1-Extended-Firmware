@@ -1,7 +1,12 @@
 # Custom Snapmaker U1 Firmware
 
+[![Latest Release](https://img.shields.io/github/v/release/paxx12/SnapmakerU1)](https://github.com/paxx12/SnapmakerU1/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/paxx12/SnapmakerU1?include_prereleases&label=pre-release)](https://github.com/paxx12/SnapmakerU1/releases)
+
 This project builds custom firmware for the Snapmaker U1 3D printer,
 enabling debug features like SSH access and adding additional capabilities.
+
+This is an independent project and is not affiliated with Snapmaker.
 
 > **Warning**: While installing custom firmware does not automatically void the product warranty, any damage caused by or attributable to the installation or use of custom firmware is not covered under warranty. Use at your own risk. See [Snapmaker Terms of Use](https://www.snapmaker.com/terms-of-use) for details.
 >
