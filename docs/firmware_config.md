@@ -49,6 +49,7 @@ Toggle settings directly from the web interface:
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
+| OctoEverywhere | Enabled, Disabled | Enable support for [OctoEverywhere](octoeverywhere.md) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -160,6 +161,12 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 
 See [VPN Remote Access](vpn.md) for setup instructions.
 
+**OctoEverywhere** - [OctoEverywhere.com](https://octoeverywhere.com) for remote access, ai failure detection, notifications, and more!
+- `false` (default) - OctoEverywhere plugin disabled.
+- `true` - OctoEverywhere plugin enabled.
+
+See the [OctoEverywhere setup instructions](octoeverywhere.md) for a full setup guide.
+
 #### [monitoring]
 
 **klipper_exporter** - Enable Prometheus metrics exporter for Klipper
@@ -198,6 +205,11 @@ vpn: none
 [monitoring]
 # Enable Klipper Prometheus exporter on specified address
 # klipper_exporter: :9101
+
+[octoeverywhere]
+# Enables the OctoEverywhere.com plugin.
+# Access the octoeverywhere.log file from Fluidd/Mainsail to find your account linking URL.
+enabled: false
 ```
 
 ### Identifying Customized Settings

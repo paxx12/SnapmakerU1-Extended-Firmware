@@ -1,0 +1,91 @@
+#!/bin/sh
+
+# These paths are referenced in the pkg script
+INSTALL_DIR="/oem/apps/octoeverywhere"
+VENV_DIR="/oem/apps/octoeverywhere-env"
+
+# Common
+PYTHON="${VENV_DIR}/bin/python3"
+OCTOEVERYWHERE_PIDFILE="/var/run/octoeverywhere.pid"
+
+# These must match the paths in the config json.
+OCTOEVERYWHERE_STORAGE_DIR="/home/lava/printer_data/octoeverywhere-store"
+
+# OCTOEVERYWHERE_ARGS is the following json base64 encoded:
+# {"ConfigFolder": "/home/lava/printer_data/config", "LogFolder": "/home/lava/printer_data/logs", "LocalFileStoragePath": "/home/lava/printer_data/octoeverywhere-store",
+#      "ServiceName": "octoeverywhere", "VirtualEnvPath": "/oem/apps/octoeverywhere-env", "RepoRootFolder": "/oem/apps/octoeverywhere", "IsCompanion": false,
+#      "MoonrakerConfigFile": "/home/lava/printer_data/config/moonraker.conf"}
+OCTOEVERYWHERE_ARGS="eyJDb25maWdGb2xkZXIiOiAiL2hvbWUvbGF2YS9wcmludGVyX2RhdGEvY29uZmlnIiwgIkxvZ0ZvbGRlciI6ICIvaG9tZS9sYXZhL3ByaW50ZXJfZGF0YS9sb2dzIiwgIkxvY2FsRmlsZVN0b3JhZ2VQYXRoIjogIi9ob21lL2xhdmEvcHJpbnRlcl9kYXRhL29jdG9ldmVyeXdoZXJlLXN0b3JlIiwgIlNlcnZpY2VOYW1lIjogIm9jdG9ldmVyeXdoZXJlIiwgIlZpcnR1YWxFbnZQYXRoIjogIi9vZW0vYXBwcy9vY3RvZXZlcnl3aGVyZS1lbnYiLCAiUmVwb1Jvb3RGb2xkZXIiOiAiL29lbS9hcHBzL29jdG9ldmVyeXdoZXJlIiwgIklzQ29tcGFuaW9uIjogZmFsc2UsICJNb29ucmFrZXJDb25maWdGaWxlIjogIi9ob21lL2xhdmEvcHJpbnRlcl9kYXRhL2NvbmZpZy9tb29ucmFrZXIuY29uZiJ9"
+
+
+# Load config from user
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+ENABLED_FLAG=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" octoeverywhere enabled false)
+
+start_octoeverywhere() {
+    if [ -f "$OCTOEVERYWHERE_PIDFILE" ] && kill -0 "$(cat "$OCTOEVERYWHERE_PIDFILE")" 2>/dev/null; then
+        echo "OctoEverywhere already running"
+        return 0
+    fi
+
+    printf "Starting OctoEverywhere: "
+    mkdir -p "$OCTOEVERYWHERE_STORAGE_DIR"
+
+    cd "$INSTALL_DIR"
+    start-stop-daemon -S -b -m \
+        -p "$OCTOEVERYWHERE_PIDFILE" \
+        -x "$PYTHON" -- \
+        -m moonraker_octoeverywhere "$OCTOEVERYWHERE_ARGS"
+
+    echo "OK"
+
+    echo ""
+    echo "Use the Fluidd or Mainsail web interface to access the octoeverywhere.log file to link this printer to your OctoEverywhere account."
+}
+
+start() {
+    case "$ENABLED_FLAG" in
+        true)
+            start_octoeverywhere
+            ;;
+        *)
+            echo "OctoEverywhere is not enabled in the extended configuration; not starting OctoEverywhere."
+            exit 0
+            ;;
+    esac
+}
+
+stop() {
+    printf "Stopping OctoEverywhere: "
+    if [ -f "$OCTOEVERYWHERE_PIDFILE" ]; then
+        start-stop-daemon -K -p "$OCTOEVERYWHERE_PIDFILE" -s TERM
+        rm -f "$OCTOEVERYWHERE_PIDFILE"
+
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?
