@@ -137,6 +137,10 @@ jobs:
         echo "${{ env.GIT_VERSION }}" > pr-info/version
         echo "${{ env.JOB_START }}" > pr-info/job_start
         echo "$(date +%s)" > pr-info/job_end
+        echo basic-build >> pr-info/artifacts
+        echo extended-build >> pr-info/artifacts
+        echo basic-devel-build >> pr-info/artifacts
+        echo extended-devel-build >> pr-info/artifacts
 
     - name: Upload PR info
       if: github.event_name == 'pull_request'

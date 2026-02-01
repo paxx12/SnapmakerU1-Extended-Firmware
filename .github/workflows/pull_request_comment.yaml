@@ -46,7 +46,8 @@ jobs:
             run_id: runId
           });
 
-          const buildArtifacts = artifacts.artifacts.filter(a => a.name !== 'pr-info');
+          const artifactNames = fs.readFileSync('pr-info/artifacts', 'utf8').trim().split('\n');
+          const buildArtifacts = artifacts.artifacts.filter(a => artifactNames.includes(a.name));
           const artifactLines = buildArtifacts.map(a => {
             const url = `https://github.com/${{ github.repository }}/actions/runs/${runId}/artifacts/${a.id}`;
             const size = (a.size_in_bytes / 1024 / 1024).toFixed(2);
