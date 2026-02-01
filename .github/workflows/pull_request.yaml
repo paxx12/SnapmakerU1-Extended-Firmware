@@ -1,3 +1,5 @@
+name: Build
+
 on:
   push:
     branches:
@@ -12,7 +14,6 @@ jobs:
   custom-firmware-build:
     runs-on: ubuntu-24.04-arm
     permissions:
-      pull-requests: write
       contents: read
     steps:
     - name: Record start time
@@ -125,52 +126,24 @@ jobs:
         name: extended-devel-build
         path: U1_extended_*_devel.bin
 
-    - name: Comment PR with artifact links
-      uses: actions/github-script@v7
-      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    - name: Save PR info
+      if: github.event_name == 'pull_request'
+      run: |
+        mkdir -p pr-info
+        echo "${{ github.event.pull_request.number }}" > pr-info/number
+        echo "${{ github.event.pull_request.head.sha }}" > pr-info/head_sha
+        echo "${{ github.sha }}" > pr-info/merge_sha
+        echo "${{ github.base_ref }}" > pr-info/base_ref
+        echo "${{ env.GIT_VERSION }}" > pr-info/version
+        echo "${{ env.JOB_START }}" > pr-info/job_start
+        echo "$(date +%s)" > pr-info/job_end
+
+    - name: Upload PR info
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
       with:
-        script: |
-          const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            run_id: ${{ github.run_id }}
-          });
-
-          const durationSec = Math.floor(Date.now() / 1000) - ${{ env.JOB_START }};
-          const durationMin = Math.floor(durationSec / 60);
-          const durationRemSec = durationSec % 60;
-          const duration = `${durationMin}m ${durationRemSec}s`;
-
-          const mergeCommitSha = '${{ github.sha }}'.substring(0, 7);
-          const prHeadSha = '${{ github.event.pull_request.head.sha }}'.substring(0, 7);
-          const prHeadFullSha = '${{ github.event.pull_request.head.sha }}';
-
-          const artifactLines = artifacts.artifacts.map(a => {
-            const url = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/${a.id}`;
-            const size = (a.size_in_bytes / 1024 / 1024).toFixed(2);
-            return `| [\`${a.name}\`](${url}) | ${size} MB |`;
-          }).join('\n');
-
-          const body = [
-            '## ✅ Build Artifacts',
-            '',
-            `**Version:** \`${{ env.GIT_VERSION }}\``,
-            `**Build commit:** \`${mergeCommitSha}\` (merge of [${prHeadSha}](https://github.com/${{ github.repository }}/commit/${prHeadFullSha}) into \`${{ github.base_ref }}\`)`,
-            `**Build duration:** ${duration}`,
-            '',
-            '| Artifact | Size |',
-            '|----------|------|',
-            artifactLines,
-            '',
-            `[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
-          ].join('\n');
-
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: body
-          });
+        name: pr-info
+        path: pr-info/
 
     - name: Save Firmwares Cache
       if: steps.cache-firmwares.outputs.cache-hit != 'true'
