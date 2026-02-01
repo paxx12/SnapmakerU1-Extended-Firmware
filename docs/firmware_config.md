@@ -49,7 +49,7 @@ Toggle settings directly from the web interface:
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
-| OctoEverywhere | Enabled, Disabled | Enable support for [OctoEverywhere](octoeverywhere.md) |
+| OctoEverywhere | Enabled, Disabled | Enable support for [OctoEverywhere](cloud.md) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -161,11 +161,11 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 
 See [VPN Remote Access](vpn.md) for setup instructions.
 
-**OctoEverywhere** - [OctoEverywhere.com](https://octoeverywhere.com) for remote access, ai failure detection, notifications, and more!
-- `false` (default) - OctoEverywhere plugin disabled.
-- `true` - OctoEverywhere plugin enabled.
+**cloud** - A 3D printing cloud tools provider
+- `none` (default) - No cloud providers enabled.
+- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) for free & unlimited remote access, AI print failure detection, notifications, and more!
 
-See the [OctoEverywhere setup instructions](octoeverywhere.md) for a full setup guide.
+See the [3D Printing Clouds](cloud.md) for setup instructions.
 
 #### [monitoring]
 
