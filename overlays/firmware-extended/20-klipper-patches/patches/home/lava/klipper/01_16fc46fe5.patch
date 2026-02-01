@@ -12,8 +12,8 @@ requests mid-print (eg, changing extrusion ratio) and may make a
 Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
 
 Origin details:
-- From Klipper commit 16fc46fe5ff0dbbc5188ee6a7829eee5976c1eb9.
-- No additional Klipper main changes were imported.
+* From Klipper commit 16fc46fe5ff0dbbc5188ee6a7829eee5976c1eb9.
+* No additional Klipper main changes were imported.
 
 diff --git a/klippy/toolhead.py b/klippy/toolhead.py
 index ef055f0..7c49504 100644
