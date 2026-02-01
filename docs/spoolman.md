@@ -113,6 +113,7 @@ The macros provided by this module can be found in `/extended/klipper/spoolman_s
 - `CLEAR_ACTIVE_SPOOL`: Clears the current `Active Spool`.
 - `CLEAR_ALL_SPOOLS`: Clear all the current selected spools for each tool.
 - `DUMP_SPOOLS`: prints what `Spoolman Helper` knows about the currently loaded spools. This output varies depending on your selected log level.
+- `DETECT_SPOOLS`: this is just a conveninet alias for `SH_DETECT_SPOOLS`, so we can have a nice little button to presso on the web interface
 
 You will also find 2 other cfg files, they provide the necessary T# macro proxies for the whole spoolman magic to happen:
 
