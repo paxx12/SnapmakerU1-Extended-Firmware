@@ -15,6 +15,7 @@ RUN apt-get update -y && \
       libssl-dev \
       dos2unix \
       sudo \
+      sshpass \
       unzip \
       wget \
       g++-aarch64-linux-gnu \

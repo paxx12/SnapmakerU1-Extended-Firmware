@@ -9,9 +9,11 @@ SSH_HOST="$1"
 PROFILE="$2"
 shift 2
 
+PASSWORD="${PASSWORD:-snapmaker}"
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
 set -xe
 
-rm -rf "firmware/firmware_$PROFILE.bin" "tmp/firmware"
-make build OUTPUT_FILE=firmware/firmware_$PROFILE.bin PROFILE="$PROFILE"
-scp "tmp/firmware/update.img" "$SSH_HOST:/tmp/"
-ssh "$SSH_HOST" /home/lava/bin/systemUpgrade.sh upgrade soc /tmp/update.img
+make build OUTPUT_FILE=firmware/firmware_$PROFILE.bin PROFILE="$PROFILE" OVERWRITE=1
+sshpass -p "$PASSWORD" scp $SSH_OPTS "tmp/firmware/update.img" "$SSH_HOST:/tmp/"
+sshpass -p "$PASSWORD" ssh $SSH_OPTS "$SSH_HOST" /home/lava/bin/systemUpgrade.sh upgrade soc /tmp/update.img

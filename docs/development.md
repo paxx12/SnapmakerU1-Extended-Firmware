@@ -186,6 +186,26 @@ To extract and examine the base firmware:
 
 Output: `tmp/extracted/`
 
+## Upgrade Firmware
+
+To build and deploy firmware directly to a connected printer:
+
+```bash
+./dev.sh ./scripts/dev/upgrade-firmware.sh root@<printer-ip> <profile>
+```
+
+Example:
+
+```bash
+./dev.sh ./scripts/dev/upgrade-firmware.sh root@192.168.1.100 extended
+```
+
+By default, the script uses `snapmaker` as the SSH password. To use a different password:
+
+```bash
+PASSWORD=mypassword ./dev.sh ./scripts/dev/upgrade-firmware.sh root@192.168.1.100 extended
+```
+
 ## Release Process
 
 The project uses GitHub Actions for automated releases:

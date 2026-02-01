@@ -5,6 +5,7 @@ all: tools
 # ================= Build Tools =================
 
 OUTPUT_FILE := firmware/firmware.bin
+BUILD_DIR ?= tmp/firmware
 
 ifneq (,$(PROFILE))
 PROFILE_MAIN := $(patsubst %-devel,%,$(PROFILE))
@@ -26,7 +27,7 @@ else ifeq (,$(filter $(PROFILE_MAIN),$(PROFILES)))
 	@echo "Invalid profile '$(PROFILE_MAIN)'. Available profiles are: $(PROFILES)."
 	@exit 1
 endif
-	./scripts/create_firmware.sh $< tmp/firmware $@ $(OVERLAYS)
+	./scripts/create_firmware.sh $< $(BUILD_DIR) $@ $(OVERLAYS)
 
 .PHONY: build
 build: $(OUTPUT_FILE)
