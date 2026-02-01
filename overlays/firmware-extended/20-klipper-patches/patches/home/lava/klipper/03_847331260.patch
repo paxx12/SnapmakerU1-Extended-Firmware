@@ -1,4 +1,4 @@
-From 847331260c84e9de00404aa98f0029184150a897 Mon Sep 17 00:00:00 2001
+From d0ea78a438ad29dd9dac2b9d6511f8d5f8d12a45 Mon Sep 17 00:00:00 2001
 From: Kevin O'Connor <kevin@koconnor.net>
 Date: Wed, 27 Nov 2024 22:34:17 -0500
 Subject: [PATCH] toolhead: Remove arbitrary constants controlling junction
@@ -22,10 +22,10 @@ Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
  1 file changed, 19 insertions(+), 19 deletions(-)
 
 diff --git a/klippy/toolhead.py b/klippy/toolhead.py
-index 948ea974fd70..ed26092f651d 100644
+index 363959ed0..6f21e5a71 100644
 --- a/klippy/toolhead.py
 +++ b/klippy/toolhead.py
-@@ -64,33 +64,33 @@ def calc_junction(self, prev_move):
+@@ -92,33 +92,33 @@ class Move:
              return
          # Allow extruder to calculate its maximum junction
          extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
@@ -78,3 +78,6 @@ index 948ea974fd70..ed26092f651d 100644
      def set_junction(self, start_v2, cruise_v2, end_v2):
          # Determine accel, cruise, and decel portions of the move distance
          half_inv_accel = .5 / self.accel
+-- 
+2.47.3
+
