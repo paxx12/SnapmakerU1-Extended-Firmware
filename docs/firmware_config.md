@@ -161,9 +161,9 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 
 See [VPN Remote Access](vpn.md) for setup instructions.
 
-**cloud** - A 3D printing cloud tools provider
+**cloud** - Cloud tools providers.
 - `none` (default) - No cloud providers enabled.
-- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) for free & unlimited remote access, AI print failure detection, notifications, and more!
+- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) enables free & unlimited remote access, AI print failure detection, notifications, and more.
 
 See the [3D Printing Clouds](cloud.md) for setup instructions.
 
@@ -201,15 +201,14 @@ ssh: false
 # VPN provider for remote access: none, tailscale
 # Must SSH and run "tailscale up" to complete login flow
 vpn: none
+# Cloud: none, octoeverywhere
+# - none - No cloud services enabled.
+# - octoeverywhere - OctoEverywhere.com remote access, AI print failure detection, notifications, and more.
+cloud: none
 
 [monitoring]
 # Enable Klipper Prometheus exporter on specified address
 # klipper_exporter: :9101
-
-[octoeverywhere]
-# Enables the OctoEverywhere.com plugin.
-# Access the octoeverywhere.log file from Fluidd/Mainsail to find your account linking URL.
-enabled: false
 ```
 
 ### Identifying Customized Settings
