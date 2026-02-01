@@ -1,4 +1,4 @@
-From 8291788f40a677b11d6e0e0283411bc5f96936f7 Mon Sep 17 00:00:00 2001
+From 1001abc34a46326904ad8c5917d2ff10efc08cb3 Mon Sep 17 00:00:00 2001
 From: Kevin O'Connor <kevin@koconnor.net>
 Date: Wed, 27 Nov 2024 22:45:27 -0500
 Subject: [PATCH] toolhead: Use delta_v2 when calculating centripetal force
@@ -16,10 +16,10 @@ Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
  1 file changed, 5 insertions(+), 4 deletions(-)
 
 diff --git a/klippy/toolhead.py b/klippy/toolhead.py
-index 4149d53b12f6..948ea974fd70 100644
+index 7c4950469..363959ed0 100644
 --- a/klippy/toolhead.py
 +++ b/klippy/toolhead.py
-@@ -76,10 +76,11 @@ def calc_junction(self, prev_move):
+@@ -104,10 +104,11 @@ class Move:
          sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
          R_jd = sin_theta_d2 / (1. - sin_theta_d2)
          # Approximated circle must contact moves no further away than mid-move
@@ -35,3 +35,6 @@ index 4149d53b12f6..948ea974fd70 100644
          # Apply limits
          self.max_start_v2 = min(
              R_jd * self.junction_deviation * self.accel,
+-- 
+2.47.3
+

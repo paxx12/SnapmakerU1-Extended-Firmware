@@ -1,4 +1,4 @@
-From 6d1256ddcc51cc62ab403fdc29d0b2688116a29e Mon Sep 17 00:00:00 2001
+From 8543899d3c9d84923a748056fa8d17f37ffbdbb7 Mon Sep 17 00:00:00 2001
 From: MRX8024 <57844100+MRX8024@users.noreply.github.com>
 Date: Wed, 13 Nov 2024 02:55:32 +0200
 Subject: [PATCH] resonance_tester: Fix chips selection, add accel_per_hz
@@ -13,16 +13,14 @@ docs: Update TEST_RESONANCES + SHAPER_CALIBRATE with missing parameters and brac
 
 Signed-off-by: Maksim Bolgov <maksim8024@gmail.com>
 ---
- docs/Config_Changes.md            |  4 ++++
- docs/G-Codes.md                   | 18 +++++++++---------
- klippy/extras/resonance_tester.py |  8 +++-----
- 3 files changed, 16 insertions(+), 14 deletions(-)
+ klippy/extras/resonance_tester.py | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/klippy/extras/resonance_tester.py b/klippy/extras/resonance_tester.py
-index fe8717d58545..e9d4e9d92c53 100644
+index 5657adbe2..d6048cddf 100644
 --- a/klippy/extras/resonance_tester.py
 +++ b/klippy/extras/resonance_tester.py
-@@ -65,6 +65,8 @@ def prepare_test(self, gcmd):
+@@ -70,6 +70,8 @@ class VibrationPulseTest:
          self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.)
          self.freq_end = gcmd.get_float("FREQ_END", self.max_freq,
                                         minval=self.freq_start, maxval=300.)
@@ -31,7 +29,7 @@ index fe8717d58545..e9d4e9d92c53 100644
          self.hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
                                           above=0., maxval=2.)
      def run_test(self, axis, gcmd):
-@@ -212,11 +214,7 @@ def _run_test(self, gcmd, axes, helper, raw_name_suffix=None,
+@@ -231,11 +233,7 @@ class ResonanceTester:
      def _parse_chips(self, accel_chips):
          parsed_chips = []
          for chip_name in accel_chips.split(','):
@@ -44,3 +42,6 @@ index fe8717d58545..e9d4e9d92c53 100644
              parsed_chips.append(chip)
          return parsed_chips
      def _get_max_calibration_freq(self):
+-- 
+2.47.3
+

@@ -1,4 +1,4 @@
-From 16fc46fe5ff0dbbc5188ee6a7829eee5976c1eb9 Mon Sep 17 00:00:00 2001
+From f92f452dcec89c7ec7909b7e75acfd52e1e32955 Mon Sep 17 00:00:00 2001
 From: Kevin O'Connor <kevin@koconnor.net>
 Date: Tue, 30 Sep 2025 19:32:49 -0400
 Subject: [PATCH] toolhead: Reduce LOOKAHEAD_FLUSH_TIME to 0.150 seconds
@@ -15,10 +15,10 @@ Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/klippy/toolhead.py b/klippy/toolhead.py
-index 9163e82cc7a8..da297e966be4 100644
+index ef055f0d5..7c4950469 100644
 --- a/klippy/toolhead.py
 +++ b/klippy/toolhead.py
-@@ -113,7 +113,7 @@ def set_junction(self, start_v2, cruise_v2, end_v2):
+@@ -134,7 +134,7 @@ class Move:
          self.cruise_t = cruise_d / cruise_v
          self.decel_t = decel_d / ((end_v + cruise_v) * 0.5)
  
@@ -27,3 +27,6 @@ index 9163e82cc7a8..da297e966be4 100644
  
  # Class to track a list of pending move requests and to facilitate
  # "look-ahead" across moves to reduce acceleration between moves.
+-- 
+2.47.3
+
