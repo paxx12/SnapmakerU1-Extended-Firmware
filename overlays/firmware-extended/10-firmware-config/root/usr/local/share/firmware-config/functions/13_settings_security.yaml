@@ -1,6 +1,6 @@
 settings:
-  remote_access:
-    label: Remote Access
+  web:
+    label: Web
     items:
       moonraker-auth:
         label: Require Login/Password (Fluidd only)
