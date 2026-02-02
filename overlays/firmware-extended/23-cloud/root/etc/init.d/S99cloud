@@ -35,18 +35,14 @@ start_octoeverywhere() {
         -m moonraker_octoeverywhere "$OCTOEVERYWHERE_ARGS"
 
     echo "OctoEverywhere started!"
-    echo ""
-    echo "To link this printer to your OctoEverywhere account, use the Fluidd or Mainsail web interface to access the octoeverywhere.log file."
-    echo "Full Guide: https://octoeverywhere.com/s/snapmaker-u1-setup"
-    echo ""
 }
 
 #
 # Cloud Common
 #
 
-# Load config from user
-EXTENDED_CFG="/home/lava/printer_data/config/extended/extended.cfg"
+# Load config from user extended config file
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
 CLOUD_PROVIDER=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" remote_access cloud none)
 
 start() {
