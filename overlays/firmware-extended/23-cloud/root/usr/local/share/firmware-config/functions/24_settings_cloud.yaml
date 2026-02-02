@@ -29,5 +29,7 @@ settings:
                 /usr/local/bin/octoeverywhere-pkg download &&
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere &&
                 /etc/init.d/S99cloud restart &&
-                /usr/local/bin/octoeverywhere up --timeout=60s # to pull the access tokens
+                sleep 5 &&
+                echo "Please visit the following URL to link your OctoEverywhere account:" &&
+                grep "account-linking-url:" /home/lava/printer_data/logs/octoeverywhere.log
         default: none
