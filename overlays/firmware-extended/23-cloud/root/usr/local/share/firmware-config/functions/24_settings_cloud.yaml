@@ -1,10 +1,33 @@
-# TODO - I'm not sure how these work, are they part of the firmware config system?
-# I would be cool to get the OctoEverywhere link URL from here.
-# actions:
-#   get-link-url:
-#     label: Get Plugin Linking URL
-#     items:
-#       tailscale-status:
-#         label: Tailscale Status
-#         cmd: [/usr/local/bin/tailscale, status]
-#         message: "Checking Tailscale status..."
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      cloud:
+        label: Cloud Access
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - remote_access
+          - cloud
+          - none
+        options:
+          none:
+            label: None
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
+                /etc/init.d/S99cloud stop
+          octoeverywhere:
+            label: OctoEverywhere
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/octoeverywhere-pkg download &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere &&
+                /etc/init.d/S99cloud restart &&
+                /usr/local/bin/octoeverywhere up --timeout=60s # to pull the access tokens
+        default: none

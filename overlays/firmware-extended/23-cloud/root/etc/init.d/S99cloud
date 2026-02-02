@@ -41,7 +41,6 @@ start_octoeverywhere() {
     echo ""
 }
 
-
 #
 # Cloud Common
 #
