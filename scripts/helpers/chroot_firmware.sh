@@ -15,8 +15,9 @@ if [[ -e ./etc/resolv.conf ]]; then
   exit 1
 fi
 
+set -euo pipefail
+
 echo "nameserver 1.1.1.1" > ./etc/resolv.conf
+trap 'rm -f ./etc/resolv.conf' EXIT
 
 chroot "$ROOTFS" "$@"
-
-rm -f ./etc/resolv.conf
