@@ -6,7 +6,7 @@
 # Downloads and installs a pinned version of OctoEverywhere from GitHub
 #
 
-GIT_TAG_VERSION="4.6.1"
+GIT_TAG_VERSION="4.6.2"
 EXPECTED_TAG_SHA256="a735b1f19c9dcdc09ceca4ab98b7de54f25e75923229c9e8474969f99368de63"
 
 REPO_URL="https://github.com/QuinnDamerell/OctoPrint-OctoEverywhere/archive/refs/tags/${GIT_TAG_VERSION}.zip"
