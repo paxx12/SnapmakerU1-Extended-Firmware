@@ -3,7 +3,7 @@ settings:
     label: Remote Access
     items:
       cloud:
-        label: Cloud Access
+        label: Cloud Services - Remote Access, AI Print Failure Detection, Notifications, Phone Apps, etc.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

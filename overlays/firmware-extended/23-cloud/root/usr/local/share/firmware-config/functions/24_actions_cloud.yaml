@@ -1,0 +1,13 @@
+actions:
+  account-linking:
+    label: Account Linking
+    items:
+      get-octoeverywhere-link-url:
+        label: Get OctoEverywhere Account Link URL
+        cmd:
+          - grep
+          - "plugin-not-linked"
+          - -A
+          - 20
+          - /home/lava/printer_data/logs/octoeverywhere.log
+        message: "Getting your OctoEverywhere account link URL..."
