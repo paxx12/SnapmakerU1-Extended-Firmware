@@ -7,7 +7,7 @@
 #
 
 GIT_TAG_VERSION="4.6.2"
-EXPECTED_TAG_SHA256="a735b1f19c9dcdc09ceca4ab98b7de54f25e75923229c9e8474969f99368de63"
+EXPECTED_TAG_SHA256="055dcd5400c61ed231283faa3d511ebf6b5565e3fdb5d665b04ef9943dee5150"
 
 REPO_URL="https://github.com/QuinnDamerell/OctoPrint-OctoEverywhere/archive/refs/tags/${GIT_TAG_VERSION}.zip"
 TMP_DIR="/oem/apps/octoeverywhere.tmp"
@@ -30,8 +30,8 @@ download() {
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
 
-    echo "Downloading OctoEverywhere ${GIT_TAG_VERSION}..."
-    if ! /usr/local/bin/curl -fSL -o "$TMP_DIR/octoeverywhere.zip" "$REPO_URL"; then
+    echo "Downloading OctoEverywhere ${GIT_TAG_VERSION} From GitHub..."
+    if ! /usr/local/bin/curl -sfSL -o "$TMP_DIR/octoeverywhere.zip" "$REPO_URL"; then
         echo "Download failed"
         return 1
     fi
@@ -51,6 +51,7 @@ download() {
         echo "Extraction failed"
         return 1
     fi
+    echo "Extraction successful."
 
     rm -rf "$INSTALL_DIR"
 
@@ -63,24 +64,24 @@ download() {
 
     rm -rf "$TMP_DIR"
 
-    echo "Setting up Python virtual environment..."
+    echo "Setting up Python virtual environment (this can take up to 60 seconds)..."
     if ! python3 -m venv "$VENV_DIR"; then
         echo "Failed to create virtual environment"
         return 1
     fi
 
-    echo "Installing dependencies..."
-    if ! "$VENV_DIR/bin/pip" install --quiet -r "$INSTALL_DIR/requirements.txt"; then
+    echo "Installing dependencies (this can also take a bit)..."
+    if ! "$VENV_DIR/bin/pip" install --disable-pip-version-check --quiet -r "$INSTALL_DIR/requirements.txt"; then
         echo "Failed to install dependencies"
         return 1
     fi
 
     echo "Trying to install the optional zstdstandard package for better performance..."
-    if ! "$VENV_DIR/bin/pip" install --quiet zstandard; then
+    if ! "$VENV_DIR/bin/pip" install --disable-pip-version-check --quiet zstandard; then
         echo "Failed to install zstandard, continuing without it."
     fi
 
-    echo "OctoEverywhere installed to $INSTALL_DIR"
+    echo "OctoEverywhere installed successfully to $INSTALL_DIR"
 }
 
 case "$1" in
