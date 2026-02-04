@@ -9,16 +9,19 @@
      'extruder_map_table': [i for i in range(PHYSICAL_EXTRUDER_NUM)] + [0] * (LOGICAL_EXTRUDER_NUM - PHYSICAL_EXTRUDER_NUM),
      'extruders_used' : [False] * PHYSICAL_EXTRUDER_NUM,
      'extruders_replenished': [i for i in range(PHYSICAL_EXTRUDER_NUM)],
-@@ -181,6 +183,8 @@
+@@ -181,6 +183,11 @@
          self.print_task_config['filament_color_rgba'][channel] = filament_color_rgba
          self.print_task_config['filament_official'][channel] = info['OFFICIAL']
          self.print_task_config['filament_sku'][channel] = info['SKU']
-+        self.print_task_config['filament_spool_id'][channel] = info.get('SPOOL_ID', 0)
++        new_spool_id = info.get('SPOOL_ID', 0)
++        if new_spool_id == 0 and info == self.print_task_config['filament_rfid'][channel]:
++            new_spool_id = self.print_task_config['filament_spool_id'][channel]
++        self.print_task_config['filament_spool_id'][channel] = new_spool_id
 +        self.print_task_config['filament_rfid'][channel] = info
          if self.filament_param_obj is not None:
              self.print_task_config['filament_soft'][channel] = \
                  self.filament_param_obj.get_is_soft(info['VENDOR'], info['MAIN_TYPE'], info['SUB_TYPE'])
-@@ -343,6 +347,8 @@
+@@ -343,6 +350,8 @@
          filament_sub_type = gcmd.get('FILAMENT_SUBTYPE', None)
          filament_color = gcmd.get_int('FILAMENT_COLOR', None)
          filament_color_rgba = gcmd.get('FILAMENT_COLOR_RGBA', None)
@@ -27,7 +30,7 @@
          logging.info("[print_task_config] PRINT_FILAMENT_CONFIG %s",
                          gcmd.get_raw_command_parameters())
 
-@@ -359,8 +365,8 @@
+@@ -359,8 +368,8 @@
          if config_extruder < 0 or config_extruder >= PHYSICAL_EXTRUDER_NUM:
              raise gcmd.error("[print_task_config] extruder{} is out of range[0, {}]".format(config_extruder, PHYSICAL_EXTRUDER_NUM -1))
 
@@ -38,7 +41,7 @@
 
          if filament_type is not None:
              self.print_task_config['filament_vendor'][config_extruder] = filament_vendor
-@@ -403,6 +411,8 @@
+@@ -403,6 +414,8 @@
 
          self.print_task_config['filament_official'][config_extruder] = False
          self.print_task_config['filament_sku'][config_extruder] = 0
