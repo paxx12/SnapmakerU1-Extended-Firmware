@@ -27,6 +27,10 @@ start_octoeverywhere() {
     printf "Starting OctoEverywhere..."
     mkdir -p "$OCTOEVERYWHERE_STORAGE_DIR"
 
+    # Tune malloc for embedded systems, so PY doesn't each so much memory.
+    export MALLOC_TRIM_THRESHOLD_=65536
+    export MALLOC_ARENA_MAX=2
+
     PYTHON="${OE_VENV_DIR}/bin/python3"
     cd "$OE_INSTALL_DIR"
     start-stop-daemon -S -b -m \
