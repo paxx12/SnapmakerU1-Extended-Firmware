@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ $# -ne 2 ]]; then
   echo "usage: $0 <user@ip> <profile>"

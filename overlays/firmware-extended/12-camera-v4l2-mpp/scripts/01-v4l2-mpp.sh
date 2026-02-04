@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
 GIT_SHA=664e0891089a199d4fc6d9b50bb8f72b67aa4058
