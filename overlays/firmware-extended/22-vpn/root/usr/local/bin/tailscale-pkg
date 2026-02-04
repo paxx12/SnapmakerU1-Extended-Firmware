@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 VERSION=1.92.5
 URL="https://pkgs.tailscale.com/stable/tailscale_${VERSION}_arm64.tgz"

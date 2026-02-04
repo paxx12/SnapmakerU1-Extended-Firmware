@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CUR_DIR="$(realpath "$(dirname "$0")")"
 
