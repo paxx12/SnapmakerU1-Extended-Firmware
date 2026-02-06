@@ -18,6 +18,8 @@ Each overlay is self-contained and numbered to control application order. This m
 - Maintain different firmware profiles (basic vs extended)
 - Add custom modifications without conflicts
 
+For external third-party components, see [Third-Party Integrations](design/third_party.md).
+
 ## Prerequisites
 
 - Docker installed on your system
