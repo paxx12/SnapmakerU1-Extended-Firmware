@@ -35,14 +35,11 @@ config_json() {
 EOF
 }
 
-ARGS=$(config_json)
-
 mkdir -p "$STATE_DIR"
 
 # Tune malloc for embedded systems, so PY doesn't each so much memory.
 export MALLOC_TRIM_THRESHOLD_=65536
 export MALLOC_ARENA_MAX=2
-
 export PYTHONPATH="$DIR:$PYTHONPATH"
 
-exec "$PYTHON" -m moonraker_octoeverywhere "$(base64 -d <<< "$ARGS")"
+exec "$PYTHON" -m moonraker_octoeverywhere "$(base64 <<< $(config_json))"
