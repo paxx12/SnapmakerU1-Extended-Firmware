@@ -21,21 +21,27 @@ Once enabled: `http://<printer-ip>/screen/`
 
 ## Enabling Remote Screen
 
-Remote screen is **disabled by default**. To enable:
+Remote screen is disabled by default.
 
-**Step 1:** Edit `extended/extended2.cfg`, locate the setting below and set it to true:
+### Using firmware-config Web UI (preferred)
+
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Web section, and enable Remote Screen Access.
+
+### Manual Setup (advanced)
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg`, set remote_screen to true:
 ```ini
 [web]
 remote_screen: true
 ```
 
-**Step 2:** Edit `extended/moonraker/04_remote_screen.cfg`, locate the setting below and set it to true:
+**Step 2:** Edit `/home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg`, set enabled to true:
 ```ini
 [webcam gui]
 enabled: true
 ```
 
-**Step 3:** Reboot the printer
+**Step 3:** Reboot the printer for changes to take effect.
 
 **Editing via Fluidd/Mainsail:**
 1. Enable **Advanced Mode** in printer settings
