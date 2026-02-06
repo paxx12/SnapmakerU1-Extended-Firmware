@@ -49,7 +49,7 @@ Toggle settings directly from the web interface:
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
-| Cloud | None, OctoEverywhere | Enable support for [OctoEverywhere](cloud.md) |
+| Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -163,7 +163,7 @@ See [VPN Remote Access](vpn.md) for setup instructions.
 
 **cloud**
 - `none` (default) - No cloud providers enabled.
-- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) enables free & unlimited remote access, AI print failure detection, notifications, and more.
+- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) remote access
 
 See the [3D Printing Clouds](cloud.md) for setup instructions.
 
@@ -203,7 +203,7 @@ ssh: false
 vpn: none
 # Cloud: none, octoeverywhere
 # - none - No cloud services enabled.
-# - octoeverywhere - OctoEverywhere.com remote access, AI print failure detection, notifications, and more.
+# - octoeverywhere - OctoEverywhere.com remote access
 cloud: none
 
 [monitoring]

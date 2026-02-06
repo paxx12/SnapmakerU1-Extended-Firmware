@@ -1,34 +1,34 @@
 ---
-title: 3D Printing Clouds
+title: Cloud Remote Access (Experimental)
 ---
 
-3D printing cloud providers offer a wide range of tools for 3D printing.
-
-## OctoEverywhere
+# Cloud Remote Access (Experimental)
 
 **Available in: Extended firmware only**
 
-[OctoEverywhere.com](https://octoeverywhere.com) is a community project that enables:
+Control your printer remotely using cloud-based remote access providers.
 
-- Free & unlimited full Fluidd/Mainsail remote access.
-- Free & unlimited AI print failure detection.
-- Real-time print notifications to Email, SMS, Discord, etc.
-- Remote access for iPhone & Android apps like Mobileraker and OctoApp.
-- Multi-printer dashboard with quick access to snapshots, status, remote access, and print time completions.
-- Live streaming, shared printer access, and more!
+> **Note**: Cloud providers are downloaded on-demand when enabled by the user. See [third-party integration design](design/third_party.md) for details on how external components are managed.
 
+> **Warning**: This feature is experimental. Cloud services consume additional CPU and memory resources which may affect print quality or reliability during active prints. It is recommended to monitor system performance closely.
 
-### Enabling OctoEverywhere
+## Supported Providers
 
-OctoEverywhere is **disabled by default**.
+- **none** - Cloud access disabled (default)
+- **octoeverywhere** - Remote access via [OctoEverywhere.com](https://octoeverywhere.com)
 
-#### Using firmware-config Web UI
+## OctoEverywhere
 
-Navigate to the firmware-config interface and select `octoeverywhere` under Cloud Provider. This will automatically download and install the OctoEverywhere plugin.
+- Access your printer remotely from anywhere
+- AI print failure detection and notifications
+- Webcam streaming and timelapse
+- Requires no port forwarding or VPN configuration
 
-> **After enabling OctoEverywhere, you must link your account! (see below)**
+### Using firmware-config Web UI (preferred)
 
-#### Manual Setup
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Remote Access section, and select OctoEverywhere under Cloud Provider. This will automatically download and install the OctoEverywhere plugin and display the account linking instructions.
+
+### Manual Setup (advanced)
 
 **Step 1:** Download OctoEverywhere (requires internet connection):
 ```bash
@@ -36,34 +36,17 @@ ssh root@<printer-ip>
 octoeverywhere-pkg download
 ```
 
-**Step 2:** Edit `extended/extended2.cfg`, set the `cloud` to `octoeverywhere`:
+**Step 2:** Edit `extended/extended2.cfg`, set the `cloud`:
 ```ini
 [remote_access]
 cloud: octoeverywhere
 ```
 
-**Step 3:** Start the OctoEverywhere plugin service:
+**Step 3:** Start the cloud service:
 ```bash
-/etc/init.d/S99octoeverywhere restart
+/etc/init.d/S99cloud restart
 ```
 
-### OctoEverywhere Account Linking
+**Step 4:** Link your account by downloading `octoeverywhere.log` from Mainsail or Fluidd to find the account linking URL. Open the URL in your browser to link your printer to your OctoEverywhere.com account.
 
-Once the OctoEverywhere plug-in is running, you need to link it with your OctoEverywhere.com account. Simply find the account linking URL in the `octoeverywhere.log` file.
-
-#### Using Fluidd
-
-- Open the Fluidd web interface
-- Click the `{...}` Configuration icon on the side menu bar.
-- In the `Other Files` section, under the `Logs` tab, find `octoeverywhere.log` and click to edit/open it.
-- Look for the account linking URL; it will be near the top.
-- Open the URL in your browser, name your printer, and you're done!
-
-#### Using Mainsail
-
-- Open the Mainsail web interface
-- Click the `Machine` option in the side menu bar.
-- In the `Config Files` section, set the `root` dropdown box to `logs`
-- Find `octoeverywhere.log` file and click to open it.
-- Look for the account linking URL; it will be near the top.
-- Open the URL in your browser, name your printer, and you're done!
+**Need help?** Visit [OctoEverywhere Support for Snapmaker U1](https://octoeverywhere.com/s/snapmaker-u1) for assistance.

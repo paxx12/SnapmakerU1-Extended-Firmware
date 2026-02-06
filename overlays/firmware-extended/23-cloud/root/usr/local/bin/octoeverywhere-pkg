@@ -1,23 +1,19 @@
 #!/bin/bash
 
-
 #
 # OctoEverywhere package manager
 # Downloads and installs a pinned version of OctoEverywhere from GitHub
 #
 
-GIT_TAG_VERSION="4.6.6"
-EXPECTED_TAG_SHA256="8fedea60d50adc5763269cec47a46d81e534ea0066b790176fc819abea1b8db5"
-
-REPO_URL="https://github.com/QuinnDamerell/OctoPrint-OctoEverywhere/archive/refs/tags/${GIT_TAG_VERSION}.zip"
-TMP_DIR="/oem/apps/octoeverywhere.tmp"
+VERSION="4.6.6"
+URL="https://github.com/QuinnDamerell/OctoPrint-OctoEverywhere/archive/refs/tags/${VERSION}.zip"
+SHA256="8fedea60d50adc5763269cec47a46d81e534ea0066b790176fc819abea1b8db5"
 
 # These paths are referenced in the init.d script
-INSTALL_DIR="/oem/apps/octoeverywhere"
-VENV_DIR="/oem/apps/octoeverywhere-env"
+APP_DIR="/oem/apps/octoeverywhere"
 
 check() {
-    if [[ -d "$INSTALL_DIR" && -d "$VENV_DIR" && -f "$INSTALL_DIR/moonraker_octoeverywhere.py" ]]; then
+    if [[ -d "$APP_DIR/latest" ]]; then
         echo "OctoEverywhere is installed."
         return 0
     else
@@ -27,61 +23,54 @@ check() {
 }
 
 download() {
-    rm -rf "$TMP_DIR"
-    mkdir -p "$TMP_DIR"
+    rm -rf "$APP_DIR"
+    mkdir -p "$APP_DIR"
 
-    echo "Downloading OctoEverywhere ${GIT_TAG_VERSION} From GitHub..."
-    if ! /usr/local/bin/curl -sfSL -o "$TMP_DIR/octoeverywhere.zip" "$REPO_URL"; then
+    echo "Downloading OctoEverywhere ${VERSION} From GitHub..."
+    if ! /usr/local/bin/curl -sfSL -o "$APP_DIR/octoeverywhere.zip" "$URL"; then
         echo "Download failed"
         return 1
     fi
 
     echo "Verifying SHA256 checksum..."
-    ACTUAL_SHA256=$(sha256sum "$TMP_DIR/octoeverywhere.zip" | awk '{print $1}')
-    if [[ "$ACTUAL_SHA256" != "$EXPECTED_TAG_SHA256" ]]; then
+    ACTUAL_SHA256=$(sha256sum "$APP_DIR/octoeverywhere.zip" | awk '{print $1}')
+    if [[ "$ACTUAL_SHA256" != "$SHA256" ]]; then
         echo "SHA256 mismatch!"
-        echo "  Expected: $EXPECTED_TAG_SHA256"
+        echo "  Expected: $SHA256"
         echo "  Actual:   $ACTUAL_SHA256"
         return 1
     fi
     echo "Checksum verified."
 
     echo "Extracting..."
-    if ! unzip -q "$TMP_DIR/octoeverywhere.zip" -d "$TMP_DIR"; then
+    if ! unzip -q "$APP_DIR/octoeverywhere.zip" -d "$APP_DIR"; then
         echo "Extraction failed"
         return 1
     fi
     echo "Extraction successful."
 
-    rm -rf "$INSTALL_DIR"
-
-    # GitHub archives extract to OctoPrint-OctoEverywhere-<tag>
-    EXTRACT_DIR="$TMP_DIR/OctoPrint-OctoEverywhere-${GIT_TAG_VERSION}"
-    if ! mv "$EXTRACT_DIR" "$INSTALL_DIR"; then
-        echo "Failed to move OctoEverywhere to $INSTALL_DIR"
-        return 1
-    fi
-
-    rm -rf "$TMP_DIR"
+    rm -rf "$APP_DIR/octoeverywhere.zip"
 
     echo "Setting up Python virtual environment (this can take up to 60 seconds)..."
-    if ! python3 -m venv "$VENV_DIR"; then
+    if ! python3 -m venv "$APP_DIR/venv"; then
         echo "Failed to create virtual environment"
         return 1
     fi
 
     echo "Installing dependencies (this can also take a bit)..."
-    if ! "$VENV_DIR/bin/pip" install --disable-pip-version-check --quiet -r "$INSTALL_DIR/requirements.txt"; then
+    if ! "$APP_DIR/venv/bin/pip" install --disable-pip-version-check -r "$APP_DIR/OctoPrint-OctoEverywhere-${VERSION}/requirements.txt"; then
         echo "Failed to install dependencies"
         return 1
     fi
 
     echo "Trying to install the optional zstdstandard package for better performance..."
-    if ! "$VENV_DIR/bin/pip" install --disable-pip-version-check --quiet zstandard; then
+    if ! "$APP_DIR/venv/bin/pip" install --disable-pip-version-check zstandard; then
         echo "Failed to install zstandard, continuing without it."
     fi
 
-    echo "OctoEverywhere installed successfully to $INSTALL_DIR"
+    # GitHub archives extract to OctoPrint-OctoEverywhere-<tag>
+    ln -s "OctoPrint-OctoEverywhere-${VERSION}" "$APP_DIR/latest"
+    echo "OctoEverywhere installed successfully to $APP_DIR"
 }
 
 case "$1" in
@@ -94,20 +83,20 @@ case "$1" in
             exit 0
         fi
         if ! download; then
-            rm -rf "$TMP_DIR"
+            rm -rf "$APP_DIR"
             exit 1
         fi
         ;;
     update)
         echo "Updating OctoEverywhere..."
         if ! download; then
-            rm -rf "$TMP_DIR"
+            rm -rf "$APP_DIR"
             exit 1
         fi
         ;;
     clean)
         echo "Removing OctoEverywhere installation..."
-        rm -rf "$INSTALL_DIR" "$VENV_DIR"
+        rm -rf "$APP_DIR"
         echo "Removed."
         ;;
     *)
