@@ -8,21 +8,27 @@ title: VPN Remote Access (Experimental)
 
 Control your printer remotely using a VPN provider.
 
+> **Note**: VPN providers are downloaded on-demand when enabled by the user. See [third-party integration design](design/third_party.md) for details on how external components are managed.
+
 > **Warning**: This feature is experimental. VPN services consume additional CPU and memory resources which may affect print quality or reliability during active prints. It is recommended to disable VPN while printing or monitor system performance closely.
 
 ## Supported Providers
 
+- **none** - VPN disabled (default)
 - **tailscale** - Access your printer on your [Tailnet](https://tailscale.com)
 
-## Enabling VPN
+## Tailscale
 
-VPN is **disabled by default**.
+- Gain full access to your printer from anywhere
+- Requires no port forwarding
 
-### Using firmware-config Web UI
+### Using firmware-config Web UI (preferred)
 
-Navigate to the firmware-config interface and select Tailscale under VPN Provider. This will automatically download and install Tailscale.
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Remote Access section, and select Tailscale under VPN Provider. This will automatically download and install Tailscale.
 
-### Manual Setup
+### Manual Setup (advanced)
+
+Tailscale setup requires [SSH access](ssh_access.md) to the printer.
 
 **Step 1:** Download Tailscale (requires internet connection):
 ```bash
@@ -41,14 +47,7 @@ vpn: tailscale
 /etc/init.d/S99vpn restart
 ```
 
-## Tailscale Setup
-
-Tailscale setup requires [SSH access](ssh_access.md) to the printer.
-
-**Login to your tailnet:**
-
-Use the [tailscale CLI up command](https://tailscale.com/kb/1241/tailscale-up) to login. Get a login link, QR code, or use an auth token to complete the login.
-
+**Step 4:** Login to your tailnet using the [tailscale up command](https://tailscale.com/kb/1241/tailscale-up):
 ```bash
 tailscale up
 
@@ -59,23 +58,17 @@ tailscale status | grep lava
 
 Note: You can use `tailscale up --ssh` to enable [tailscale SSH](https://tailscale.com/kb/1193/tailscale-ssh) and bypass passwords and keys.
 
-### Features
+### Optional: Enable SSL Certificates
 
-- Gain full access to your printer from anywhere
-- Requires no port forwarding
-- Tailscale runs in [Userspace Mode](https://tailscale.com/kb/1177/kernel-vs-userspace-routers#userspace-netstack-mode), there is no access to TUN
+Tailscale can generate Let's Encrypt SSL certificates for your printer using [Tailscale Serve](https://tailscale.com/kb/1312/serve):
 
-### Tailscale Certificates
-
-Tailscale can help generate Let's Encrypt SSL certificates for your printer, using [Tailscale Serve](https://tailscale.com/kb/1312/serve)! This will securly terminate SSL and forward requests to Fluidd/Mainsail.
-
-```
+```bash
 tailscale serve --bg 80
-tailscale serve reset # to disable
+# to disable: tailscale serve reset
 ```
 
-You can now browse securly to:
-https://lava.${YOUR_TAILNET}.ts.net/
+Browse securely to: `https://lava.${YOUR_TAILNET}.ts.net/`
 
-Note: The first time you load this it will take a minute to generate the certificate for the first time.
-Note: Advanced users can enable [Funnel](https://tailscale.com/kb/1223/funnel) to expose Fluidd/Mainsail to the public internet. Only do this if you absutely know what you are doing to stay secure. Stay safe!
+Note: The first time you load this it will take a minute to generate the certificate.
+
+Note: Advanced users can enable [Funnel](https://tailscale.com/kb/1223/funnel) to expose Fluidd/Mainsail to the public internet. Only do this if you absolutely know what you are doing to stay secure.

@@ -30,45 +30,7 @@ The internal camera is automatically configured and enabled.
 
 Access at: `http://<printer-ip>/webcam2/`
 
-USB cameras must be enabled in `extended2.cfg`. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
-
-## Moonraker Camera Configuration
-
-Camera streaming settings are configured through Moonraker configuration files in the `extended/moonraker/` directory.
-
-### Internal Camera Configuration
-
-Edit `extended/moonraker/02_internal_camera.cfg` to customize internal camera streaming:
-
-```cfg
-[webcam case]
-service: webrtc-camerastreamer
-stream_url: /webcam/webrtc
-snapshot_url: /webcam/snapshot.jpg
-aspect_ratio: 16:9
-```
-
-**Available streaming modes:**
-- `webrtc-camerastreamer` - WebRTC streaming (best quality and performance, default)
-  - `stream_url: /webcam/webrtc`
-- `iframe` - H264/MJPEG iframe streaming (acceptable quality and performance)
-  - `stream_url: /webcam/player`
-- `mjpegstreamer-adaptive` - MJPEG streaming (best compatibility, most resource intensive)
-  - No stream_url needed (uses snapshot_url only)
-
-### USB Camera Configuration
-
-Edit `extended/moonraker/03_usb_camera.cfg` to enable USB camera. Uncomment one of the sections:
-
-```cfg
-[webcam usb]
-service: webrtc-camerastreamer
-stream_url: /webcam2/webrtc
-snapshot_url: /webcam2/snapshot.jpg
-aspect_ratio: 16:9
-```
-
-**Important:** Only one streaming mode can be active per camera. After changing camera configuration, reboot the printer.
+USB cameras must be enabled first. See [USB Camera Configuration](#usb-camera-configuration) below for setup instructions.
 
 ## Camera Controls
 
@@ -92,69 +54,125 @@ To reset camera settings to defaults, delete the corresponding JSON file and reb
 
 ## Configuration
 
-All camera configuration is done through `/home/lava/printer_data/config/extended/extended2.cfg`. See [Firmware Configuration](firmware_config.md) for editing instructions.
-
 ### Internal Camera Selection
 
-By default, the extended firmware uses a custom hardware-accelerated camera service (paxx12). To switch to Snapmaker's original camera service:
+By default, the extended firmware uses a custom hardware-accelerated camera service (paxx12).
 
+#### Using firmware-config Web UI (preferred)
+
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Camera section, and select your preferred internal camera service or disable it.
+
+#### Manual Setup (advanced)
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg`.
+
+To switch to Snapmaker's original camera service:
 ```ini
 [camera]
 internal: snapmaker
 ```
 
 To disable the internal camera entirely (also disables timelapses):
-
 ```ini
 [camera]
 internal: none
 ```
 
-Note: Only one camera service can be operational at a time for the internal camera.
-
-### Camera Logging
-
-Enable logging to syslog for all camera services:
-
-```ini
-[camera]
-logs: syslog
+**Step 2:** (Optional) Customize streaming mode by editing `/home/lava/printer_data/config/extended/moonraker/02_internal_camera.cfg`:
+```cfg
+[webcam case]
+service: webrtc-camerastreamer
+stream_url: /webcam/webrtc
+snapshot_url: /webcam/snapshot.jpg
+aspect_ratio: 16:9
 ```
 
-Logs are available in `/var/log/messages`.
+**Available streaming modes:**
+- `webrtc-camerastreamer` - WebRTC streaming (best quality and performance, default)
+  - `stream_url: /webcam/webrtc`
+- `iframe` - H264/MJPEG iframe streaming (acceptable quality and performance)
+  - `stream_url: /webcam/player`
+- `mjpegstreamer-adaptive` - MJPEG streaming (best compatibility, most resource intensive)
+  - No stream_url needed (uses snapshot_url only)
 
-### RTSP Streaming
+**Step 3:** Reboot the printer for changes to take effect.
 
-RTSP streaming is disabled by default (paxx12 service only). To enable:
-
-```ini
-[camera]
-rtsp: true
-```
-
-RTSP streams will be available at:
-- Internal camera: `rtsp://<printer-ip>:8554/stream`
-- USB camera: `rtsp://<printer-ip>:8555/stream`
+Note: Only one camera service and one streaming mode can be operational at a time for the internal camera.
 
 ### USB Camera Configuration
 
-Enable USB camera support (paxx12 service only):
+USB camera support is disabled by default (paxx12 service only).
 
+#### Using firmware-config Web UI (preferred)
+
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Camera section, and enable USB camera support. This will automatically configure both the camera service and Moonraker streaming settings.
+
+#### Manual Setup (advanced)
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` to enable USB camera:
 ```ini
 [camera]
 usb: paxx12
 ```
 
-To disable USB camera:
-
-```ini
-[camera]
-usb: none
+**Step 2:** Edit `/home/lava/printer_data/config/extended/moonraker/03_usb_camera.cfg` to configure USB camera streaming:
+```cfg
+[webcam usb]
+service: webrtc-camerastreamer
+stream_url: /webcam2/webrtc
+snapshot_url: /webcam2/snapshot.jpg
+aspect_ratio: 16:9
 ```
+
+**Available streaming modes:**
+- `webrtc-camerastreamer` - WebRTC streaming (best quality and performance, default)
+  - `stream_url: /webcam2/webrtc`
+- `iframe` - H264/MJPEG iframe streaming (acceptable quality and performance)
+  - `stream_url: /webcam2/player`
+- `mjpegstreamer-adaptive` - MJPEG streaming (best compatibility, most resource intensive)
+  - No stream_url needed (uses snapshot_url only)
+
+**Step 3:** Reboot the printer for changes to take effect.
+
+To disable USB camera, set `usb: none` in extended2.cfg.
 
 When enabled, USB cameras are accessible at `http://<printer-ip>/webcam2/`.
 
-After any configuration changes, reboot the printer for changes to take effect.
+Note: Only one streaming mode can be active per camera.
+
+### RTSP Streaming
+
+RTSP streaming is disabled by default (paxx12 service only).
+
+#### Using firmware-config Web UI (preferred)
+
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Camera section, and enable RTSP streaming.
+
+#### Manual Setup (advanced)
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` to enable RTSP:
+```ini
+[camera]
+rtsp: true
+```
+
+**Step 2:** Reboot the printer for changes to take effect.
+
+RTSP streams will be available at:
+- Internal camera: `rtsp://<printer-ip>:8554/stream`
+- USB camera: `rtsp://<printer-ip>:8555/stream`
+
+### Camera Logging
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` to enable logging:
+```ini
+[camera]
+logs: syslog
+```
+
+**Step 2:** Reboot the printer for changes to take effect.
+
+Logs are available in `/var/log/messages`.
 
 ## Timelapse Support
 
