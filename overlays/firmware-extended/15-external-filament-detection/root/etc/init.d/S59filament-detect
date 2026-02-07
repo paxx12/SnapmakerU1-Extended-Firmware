@@ -30,7 +30,7 @@ start() {
     printf "Starting filament-detect: "
     start-stop-daemon -S -b -m \
         -p "$PIDFILE" \
-        -x /usr/bin/python3 -- /usr/local/bin/filament-detect/main.py /usr/local/bin/filament-detect/examples/u1.ini
+        -x /usr/bin/python3 -- /usr/local/bin/filament-detect/main.py /usr/local/bin/filament-detect/examples/u1.cfg
     echo "OK"
 }
 
