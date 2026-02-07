@@ -20,8 +20,8 @@ start() {
     fi
 
     printf "Applying printer.cfg patch: "
-    if patch -N --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
-        patch -N "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
+    if patch --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
+        patch "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
         echo "OK"
     else
         echo "already applied or failed"
@@ -30,8 +30,7 @@ start() {
     printf "Starting filament-detect: "
     start-stop-daemon -S -b -m \
         -p "$PIDFILE" \
-        -d "$FILAMENT_DETECT_DIR" \
-        -x /usr/bin/python3 -- main.py examples/u1.ini
+        -x /usr/bin/python3 -- /usr/local/bin/filament-detect/main.py /usr/local/bin/filament-detect/examples/u1.ini
     echo "OK"
 }
 
@@ -39,7 +38,7 @@ stop() {
     printf "Stopping filament-detect: "
     if [ -f "$PIDFILE" ]; then
         start-stop-daemon -K -p "$PIDFILE" -s TERM
-        rm -f "$PIDFILE"
+        rm -f "$PIDFILE" 
         echo "OK"
     else
         echo "not running"

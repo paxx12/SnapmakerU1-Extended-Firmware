@@ -19,7 +19,7 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system official
-                /etc/init.d/S59filament-detect stop
+                echo Restart for changes to take effect
           extended:
             label: Extended
             cmd:
@@ -27,5 +27,5 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system extended
-                /etc/init.d/S59filament-detect restart
+                echo Restart for changes to take effect
         default: official

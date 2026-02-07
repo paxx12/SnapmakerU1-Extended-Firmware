@@ -14,6 +14,6 @@ TARGET_DIR="$CACHE_DIR/filament-detect"
 cache_git.sh "$TARGET_DIR" "$GIT_URL" "$GIT_SHA"
 
 echo ">> Installing filament-detect..."
-install -d "$ROOTFS_DIR/oem/apps/filament-detect"
-cp -r "$TARGET_DIR/." "$ROOTFS_DIR/oem/apps/filament-detect/"
+install -d "$ROOTFS_DIR/usr/local/bin/filament-detect"
+cp -r "$TARGET_DIR/." "$ROOTFS_DIR/usr/local/bin/filament-detect/"
 echo ">> filament-detect installation completed successfully."
