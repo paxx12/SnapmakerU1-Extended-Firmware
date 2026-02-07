@@ -104,6 +104,7 @@ Using the non-standard OpenSpool `subtype` field it is possible to specify a mat
 - `weight` - Spool weight in grams
 - `diameter` - Filament diameter in mm (e.g., 1.75)
 - `spool_id` - Spoolman spool ID for integration with spool management systems
+- `lot_nr` - Lot number identifier for filament batch tracking (8-16 character hex string). Both tags from the same spool should be programmed with the same lot_nr value
 
 ### Snapmaker Orca Naming Convention
 

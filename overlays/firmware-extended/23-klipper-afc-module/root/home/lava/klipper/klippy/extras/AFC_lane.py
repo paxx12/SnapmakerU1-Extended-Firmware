@@ -26,6 +26,7 @@ class AFCLane:
         self.connect_done = False
         self.print_task_config = None
         self.sensor = None
+        self.pending_lot_nr = None
         self.pending_refresh = False
 
         self.weight = -1 # -1 means weight is not supported/configured
@@ -42,6 +43,11 @@ class AFCLane:
             desc=self.cmd_SET_SPOOL_ID_help)
 
         self.gcode.register_mux_command(
+            "RESOLVE_SPOOL", "LANE", self.name,
+            self.cmd_RESOLVE_SPOOL,
+            desc=self.cmd_RESOLVE_SPOOL_help)
+
+        self.gcode.register_mux_command(
             "REFRESH_SPOOL", "LANE", self.name,
             self.cmd_REFRESH_SPOOL,
             desc=self.cmd_REFRESH_SPOOL_help)
@@ -50,6 +56,11 @@ class AFCLane:
         self.webhooks.register_endpoint(
             self.find_by_spool_id_callback,
             self._handle_find_by_spool_id_callback)
+
+        self.find_by_lot_nr_callback = f"{SPOOLMAN_PROXY_ENDPOINT_BASE}/find_by_lot_nr/{config.get_name()}"
+        self.webhooks.register_endpoint(
+            self.find_by_lot_nr_callback,
+            self._handle_find_by_lot_nr_callback)
 
     def _handle_connect(self):
         self.connect_done = True
@@ -98,6 +109,25 @@ class AFCLane:
         except Exception as e:
             raise web_request.error(f"Failed to process spoolman response: {e}")
 
+    cmd_RESOLVE_SPOOL_help = "Find spool by lot number and fetch filament data from Spoolman"
+    def cmd_RESOLVE_SPOOL(self, gcmd):
+        lot_nr = gcmd.get('LOT_NR')
+
+        gcmd.respond_info(f"Searching spool with lot_nr '{lot_nr}' for lane {self.name}...")
+
+        self.pending_lot_nr = lot_nr
+        self.pending_refresh = False
+
+        try:
+            self.webhooks.call_remote_method(
+                "spoolman_proxy",
+                cb_endpoint=self.find_by_lot_nr_callback,
+                request_method="GET",
+                path=f"/v1/spool?lot_nr={lot_nr}"
+            )
+        except Exception as e:
+            gcmd.respond_error(f"Failed to query spoolman: {e}")
+
     cmd_REFRESH_SPOOL_help = "Refresh current spool data from Spoolman"
     def cmd_REFRESH_SPOOL(self, gcmd):
         filament_info = self._get_filament_info()
@@ -118,6 +148,35 @@ class AFCLane:
             )
         except Exception as e:
             gcmd.respond_error(f"Failed to query spoolman: {e}")
+
+    def _handle_find_by_lot_nr_callback(self, web_request):
+        try:
+            payload = web_request.get('payload', [])
+            error = web_request.get('error', None)
+
+            if error:
+                self.gcode.respond_error(f"Spoolman error: {error}")
+                return
+
+            lot_nr = self.pending_lot_nr
+            self.pending_lot_nr = None
+
+            spool_data = None
+            if payload and isinstance(payload, list):
+                for spool in payload:
+                    spool_lot_nr = spool.get('lot_nr', '')
+                    lot_nrs = [x.strip() for x in spool_lot_nr.split(',')]
+                    if lot_nr in lot_nrs:
+                        spool_data = spool
+                        break
+
+            if not spool_data:
+                self.gcode.respond_error(f"No spool found with exact lot_nr '{lot_nr}'")
+                return
+
+            self._apply_spool_data_from_webhook(spool_data)
+        except Exception as e:
+            raise web_request.error(f"Failed to process spoolman response: {e}")
 
     def _apply_spool_data_from_webhook(self, response):
         """Apply spool data from spoolman response via webhook"""
