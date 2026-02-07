@@ -62,7 +62,8 @@ Example payload:
   "min_temp": 190,
   "max_temp": 220,
   "bed_min_temp": 50,
-  "bed_max_temp": 60
+  "bed_max_temp": 60,
+  "spool_id": 1
 }
 ```
 
@@ -102,6 +103,8 @@ Using the non-standard OpenSpool `subtype` field it is possible to specify a mat
 - `additional_color_hexes` - Additional colors for multicolor spools (up to 4)
 - `weight` - Spool weight in grams
 - `diameter` - Filament diameter in mm (e.g., 1.75)
+- `spool_id` - Spoolman spool ID for integration with spool management systems
+- `lot_nr` - Lot number identifier for filament batch tracking (8-16 character hex string). Both tags from the same spool should be programmed with the same lot_nr value
 
 ### Snapmaker Orca Naming Convention
 
