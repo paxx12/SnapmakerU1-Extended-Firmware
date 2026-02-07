@@ -60,6 +60,7 @@ Heavily expanded firmware with extensive features and customization. Includes al
 - [Fluidd or Mainsail](firmware_config.md#web) (selectable) with timelapse support
 - Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - [Timelapse Recovery Tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos
+- [OctoEverywhere](cloud.md) - Cloud-based remote access service for 3D printers
 
 ## Support
 

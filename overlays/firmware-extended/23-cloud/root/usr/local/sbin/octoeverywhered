@@ -1,0 +1,45 @@
+#!/bin/bash
+
+DIR="/oem/apps/octoeverywhere/latest"
+PIDFILE="/var/run/octoeverywhere.pid"
+PYTHON="/oem/apps/octoeverywhere/venv/bin/python3"
+STATE_DIR="/home/lava/printer_data/octoeverywhere-store"
+
+if [[ ! -e "$PYTHON" ]]; then
+    echo "Error: Python interpreter not found at $PYTHON"
+    exit 1
+fi
+
+if [[ ! -e "$DIR" ]]; then
+    echo "Error: OctoEverywhere daemon not found at $DAEMON"
+    exit 1
+fi
+
+if [[ ! -e "$STATE_DIR" ]]; then
+    echo "Error: State directory not found at $STATE_DIR"
+    exit 1
+fi
+
+config_json() {
+    cat <<"EOF"
+{
+    "ConfigFolder": "/home/lava/printer_data/config",
+    "LogFolder": "/home/lava/printer_data/logs",
+    "LocalFileStoragePath": "/home/lava/printer_data/octoeverywhere-store",
+    "ServiceName": "octoeverywhere",
+    "VirtualEnvPath": "/oem/apps/octoeverywhere/venv",
+    "RepoRootFolder": "/oem/apps/octoeverywhere/latest",
+    "IsCompanion": false,
+    "MoonrakerConfigFile": "/home/lava/printer_data/config/moonraker.conf"
+}
+EOF
+}
+
+mkdir -p "$STATE_DIR"
+
+# Tune malloc for embedded systems, so PY doesn't each so much memory.
+export MALLOC_TRIM_THRESHOLD_=65536
+export MALLOC_ARENA_MAX=2
+export PYTHONPATH="$DIR:$PYTHONPATH"
+
+exec "$PYTHON" -m moonraker_octoeverywhere "$(base64 <<< $(config_json))"

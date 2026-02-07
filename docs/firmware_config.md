@@ -49,6 +49,7 @@ Toggle settings directly from the web interface:
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
+| Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -160,6 +161,12 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 
 See [VPN Remote Access](vpn.md) for setup instructions.
 
+**cloud**
+- `none` (default) - No cloud providers enabled.
+- `octoeverywhere` - [OctoEverywhere.com](https://octoeverywhere.com) remote access
+
+See the [3D Printing Clouds](cloud.md) for setup instructions.
+
 #### [monitoring]
 
 **klipper_exporter** - Enable Prometheus metrics exporter for Klipper
@@ -194,6 +201,10 @@ ssh: false
 # VPN provider for remote access: none, tailscale
 # Must SSH and run "tailscale up" to complete login flow
 vpn: none
+# Cloud: none, octoeverywhere
+# - none - No cloud services enabled.
+# - octoeverywhere - OctoEverywhere.com remote access
+cloud: none
 
 [monitoring]
 # Enable Klipper Prometheus exporter on specified address
