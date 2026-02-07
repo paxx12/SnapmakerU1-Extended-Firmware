@@ -1,0 +1,61 @@
+--- a/printer.cfg
++++ b/printer.cfg
+@@ -54,29 +54,39 @@
+ #################################################################
+ ###       NFC configuration
+ #################################################################
+-[fm175xx_reader]
+-soc_spi_bus: 2
+-soc_spi_dev_num: 0
+-soc_spi_mode: 0
+-soc_spi_speed_max: 500000
+-soc_rst_pin: host:gpiochip1/gpio25
+-
+-extra_spi_bus: 2
+-extra_spi_dev_num: 1
+-extra_spi_mode: 0
+-extra_spi_speed_max: 500000
+-extra_rst_pin: host:gpiochip1/gpio28
++#[fm175xx_reader]
++#soc_spi_bus: 2
++#soc_spi_dev_num: 0
++#soc_spi_mode: 0
++#soc_spi_speed_max: 500000
++#soc_rst_pin: host:gpiochip1/gpio25
++
++#extra_spi_bus: 2
++#extra_spi_dev_num: 1
++#extra_spi_mode: 0
++#extra_spi_speed_max: 500000
++#extra_rst_pin: host:gpiochip1/gpio28
+ 
+ # Equivalently: etruder ~ extruder3
+-soc_ch_1: 3
+-soc_ch_2: 2
+-extra_ch_1: 0
+-extra_ch_2: 1
++#soc_ch_1: 3
++#soc_ch_2: 2
++#extra_ch_1: 0
++#extra_ch_2: 1
+ 
+-rf_1_pin: host:gpiochip1/gpio27
+-rf_2_pin: host:gpiochip1/gpio24
++#rf_1_pin: host:gpiochip1/gpio27
++#rf_2_pin: host:gpiochip1/gpio24
+ 
+-[filament_detect]
++#[filament_detect]
++
++[gcode_macro FILAMENT_DT_UPDATE]
++gcode:
++    {% set channel = params.CHANNEL|default(0)|int %}
++    { action_call_remote_method("filament_detect.start_scan", slot=channel) }
++
++[gcode_macro FILAMENT_DT_CLEAR]
++gcode:
++    {% set channel = params.CHANNEL|default(0)|int %}
++    SET_PRINT_FILAMENT_CONFIG CONFIG_EXTRUDER={channel} VENDOR=NONE FILAMENT_TYPE=NONE FILAMENT_SUBTYPE=NONE FILAMENT_COLOR=0
+ 
+ #################################################################
+ ###       flow calibration configuration

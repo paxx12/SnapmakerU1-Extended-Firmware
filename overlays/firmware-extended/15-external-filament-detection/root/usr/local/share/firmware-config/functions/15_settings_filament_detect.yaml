@@ -1,0 +1,32 @@
+settings:
+  filament_detection:
+    label: Filament Detection
+    items:
+      system:
+        label: Filament Tag Detection System
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - filament_detection
+          - system
+          - official
+        options:
+          official:
+            label: Official
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system official
+                /etc/init.d/S59filament-detect stop
+                echo Restart for changes to take effect
+          extended:
+            label: Extended
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system extended
+                echo Restart for changes to take effect
+        default: official
