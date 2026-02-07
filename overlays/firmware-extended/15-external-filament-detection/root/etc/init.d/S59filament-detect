@@ -1,0 +1,78 @@
+#!/bin/sh
+
+PIDFILE="/var/run/filament-detect.pid"
+FILAMENT_DETECT_DIR="/oem/apps/filament-detect"
+PRINTER_CFG="/oem/printer_data/config/printer.cfg"
+PRINTER_CFG_PATCH="/usr/local/share/filament-detect/printer.cfg.patch"
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
+FILAMENT_DETECT_SYSTEM=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection system official)
+
+start() {
+    if [ "$FILAMENT_DETECT_SYSTEM" != "extended" ]; then
+        echo "Filament tag detection system is not set to 'extended', not starting."
+        return
+    fi
+
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "filament-detect already running"
+        return 0
+    fi
+
+    printf "Applying printer.cfg patch: "
+    if patch -N --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
+        patch -N "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
+        echo "OK"
+    else
+        echo "already applied or failed"
+    fi
+
+    printf "Starting filament-detect: "
+    start-stop-daemon -S -b -m \
+        -p "$PIDFILE" \
+        -d "$FILAMENT_DETECT_DIR" \
+        -x /usr/bin/python3 -- main.py examples/u1.ini
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping filament-detect: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+    else
+        echo "not running"
+    fi
+
+    printf "Reverting printer.cfg patch: "
+    if patch -R --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
+        patch -R "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
+        echo "OK"
+    else
+        echo "already reverted or failed"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?
