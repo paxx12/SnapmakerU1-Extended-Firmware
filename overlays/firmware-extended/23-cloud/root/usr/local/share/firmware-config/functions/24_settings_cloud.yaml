@@ -25,13 +25,18 @@ settings:
             label: OctoEverywhere
             cmd:
               - bash
-              - -xec
+              - -ec
               - |
                 echo "WARNING: OctoEverywhere support is experimental. Higher resource usage may affect print quality."
                 sleep 5
 
+                echo ">> Downloading OctoEverywhere package..."
                 /usr/local/bin/octoeverywhere-pkg download
+
+                echo ">> Enabling OctoEverywhere..."
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere
+
+                echo ">> Restarting OctoEverywhere service..."
                 /etc/init.d/S99cloud restart
 
                 echo
@@ -41,7 +46,14 @@ settings:
                 echo "Contact Support: https://octoeverywhere.com/support"
                 echo
 
-                sleep 5
+                for i in {1..15}; do
+                    echo ">> Looking for authorization URL in logs... ($i)"
+                    if MATCH=$(grep -C 20 "This Plugin Isn't Connected To OctoEverywhere!" /home/lava/printer_data/logs/octoeverywhere.log); then
+                        sed -n 's/.*WARNING //p' <<< "$MATCH"
+                        exit 0
+                    fi
+                    sleep 1
+                done
 
-                grep -C 20 "This Plugin Isn't Connected To OctoEverywhere!" /home/lava/printer_data/logs/octoeverywhere.log | grep WARNING
+                echo "Authorization URL not found in logs. Please check the logs for more details."
         default: none
