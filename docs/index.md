@@ -60,16 +60,16 @@ Heavily expanded firmware with extensive features and customization. Includes al
 - [Fluidd or Mainsail](firmware_config.md#web) (selectable) with timelapse support
 - Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
 - [Timelapse Recovery Tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos
+- [Spoolman](spoolman.md) - Automatic spools tracking and configuration
 
 ## Support
 
 If you find this project useful and would like to support its development, you can:
 
-
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)
 
 🖨️ **Buy a Snapmaker Printer from Official Store** - use referral link and discount code `PAXX12` to get 5% discount on any purchase
 
-  * EU store: [https://snapmaker-eu.myshopify.com?ref=paxx12](https://snapmaker-eu.myshopify.com?ref=paxx12)
-  * US store: [https://snapmaker-us.myshopify.com?ref=paxx12](https://snapmaker-us.myshopify.com?ref=paxx12)
-  * Global store: [https://test-snapmaker.myshopify.com?ref=paxx12](https://test-snapmaker.myshopify.com?ref=paxx12)
+- EU store: [https://snapmaker-eu.myshopify.com?ref=paxx12](https://snapmaker-eu.myshopify.com?ref=paxx12)
+- US store: [https://snapmaker-us.myshopify.com?ref=paxx12](https://snapmaker-us.myshopify.com?ref=paxx12)
+- Global store: [https://test-snapmaker.myshopify.com?ref=paxx12](https://test-snapmaker.myshopify.com?ref=paxx12)

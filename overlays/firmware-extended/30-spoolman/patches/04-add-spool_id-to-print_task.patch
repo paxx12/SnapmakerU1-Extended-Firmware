@@ -1,0 +1,34 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/print_task_config.py	2025-12-30 05:40:32
++++ rootfs/home/lava/klipper/klippy/extras/print_task_config.py	2026-01-20 18:56:48
+@@ -19,6 +19,7 @@
+     'filament_color_rgba': ['FFFFFFFF'] * PHYSICAL_EXTRUDER_NUM,
+     'filament_official': [False] * PHYSICAL_EXTRUDER_NUM,
+     'filament_sku': [0] * PHYSICAL_EXTRUDER_NUM,
++    'filament_spool_id': [0] * PHYSICAL_EXTRUDER_NUM,
+     'filament_edit': [True] * PHYSICAL_EXTRUDER_NUM,
+     'filament_exist': [False] * PHYSICAL_EXTRUDER_NUM,
+     'filament_soft': [False] * PHYSICAL_EXTRUDER_NUM,
+@@ -177,6 +178,7 @@
+         self.print_task_config['filament_color_rgba'][channel] = filament_color_rgba
+         self.print_task_config['filament_official'][channel] = info['OFFICIAL']
+         self.print_task_config['filament_sku'][channel] = info['SKU']
++        self.print_task_config['filament_spool_id'][channel] = info['SPOOL_ID']
+         if self.filament_param_obj is not None:
+             self.print_task_config['filament_soft'][channel] = \
+                 self.filament_param_obj.get_is_soft(info['VENDOR'], info['MAIN_TYPE'], info['SUB_TYPE'])
+@@ -319,6 +321,7 @@
+         filament_sub_type = gcmd.get('FILAMENT_SUBTYPE', None)
+         filament_color = gcmd.get_int('FILAMENT_COLOR', None)
+         filament_color_rgba = gcmd.get('FILAMENT_COLOR_RGBA', None)
++        filament_spool_id = gcmd.get('SPOOL_ID', None)
+         logging.info("[print_task_config] PRINT_FILAMENT_CONFIG %s",
+                         gcmd.get_raw_command_parameters())
+ 
+@@ -379,6 +382,7 @@
+ 
+         self.print_task_config['filament_official'][config_extruder] = False
+         self.print_task_config['filament_sku'][config_extruder] = 0
++        self.print_task_config['filament_spool_id'][config_extruder] = filament_spool_id
+ 
+         if not self.printer.update_snapmaker_config_file(self.config_path,
+                 self.print_task_config, DEFAULT_PRINT_TASK_CONFIG):
