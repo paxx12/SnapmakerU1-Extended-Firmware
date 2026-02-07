@@ -84,6 +84,10 @@
             Service unavailable. Ensure <strong>Advanced Mode</strong> is enabled, then restart the printer. <a href="https://github.com/paxx12/SnapmakerU1-Extended-Firmware/blob/main/docs/firmware_config.md" target="_blank">View docs</a>
         </div>
 
+        <div id="service-error" class="notice">
+            Service unavailable. <a href="javascript:refreshAll()">Refresh to reload</a>
+        </div>
+
         <div id="auth-notice" class="notice">
             Authentication required. Please <a href="/">log in to Fluidd</a> first, then return to this page.
         </div>
@@ -185,12 +189,17 @@
             $('service-notice').classList.add('visible');
         }
 
+        function showServiceError() {
+            $('service-error').classList.add('visible');
+        }
+
         function showAuthNotice() {
             $('auth-notice').classList.add('visible');
         }
 
         function hideNotices() {
             $('service-notice').classList.remove('visible');
+            $('service-error').classList.remove('visible');
             $('auth-notice').classList.remove('visible');
         }
 
@@ -204,6 +213,11 @@
             } else if (resp.status === 502) {
                 showServiceNotice();
                 throw new Error('Service unavailable');
+            } else if (resp.status >= 500 && resp.status < 600) {
+                showServiceError();
+                throw new Error(`Service unavailable (HTTP ${resp.status})`);
+            } else if (!resp.ok) {
+                throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
             }
             return resp;
         }
