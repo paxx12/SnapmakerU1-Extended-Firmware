@@ -33,6 +33,7 @@ settings:
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access vpn none
                 /etc/init.d/S99vpn stop
                 /usr/local/bin/tailscale-pkg clean
+                rm -rf /home/lava/printer_data/tailscale
           tailscale:
             label: Tailscale
             cmd:

@@ -21,6 +21,7 @@ settings:
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
                 /etc/init.d/S99cloud stop
                 /usr/local/bin/octoeverywhere-pkg clean
+                rm -rf /home/lava/printer_data/octoeverywhere-store
           octoeverywhere:
             label: OctoEverywhere
             cmd:
@@ -48,7 +49,7 @@ settings:
 
                 for i in {1..15}; do
                     echo ">> Looking for authorization URL in logs... ($i)"
-                    if MATCH=$(grep -C 20 "This Plugin Isn't Connected To OctoEverywhere!" /home/lava/printer_data/logs/octoeverywhere.log); then
+                    if MATCH=$(grep -C 20 "This Plugin Isn't Connected To OctoEverywhere!" /home/lava/printer_data/logs/octoeverywhere.log 2>/dev/null); then
                         sed -n 's/.*WARNING //p' <<< "$MATCH"
                         exit 0
                     fi
