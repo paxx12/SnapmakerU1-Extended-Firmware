@@ -5,7 +5,7 @@ import logging
 import json
 
 from . import filament_protocol
-from . import filament_protocol_ndef
+from . import filament_protocol_openspool
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -22,12 +22,12 @@ if __name__ == '__main__':
             try:
                 json.loads(data.decode('utf-8'))
                 logging.info("Detected JSON file, parsing as OpenSpool payload")
-                error_code, info = filament_protocol_ndef.openspool_parse_payload(data)
+                error_code, info = filament_protocol_openspool.openspool_parse_payload(data)
             except (json.JSONDecodeError, UnicodeDecodeError):
                 logging.info("JSON parsing failed, treating as binary NDEF data")
-                error_code, info = filament_protocol_ndef.ndef_proto_data_parse(data)
+                error_code, info = filament_protocol_openspool.ndef_proto_data_parse(data)
         else:
-            error_code, info = filament_protocol_ndef.ndef_proto_data_parse(data)
+            error_code, info = filament_protocol_openspool.ndef_proto_data_parse(data)
 
         if error_code == filament_protocol.FILAMENT_PROTO_OK:
             print(info)

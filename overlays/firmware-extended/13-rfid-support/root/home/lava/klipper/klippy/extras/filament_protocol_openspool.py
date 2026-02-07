@@ -3,6 +3,7 @@ import io
 import json
 import logging
 from . import filament_protocol
+from . import filament_protocol_plugin
 
 NDEF_OK = 0
 NDEF_ERR = -1
@@ -240,6 +241,8 @@ def ndef_proto_data_parse(data_buf):
         logging.error("NDEF parse failed: No records found")
         return filament_protocol.FILAMENT_PROTO_ERR, None
 
+    unknown_records = []
+
     for record in records:
         mime_type = record['mime_type']
         payload = record['payload']
@@ -255,10 +258,32 @@ def ndef_proto_data_parse(data_buf):
                 return error_code, info
 
         else:
-            logging.warning(f"Skipping unsupported MIME type '{mime_type}'")
+            logging.info(f"Unknown MIME type '{mime_type}', deferring to plugins")
+            unknown_records.append(record)
+
+    if unknown_records:
+        logging.info(f"Trying plugins for {len(unknown_records)} unknown record(s)")
+        plugin_output = filament_protocol_plugin.plugin_ndef_parse(unknown_records)
+        if plugin_output:
+            error_code, info = openspool_parse_payload(plugin_output)
+            if error_code == filament_protocol.FILAMENT_PROTO_OK:
+                logging.info(f"Plugin parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
+                return error_code, info
 
     logging.error("NDEF parse failed: No supported records found")
     return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, None
+
+def m1_proto_data_parse(data_buf):
+    logging.info("Trying Mifare plugins first")
+    plugin_output = filament_protocol_plugin.plugin_m1_parse(data_buf)
+    if plugin_output:
+        error_code, info = openspool_parse_payload(plugin_output)
+        if error_code == filament_protocol.FILAMENT_PROTO_OK:
+            logging.info(f"Mifare plugin parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
+            return error_code, info
+
+    logging.info("Falling back to original Mifare parser")
+    return filament_protocol.m1_proto_data_parse(data_buf)
 
 if __name__ == '__main__':
     import sys
