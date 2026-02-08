@@ -10,7 +10,6 @@ GIT_URL="$2"
 GIT_SHA="$3"
 
 set -e
-set -x
 
 if [[ ! -d "$TARGET_DIR" ]]; then
   echo ">> Cloning $GIT_URL into $TARGET_DIR"
