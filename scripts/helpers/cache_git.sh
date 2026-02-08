@@ -24,8 +24,7 @@ fi
 
 echo ">> Fetching $GIT_SHA into $TARGET_DIR"
 if ! git -C "$TARGET_DIR" checkout -f "$GIT_SHA"; then
-  git fetch origin
-  git fetch origin "$GIT_SHA"
+  git -C "$TARGET_DIR" fetch origin
   git -C "$TARGET_DIR" checkout -f "$GIT_SHA"
 fi
 
