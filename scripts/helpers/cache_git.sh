@@ -10,6 +10,7 @@ GIT_URL="$2"
 GIT_SHA="$3"
 
 set -e
+set -x
 
 if [[ ! -d "$TARGET_DIR" ]]; then
   echo ">> Cloning $GIT_URL into $TARGET_DIR"
@@ -23,6 +24,7 @@ fi
 
 echo ">> Fetching $GIT_SHA into $TARGET_DIR"
 if ! git -C "$TARGET_DIR" checkout -f "$GIT_SHA"; then
+  git fetch origin
   git fetch origin "$GIT_SHA"
   git -C "$TARGET_DIR" checkout -f "$GIT_SHA"
 fi
