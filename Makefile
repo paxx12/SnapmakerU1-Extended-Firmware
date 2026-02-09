@@ -1,4 +1,4 @@
-include vars.mk
+include deps.mk
 
 all: tools
 

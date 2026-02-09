@@ -38,8 +38,8 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: BUILDKIT_INLINE_CACHE=1
 
-    - name: Load values vars.mk
-      run: cat vars.mk >> "$GITHUB_ENV"
+    - name: Load values deps.mk
+      run: cat deps.mk >> "$GITHUB_ENV"
 
     - name: Restore Firmwares Cache
       id: cache-firmwares
