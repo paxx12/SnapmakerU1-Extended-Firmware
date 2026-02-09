@@ -23,7 +23,8 @@ fi
 
 echo ">> Fetching $GIT_SHA into $TARGET_DIR"
 if ! git -C "$TARGET_DIR" checkout -f "$GIT_SHA"; then
-  git fetch origin "$GIT_SHA"
+  git -C "$TARGET_DIR" remote set-url origin "$GIT_URL" || git -C "$TARGET_DIR" remote add origin "$GIT_URL"
+  git -C "$TARGET_DIR" fetch origin "$GIT_SHA"
   git -C "$TARGET_DIR" checkout -f "$GIT_SHA"
 fi
 
