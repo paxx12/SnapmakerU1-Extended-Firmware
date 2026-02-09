@@ -8,11 +8,7 @@ fi
 ROOT_DIR="$(realpath "$(dirname "$0")/../..")"
 TMP_DIR="$ROOT_DIR/tmp"
 
-KERNEL_TAG=20260112-d688db2
-KERNEL_FILENAME=kernel-open-6.1-$KERNEL_TAG-vmlinuz
-KERNEL_URL=https://github.com/Snapmaker-U1-Extended-Firmware/base-kernel/releases/download/$KERNEL_TAG/$KERNEL_FILENAME
-KERNEL_SHA256=2ebcebbc4b524e76e3a3ff9fef704478853f2d90e4d273221dfc4a5e0dfe5498
-KERNEL_FILE="$TMP_DIR/$KERNEL_FILENAME"
+KERNEL_FILE="$TMP_DIR/kernel-qemu-vmlinuz"
 
 ROOTFS_IMG="$(realpath "$1")"
 DISK_IMG="$TMP_DIR/disk.img"
@@ -26,16 +22,7 @@ set -e
 
 mkdir -p "$TMP_DIR"
 
-if [[ ! -f "$TMP_DIR/$KERNEL_FILENAME" ]]; then
-  echo ">> Downloading $KERNEL_FILENAME..."
-  wget -O "$TMP_DIR/$KERNEL_FILENAME" "$KERNEL_URL"
-fi
-
-echo ">> Verifying $TMP_DIR/$KERNEL_FILENAME checksum..."
-if ! echo "$KERNEL_SHA256  $TMP_DIR/$KERNEL_FILENAME" | sha256sum --check --status; then
-  echo "[!] SHA256 checksum mismatch for $KERNEL_FILENAME"
-  exit 1
-fi
+"$ROOT_DIR/scripts/helpers/cache_file.sh" kernel-qemu "$KERNEL_FILE"
 
 if [[ ! -f "$DISK_IMG" ]]; then
   echo ">> Creating $DISK_IMG..."

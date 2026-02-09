@@ -7,12 +7,7 @@ if [[ -z "$CREATE_FIRMWARE" ]]; then
   exit 1
 fi
 
-VERSION=8.17.0
-FILENAME=curl-linux-aarch64-glibc-$VERSION.tar.xz
-URL=https://github.com/stunnel/static-curl/releases/download/$VERSION/$FILENAME
-BIN_SHA256=3c6562544e1a21cd37e9dec7c48c7a6d9a2f64da42fde69ba79e54014b911abb
-
-cache_file.sh "$CACHE_DIR/$FILENAME" "$URL" "$BIN_SHA256" "$BUILD_DIR/curl"
+cache_file.sh curl "$CACHE_DIR/files/curl.tar.xz" "$BUILD_DIR/curl"
 
 install -d "$ROOTFS_DIR/usr/local/bin"
 install -m 755 "$BUILD_DIR/curl/curl" "$ROOTFS_DIR/usr/local/bin/curl"
