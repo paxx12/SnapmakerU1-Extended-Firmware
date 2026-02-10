@@ -1,0 +1,54 @@
+From 24b62e63b83454af2dd187c4d3fd6ef1a1bc54e3 Mon Sep 17 00:00:00 2001
+From: wasikuss <wasikuss@gmail.com>
+Date: Mon, 9 Feb 2026 10:10:27 +0100
+Subject: [PATCH] Add support for remote update of filament info
+
+---
+ klippy/extras/filament_detect.py | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/klippy/extras/filament_detect.py b/klippy/extras/filament_detect.py
+index 4edd747..b439c07 100644
+--- a/klippy/extras/filament_detect.py
++++ b/klippy/extras/filament_detect.py
+@@ -47,6 +47,7 @@ class FilamentDetector:
+         gcode.register_command('FILAMENT_DT_CLEAR', self.cmd_FILAMENT_DT_CLEAR)
+         gcode.register_command('FILAMENT_DT_SELF_TEST', self.cmd_FILAMENT_DT_SELF_TEST)
+         gcode.register_command('FILAMENT_DT_STARTUP_STAY', self.cmd_FILAMENT_DT_STARTUP_STAY)
++        gcode.register_command('FILAMENT_DT_FIXED', self.cmd_FILAMENT_DT_FIXED) 
+ 
+         self.printer.register_event_handler("klippy:ready", self._ready)
+         self.printer.register_event_handler("filament_feed:port", self._feed_port_evt_handle)
+@@ -291,6 +292,29 @@ class FilamentDetector:
+         if not ret:
+             logging.error("save filament_detect config failed!")
+         return ret
++     
++    def cmd_FILAMENT_DT_FIXED(self, gcmd):
++        channel = gcmd.get_int('CHANNEL', None)
++        data = gcmd.get('DATA', None)
++
++        if (channel < 0 or channel >= self._channel_nums):
++            msg = ("channel[%d] is out of range[0, %d]" % (channel, self._channel_nums - 1))
++            raise gcmd.error(msg)
++
++        # upack ba64 endoced data
++        import base64
++        try:
++            payload = base64.b64decode(data)
++        except Exception as e:
++            raise gcmd.error(f"parse DATA failed: Base64 decode error: {e}")
++
++        error_code, info = filament_protocol_ndef.openspool_parse_payload(payload)
++        if error_code != filament_protocol.FILAMENT_PROTO_OK:
++            raise gcmd.error(f"OpenSpool parse failed: Payload parsing error (code: {error_code})")
++        else:
++            logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
++
++        self._filament_info_update(channel, info, True)
+ 
+ def load_config(config):
+     return FilamentDetector(config)
+-- 
+2.49.0
+
