@@ -2,19 +2,16 @@ settings:
   web:
     label: Web
     items:
-      moonraker-auth:
-        label: Require Login/Password (Fluidd only)
+      authorization:
+        label: Moonraker Authentication (Experimental)
         get_cmd:
-          - /usr/local/bin/extended-config.py
-          - get
-          - /home/lava/printer_data/config/extended/moonraker/authorization.cfg
-          - authorization
-          - force_logins
-          - "false"
+          - bash
+          - -c
+          - test -f /oem/printer_data/config/extended/moonraker/authorization.cfg && echo "enabled" || echo "disabled"
         options:
-          "true":
+          enabled:
             label: Enabled
-            confirm: "Enable authentication? A new admin user with random password will be created. You will need to log in to access Fluidd and Firmware Config. Note: Mainsail does not support this feature."
+            confirm: "Enable authentication? A new admin user with random password will be created. You will need to log in to access Fluidd and Firmware Config. Note: This is experimental and only works with Fluidd. Mainsail does not support this feature."
             cmd:
               - bash
               - -c
@@ -30,7 +27,8 @@ settings:
                 echo "Deleting existing admin user..."
                 /usr/local/bin/curl -s -X DELETE "$URL/access/user" -H "Content-Type: application/json" -d '{"username": "admin"}' > /dev/null 2>&1
                 echo "Enabling force_logins in Moonraker..."
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/moonraker/authorization.cfg authorization force_logins true &&
+                mkdir -p /oem/printer_data/config/extended/moonraker
+                ln -sf /usr/local/share/firmware-config/tweaks/moonraker/authorization.cfg /oem/printer_data/config/extended/moonraker/authorization.cfg
                 echo "Restarting Moonraker..."
                 /etc/init.d/S61moonraker restart
                 echo "Waiting for Moonraker to restart..."
@@ -58,13 +56,14 @@ settings:
                   echo "Warning: Could not create admin user"
                   echo "$RESULT"
                 fi
-          "false":
+          disabled:
             label: Disabled
             confirm: "Disable authentication? Anyone on your network will be able to access the printer."
             cmd:
               - bash
-              - -vc
+              - -xc
               - |
-                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/moonraker/authorization.cfg authorization force_logins false &&
+                rm -f /oem/printer_data/config/extended/moonraker/authorization.cfg &&
+                echo "Authentication disabled. Restarting Moonraker..." &&
                 /etc/init.d/S61moonraker restart
-        default: "false"
+        default: disabled
