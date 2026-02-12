@@ -20,7 +20,7 @@ settings:
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system official
                 /etc/init.d/S59filament-detect stop
-                echo Restart for changes to take effect
+                /etc/init.d/S60klipper restart
           extended:
             label: Extended
             cmd:
@@ -28,5 +28,7 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system extended
-                echo Restart for changes to take effect
+                /etc/init.d/S59filament-detect start
+                /etc/init.d/S60klipper restart
+                echo Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
         default: official

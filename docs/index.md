@@ -54,6 +54,7 @@ Heavily expanded firmware with extensive features and customization. Includes al
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
 - [Klipper Tweaks](tweaks.md) - Experimental TMC driver optimizations and [object processing for adaptive mesh](tweaks.md#object-processing-for-adaptive-mesh) (firmware-config only)
 - [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format
+- [Custom Filament Detection](filament_detection.md) - Reimplementation of the built in filament detection routine for extended spool/tag support
 - [Remote Screen](remote_screen.md) - View and control printer screen remotely via web browser
 - [Monitoring](monitoring.md) - Integration with Prometheus, Home Assistant, DataDog, and other monitoring systems
 - [VPN Remote Access](vpn.md) - Secure remote access via Tailscale (Experimental)
