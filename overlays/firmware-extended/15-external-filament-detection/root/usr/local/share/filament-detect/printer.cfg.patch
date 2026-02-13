@@ -1,6 +1,6 @@
 --- a/printer.cfg
 +++ b/printer.cfg
-@@ -54,29 +54,39 @@
+@@ -54,29 +54,53 @@
  #################################################################
  ###       NFC configuration
  #################################################################
@@ -56,6 +56,20 @@
 +gcode:
 +    {% set channel = params.CHANNEL|default(0)|int %}
 +    SET_PRINT_FILAMENT_CONFIG CONFIG_EXTRUDER={channel} VENDOR=NONE FILAMENT_TYPE=NONE FILAMENT_SUBTYPE=NONE FILAMENT_COLOR=0
++
++[gcode_macro FILAMENT_DT_QUERY]
++gcode:
++    {% set channel = params.CHANNEL|default(0)|int %}
++    {% set cfg = printer.print_task_config %}
++    {% if channel < 0 or channel >= cfg.filament_vendor | length %}
++        { action_raise_error("channel[%d] is out of range[0, %d]" % (channel, (cfg.filament_vendor | length) - 1)) }
++    {% endif %}
++    { action_respond_info("channel[%d] vendor = %s, main_type: %s, sub_type= %s, rgba_color = %08X"
++        % (channel,
++           cfg.filament_vendor[channel],
++           cfg.filament_type[channel],
++           cfg.filament_sub_type[channel],
++           cfg.filament_color[channel])) }
  
  #################################################################
  ###       flow calibration configuration
