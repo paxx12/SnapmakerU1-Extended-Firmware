@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 GIT_URL=https://github.com/suchmememanyskill/filament-detect.git
-GIT_SHA=9de8fdee813c723ece92a31652be6a31e0b23551
+GIT_SHA=2b35d65682996c6781a675f97604d4f85fcc0f8c
 
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."
