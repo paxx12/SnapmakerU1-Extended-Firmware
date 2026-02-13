@@ -32,6 +32,8 @@ The extended detection system supports the following spool tagging systems:
 
 Navigate to the [firmware-config](firmware_config.md) web interface, go to the Filament Detection section, and select the **Extended** detection system.
 
+If you use Snapmaker Orca, unless you specifically set up all filament brands, they will not show up in the filament dropdown. To label all filament as 'Generic', set Snapmaker Orca Compatibility to **Enabled** as well.
+
 ### Manual Setup (advanced)
 
 **Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` and set the detection system:
@@ -40,7 +42,13 @@ Navigate to the [firmware-config](firmware_config.md) web interface, go to the F
 system: extended
 ```
 
-**Step 2:** Reboot the printer for changes to take effect.
+**Step 2:** To enable Snapmaker Orca Compatibility, add
+```ini
+[filament_detection]
+generic: true
+```
+
+**Step 3:** Reboot the printer for changes to take effect.
 
 ## Bambu Spool Configuration
 

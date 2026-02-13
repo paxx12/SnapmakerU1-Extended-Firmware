@@ -33,7 +33,7 @@ settings:
                 echo Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
         default: official
       generic:
-        label: Snapmaker Orca compatibility for extended system
+        label: Snapmaker Orca Compatibility for Extended System
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
