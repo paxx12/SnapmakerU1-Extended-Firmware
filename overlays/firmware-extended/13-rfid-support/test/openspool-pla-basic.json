@@ -7,5 +7,6 @@
   "min_temp": 190,
   "max_temp": 220,
   "bed_min_temp": 50,
-  "bed_max_temp": 60
+  "bed_max_temp": 60,
+  "spool_id": 1
 }
