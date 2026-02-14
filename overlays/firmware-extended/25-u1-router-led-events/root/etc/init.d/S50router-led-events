@@ -1,0 +1,74 @@
+#!/bin/sh
+
+CFG="/home/lava/printer_data/config/extended/klipper/router_api.cfg"
+HOOK_LINE="UPDATE_DELAYED_GCODE ID=ROUTER_LED_STATUS_SUBSCRIBE_INIT DURATION=0.5"
+
+patch_router_on_connected() {
+    [ -f "$CFG" ] || return 0
+
+    # Already patched.
+    grep -Fq "$HOOK_LINE" "$CFG" && return 0
+
+    tmp_cfg="$(mktemp)" || return 1
+
+    awk '
+    BEGIN {
+        in_target = 0
+        inserted = 0
+    }
+    /^\[gcode_macro ROUTER_ON_CONNECTED\]$/ {
+        in_target = 1
+        print
+        next
+    }
+    /^\[gcode_macro / {
+        if (in_target == 1) {
+            in_target = 0
+        }
+    }
+    {
+        print
+        if (in_target == 1 && inserted == 0 && $0 ~ /M118 Router: \{params.PRINTER\} connected/) {
+            print "    {% if '\''PRINTER'\'' in params and params.PRINTER|lower == \"led\" %}"
+            print "        UPDATE_DELAYED_GCODE ID=ROUTER_LED_STATUS_SUBSCRIBE_INIT DURATION=0.5"
+            print "    {% endif %}"
+            inserted = 1
+        }
+    }
+    END {
+        if (inserted == 0) {
+            exit 2
+        }
+    }
+    ' "$CFG" > "$tmp_cfg"
+
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        rm -f "$tmp_cfg"
+        return 0
+    fi
+
+    mv "$tmp_cfg" "$CFG"
+    chown lava:lava "$CFG" 2>/dev/null || true
+}
+
+start() {
+    patch_router_on_connected
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        ;;
+    restart|reload)
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

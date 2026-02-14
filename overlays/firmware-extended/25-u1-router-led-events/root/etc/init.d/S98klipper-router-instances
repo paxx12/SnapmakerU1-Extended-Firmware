@@ -1,0 +1,158 @@
+#!/bin/sh
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
+INSTANCES_DIR="/home/lava/printer_data/config/extended/router/instances"
+PID_DIR="/var/run"
+LOG_DIR="/home/lava/printer_data/logs"
+KLIPPY="/home/lava/klipper/klippy/klippy.py"
+
+router_enabled() {
+    /usr/local/bin/extended-config.py get "$EXTENDED_CFG" router enabled false 2>/dev/null
+}
+
+instance_pidfile() {
+    echo "$PID_DIR/klippy-router-$1.pid"
+}
+
+instance_cfg() {
+    echo "$INSTANCES_DIR/$1/printer.cfg"
+}
+
+instance_sock() {
+    echo "/home/lava/printer_data/comms/klippy-router-$1.sock"
+}
+
+instance_serial() {
+    echo "/home/lava/printer_data/comms/klippy-router-$1.serial"
+}
+
+instance_log() {
+    echo "$LOG_DIR/klippy-router-$1.log"
+}
+
+is_expected_instance_pid() {
+    name="$1"
+    pid="$2"
+    cfg="$(instance_cfg "$name")"
+    sock="$(instance_sock "$name")"
+
+    [ -n "$pid" ] || return 1
+    [ -r "/proc/$pid/cmdline" ] || return 1
+
+    cmdline="$(tr '\000' ' ' < "/proc/$pid/cmdline")"
+    echo "$cmdline" | grep -Fq "$KLIPPY" || return 1
+    echo "$cmdline" | grep -Fq "$cfg" || return 1
+    echo "$cmdline" | grep -Fq "$sock" || return 1
+    return 0
+}
+
+start_instance() {
+    name="$1"
+    cfg="$(instance_cfg "$name")"
+    pidfile="$(instance_pidfile "$name")"
+
+    [ -f "$cfg" ] || return 0
+
+    if [ -f "$pidfile" ]; then
+        pid="$(cat "$pidfile" 2>/dev/null)"
+        if kill -0 "$pid" 2>/dev/null; then
+            if is_expected_instance_pid "$name" "$pid"; then
+                echo "Klippy router instance '$name' already running"
+                return 0
+            fi
+            echo "Ignoring stale/mismatched pidfile for '$name' (pid=$pid)"
+        fi
+        rm -f "$pidfile"
+    fi
+
+    echo "Starting Klippy router instance: $name"
+    start-stop-daemon -S -b -m -u lava \
+        -p "$pidfile" \
+        -x /usr/bin/python3 -- "$KLIPPY" \
+        "$cfg" \
+        -I "$(instance_serial "$name")" \
+        -a "$(instance_sock "$name")" \
+        -l "$(instance_log "$name")" \
+        -u lava
+}
+
+stop_instance() {
+    name="$1"
+    pidfile="$(instance_pidfile "$name")"
+
+    if [ -f "$pidfile" ]; then
+        pid="$(cat "$pidfile" 2>/dev/null)"
+        if kill -0 "$pid" 2>/dev/null && is_expected_instance_pid "$name" "$pid"; then
+            echo "Stopping Klippy router instance: $name"
+            start-stop-daemon -K -p "$pidfile" -s TERM
+        else
+            echo "Skipping stale/mismatched pidfile for '$name' (pid=$pid)"
+        fi
+        rm -f "$pidfile"
+    fi
+}
+
+for_each_instance() {
+    [ -d "$INSTANCES_DIR" ] || return 0
+    find "$INSTANCES_DIR" -mindepth 1 -maxdepth 1 -type d | sort | while read -r dir; do
+        basename "$dir"
+    done
+}
+
+start() {
+    if [ "$(router_enabled)" != "true" ]; then
+        echo "[router] disabled in extended2.cfg, not starting router Klippy instances."
+        return 0
+    fi
+
+    mkdir -p "$LOG_DIR" "/home/lava/printer_data/comms"
+    for_each_instance | while read -r name; do
+        start_instance "$name"
+    done
+}
+
+stop() {
+    stopped=0
+    for_each_instance | while read -r name; do
+        stop_instance "$name"
+    done
+
+    for pidfile in "$PID_DIR"/klippy-router-*.pid; do
+        [ -f "$pidfile" ] || continue
+        name="$(basename "$pidfile" .pid)"
+        name="${name#klippy-router-}"
+        pid="$(cat "$pidfile" 2>/dev/null)"
+        if kill -0 "$pid" 2>/dev/null; then
+            if is_expected_instance_pid "$name" "$pid"; then
+                echo "Stopping stale Klippy router instance pid: $(basename "$pidfile" .pid)"
+                start-stop-daemon -K -p "$pidfile" -s TERM
+            else
+                echo "Skipping stale pidfile targeting unrelated process: $(basename "$pidfile") pid=$pid"
+            fi
+        fi
+        rm -f "$pidfile"
+        stopped=1
+    done
+
+    [ "$stopped" -eq 1 ] || echo "No Klippy router instances running"
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
