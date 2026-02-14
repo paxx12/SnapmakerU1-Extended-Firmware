@@ -29,11 +29,14 @@ config_json() {
     "ServiceName": "octoeverywhere",
     "VirtualEnvPath": "/oem/apps/octoeverywhere/venv",
     "RepoRootFolder": "/oem/apps/octoeverywhere/latest",
-    "IsCompanion": false,
-    "MoonrakerConfigFile": "/home/lava/printer_data/config/moonraker.conf"
+    "IsCompanion": true
 }
 EOF
 }
+
+# Set address to Moonraker, as required by companion mode
+/usr/local/bin/extended-config.py add /home/lava/printer_data/config/octoeverywhere.conf companion ip_or_hostname localhost
+/usr/local/bin/extended-config.py add /home/lava/printer_data/config/octoeverywhere.conf companion port 7125
 
 mkdir -p "$STATE_DIR"
 
