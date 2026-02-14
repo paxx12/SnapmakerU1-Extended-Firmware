@@ -3,7 +3,7 @@ settings:
     label: Tweaks
     items:
       tmc_autotune:
-        label: TMC AutoTune
+        label: 'TMC AutoTune (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-autotune" target="_blank">link</a>)'
         get_cmd:
           - bash
           - -c
