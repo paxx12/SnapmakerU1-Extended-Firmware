@@ -3,7 +3,7 @@ settings:
     label: Tweaks
     items:
       afc:
-        label: 'AFC Lite via Fluidd/Mainsail (<a href="http://snapmakeru1-extended-firmware.pages.dev/afc-lite.md" target="_blank">link</a>)'
+        label: 'AFC Lite via Fluidd/Mainsail (<a href="http://snapmakeru1-extended-firmware.pages.dev/afc-lite" target="_blank">link</a>)'
         get_cmd:
           - bash
           - -c
@@ -11,7 +11,7 @@ settings:
         options:
           enabled:
             label: Enabled
-            confirm: 'Enable AFC Lite component? This adds support for multi-lane filament management with CHANGE_TOOL and LANE_UNLOAD macros. See <a href="http://snapmakeru1-extended-firmware.pages.dev/afc-lite.md" target="_blank">documentation</a> for details.'
+            confirm: 'Enable AFC Lite component? This adds support for multi-lane filament management with CHANGE_TOOL and LANE_UNLOAD macros. See <a href="http://snapmakeru1-extended-firmware.pages.dev/afc-lite" target="_blank">documentation</a> for details.'
             cmd:
               - bash
               - -xc

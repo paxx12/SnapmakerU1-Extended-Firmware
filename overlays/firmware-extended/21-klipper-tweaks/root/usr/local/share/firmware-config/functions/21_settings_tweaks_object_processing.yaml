@@ -3,7 +3,7 @@ settings:
     label: Tweaks
     items:
       object_processing:
-        label: Object Processing for Adaptive Mesh
+        label: 'Object Processing for Adaptive Mesh (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#object-processing-for-adaptive-mesh" target="_blank">link</a>)'
         get_cmd:
           - bash
           - -c

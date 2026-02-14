@@ -26,6 +26,23 @@ For external third-party components, see [Third-Party Integrations](design/third
 
 The `./dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
 
+## Source Repository
+
+The project is hosted on GitHub with a mirror on Codeberg:
+
+- **GitHub**: [https://github.com/paxx12](https://github.com/paxx12)
+- **Codeberg**: [https://codeberg.org/paxx12-snapmaker-u1](https://codeberg.org/paxx12-snapmaker-u1)
+
+### Using Codeberg Mirror
+
+To use Codeberg as the source instead of GitHub, configure git to automatically remap GitHub URLs:
+
+```bash
+git config --global url."https://codeberg.org/paxx12-snapmaker-u1/".insteadOf "https://github.com/paxx12/"
+```
+
+This remaps all GitHub repository URLs to Codeberg automatically, including submodules and dependencies.
+
 ## Quick Start
 
 Build tools and download firmware:

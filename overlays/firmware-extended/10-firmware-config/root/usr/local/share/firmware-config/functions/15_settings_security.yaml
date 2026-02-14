@@ -1,9 +1,9 @@
 settings:
-  web:
-    label: Web
+  remote_access:
+    label: Remote Access
     items:
       authorization:
-        label: Moonraker Authentication (Experimental)
+        label: Web Authentication (Experimental)
         get_cmd:
           - bash
           - -c
@@ -16,11 +16,17 @@ settings:
               - bash
               - -c
               - |
-                FRONTEND=$(/usr/local/bin/extended-config.py get /home/lava/printer_data/config/extended/extended.cfg web frontend fluidd)
+                FRONTEND=$(/usr/local/bin/extended-config.py get /home/lava/printer_data/config/extended/extended2.cfg web frontend fluidd)
                 if [ "$FRONTEND" = "mainsail" ]; then
                   echo "ERROR: Authentication requires Fluidd."
                   echo "Mainsail does not support Moonraker authentication."
                   echo "Please switch to Fluidd first."
+                  exit 1
+                fi
+                CLOUD=$(/usr/local/bin/extended-config.py get /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none)
+                if [ "$CLOUD" = "octoeverywhere" ]; then
+                  echo "ERROR: OctoEverywhere companion mode is incompatible with authentication."
+                  echo "Disable OctoEverywhere first to enable authentication."
                   exit 1
                 fi
                 URL="http://127.0.0.1:7125"

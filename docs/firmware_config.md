@@ -51,6 +51,7 @@ Toggle settings directly from the web interface:
 | Filament Tag Detection | Official, Extended | Select filament detection system |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
+| Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -173,6 +174,10 @@ See the [3D Printing Clouds](cloud.md) for setup instructions.
 **system** - Filament tag detection system
 - `official` (default) - Snapmaker's official filament detection system
 - `extended` - Custom filament detection system with multi-vendor spool support
+
+**generic** - Mark all filament manufacturers as 'Generic' and strip modifiers (for Snapmaker Orca Compatibility)
+- `false` (default) - Off, keep data as-is
+- `true` - On, replace data with 'Generic'
 
 **creality_key** - Creality tagged filament detection key (32 hex characters)
 - `none` (default) - Creality spools not enabled
