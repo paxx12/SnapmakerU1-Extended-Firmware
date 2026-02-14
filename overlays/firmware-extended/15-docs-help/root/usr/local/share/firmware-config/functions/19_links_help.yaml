@@ -1,0 +1,6 @@
+links:
+  help:
+    url: help/
+    icon: "📖"
+    label: Help
+    condition: null
