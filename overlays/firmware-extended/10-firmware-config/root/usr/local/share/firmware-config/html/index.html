@@ -307,7 +307,7 @@
                             }).join('');
                             return `<div class="row">
                                 <span class="row-label">${setting.label}</span>
-                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', '${setting.label}', this)">${options}</select>
+                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', this)">${options}</select>
                             </div>`;
                         }).join('')}
                     </div>`
@@ -633,12 +633,13 @@
         // Settings Functions
         // ========================================
 
-        function updateSetting(key, label, selectEl) {
+        function updateSetting(key, selectEl) {
             const value = selectEl.value;
             const prevValue = selectEl.dataset.prevValue || value;
             const selectedOption = selectEl.selectedOptions[0];
             const optLabel = decodeURIComponent(selectedOption.dataset.label || value);
             const confirmMsg = decodeURIComponent(selectedOption.dataset.confirm || '');
+            const label = selectEl.parentElement.querySelector('.row-label').textContent;
 
             const message = confirmMsg || `Change ${label} to "${optLabel}"?`;
             const warning = '⚠️ Warning: Changing settings will restart services and may interrupt printing.';
