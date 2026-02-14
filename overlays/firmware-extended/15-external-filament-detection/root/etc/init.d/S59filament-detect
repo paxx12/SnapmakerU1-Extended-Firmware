@@ -36,7 +36,7 @@ start() {
     if [ "$GENERIC" = "true" ]; then
         sed -i "s/{{filament\.manufacturer}}/{{'Snapmaker' if filament.manufacturer == 'Snapmaker' else 'Generic'}}/g" /tmp/u1.cfg
         sed -i "s/{{ filament.modifiers | join(' ') }}/{{ filament.modifiers | join(' ') if filament.manufacturer == 'Snapmaker' else '' }}/g" /tmp/u1.cfg
-        echo "Generic mode enabled, all filament will be treated as Generic except those explicitly tagged as Snapmaker."
+        echo "Generic mode enabled (Snapmaker Orca compatibility), all filament will be treated as Generic except those explicitly tagged as Snapmaker."
     fi
 
     sed -i 's/^#\[snapmaker_tag_processor\]/[snapmaker_tag_processor]\nkey = 536e61706d616b65725f71776572747975696f705b2c2e3b5d5f317132773365/' /tmp/u1.cfg
