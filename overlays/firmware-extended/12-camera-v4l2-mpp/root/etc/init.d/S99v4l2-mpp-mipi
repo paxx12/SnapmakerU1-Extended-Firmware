@@ -22,8 +22,8 @@ CMD_CTRL_ARGS="/usr/local/bin/control-v4l2.py --device /dev/v4l-subdev2 --sock /
 
 CMD_RTSP="/usr/local/bin/stream-rtsp --h264-sock /tmp/capture-mipi-h264.sock --rtsp-port 8554 --max-clients 4"
 
-CMD_UNISRV="/usr/bin/unisrv"
-CMD_UNISRV_ARGS="-t MIPI"
+CMD_LMD="/usr/bin/lmd"
+CMD_LMD_ARGS=""
 
 start() {
     if [ "$CAMERA_INTERNAL" != "paxx12" ]; then
@@ -71,14 +71,14 @@ start() {
         export V4L2_IMPOSTER_HEIGHT=1080
         export V4L2_IMPOSTER_FORMAT=nv12
 
-        printf "Starting unisrv: "
-        start-stop-daemon -S -b -q -m -p /var/run/unisrv.pid -x $CMD_UNISRV -- $CMD_UNISRV_ARGS
+        printf "Starting lmd: "
+        start-stop-daemon -S -b -q -m -p /var/run/unisrv.pid -x $CMD_LMD -- $CMD_LMD_ARGS
         echo "OK"
     )
 }
 
 stop() {
-    printf "Stopping unisrv: "
+    printf "Stopping lmd: "
     start-stop-daemon -K -q -p /var/run/unisrv.pid
     echo "OK"
 

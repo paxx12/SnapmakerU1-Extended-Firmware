@@ -9,6 +9,8 @@
         :root { --bg: #1a1a1a; --card: #2d2d2d; --item: #3d3d3d; --hover: #4d4d4d; --accent: #4fc3f7; --text: #e0e0e0; --muted: #888; --success: #81c784; --error: #e57373; --warning: #ff9800; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .container { max-width: 900px; margin: 0 auto; }
         h1 { color: var(--accent); margin-bottom: 20px; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
         .card { background: var(--card); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
@@ -73,7 +75,7 @@
         .progress-info.visible { display: flex; }
         .notice { display: none; background: var(--warning); color: #000; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
         .notice.visible { display: block; }
-        .notice a { color: #000; }
+        .notice a { color: #000; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -82,6 +84,14 @@
 
         <div id="service-notice" class="notice">
             Service unavailable. Ensure <strong>Advanced Mode</strong> is enabled, then restart the printer. <a href="https://github.com/paxx12/SnapmakerU1-Extended-Firmware/blob/main/docs/firmware_config.md" target="_blank">View docs</a>
+        </div>
+
+        <div id="service-error" class="notice">
+            Service unavailable. <a href="javascript:refreshAll()">Refresh to reload</a>
+        </div>
+
+        <div id="auth-notice" class="notice">
+            Authentication required. Please <a href="/">log in to Fluidd</a> first, then return to this page.
         </div>
 
         <div id="main-content">
@@ -152,6 +162,26 @@
         // Helper function to get element by ID
         const $ = id => document.getElementById(id);
 
+        // Auth functions for Moonraker/Fluidd token
+        function getJWT() {
+            const instanceKey = `user-token-${window.location.host.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            let token = localStorage.getItem(instanceKey);
+            if (token) return token;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('user-token-')) {
+                    token = localStorage.getItem(key);
+                    if (token) return token;
+                }
+            }
+            return null;
+        }
+
+        function getAuthHeaders() {
+            const jwt = getJWT();
+            return jwt ? { 'Authorization': `Bearer ${jwt}` } : {};
+        }
+
         // Global state
         let selectedFile = null;
         let actionsData = [];
@@ -161,17 +191,36 @@
             $('service-notice').classList.add('visible');
         }
 
-        function hideServiceNotice() {
+        function showServiceError() {
+            $('service-error').classList.add('visible');
+        }
+
+        function showAuthNotice() {
+            $('auth-notice').classList.add('visible');
+        }
+
+        function hideNotices() {
             $('service-notice').classList.remove('visible');
+            $('service-error').classList.remove('visible');
+            $('auth-notice').classList.remove('visible');
         }
 
         async function apiFetch(url, options = {}) {
+            options.headers = { ...getAuthHeaders(), ...options.headers };
             const resp = await fetch(url, options);
-            if (resp.status === 502) {
+            hideNotices();
+            if (resp.status === 401) {
+                showAuthNotice();
+                throw new Error('Authentication required');
+            } else if (resp.status === 502) {
                 showServiceNotice();
                 throw new Error('Service unavailable');
+            } else if (resp.status >= 500 && resp.status < 600) {
+                showServiceError();
+                throw new Error(`Service unavailable (HTTP ${resp.status})`);
+            } else if (!resp.ok) {
+                throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
             }
-            hideServiceNotice();
             return resp;
         }
 
@@ -441,6 +490,8 @@
             const startTime = performance.now();
 
             xhr.open('POST', 'api/upgrade/upload');
+            const jwt = getJWT();
+            if (jwt) xhr.setRequestHeader('Authorization', `Bearer ${jwt}`);
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {

@@ -1,0 +1,32 @@
+settings:
+  tweaks:
+    label: Tweaks
+    items:
+      object_processing:
+        label: 'Object Processing for Adaptive Mesh (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#object-processing-for-adaptive-mesh" target="_blank">link</a>)'
+        get_cmd:
+          - bash
+          - -c
+          - test -f /oem/printer_data/config/extended/moonraker/object_processing.cfg && echo "enabled" || echo "disabled"
+        options:
+          enabled:
+            label: Enabled
+            confirm: "Enable Moonraker object processing? Note: Enabling 'Exclude Object' in your slicer settings is preferred over this option. This can cause long processing times for large gcode files (> 100MB), delays when uploading files, and extended time stuck at 100% in Snapmaker Orca. Only enable if your slicer doesn't support exclude object."
+            cmd:
+              - bash
+              - -xc
+              - |
+                mkdir -p /oem/printer_data/config/extended/moonraker &&
+                ln -sf /usr/local/share/firmware-config/tweaks/moonraker/object_processing.cfg /oem/printer_data/config/extended/moonraker/object_processing.cfg &&
+                echo "Object processing enabled. Restarting Moonraker..." &&
+                /etc/init.d/S61moonraker restart
+          disabled:
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                rm -f /oem/printer_data/config/extended/moonraker/object_processing.cfg &&
+                echo "Object processing disabled. Restarting Moonraker..." &&
+                /etc/init.d/S61moonraker restart
+        default: disabled

@@ -33,8 +33,10 @@ def set_value(cfg_file, section, key, value, create_section=True, create_key=Tru
 
     section_found = False
     key_found = False
+    i = 0
 
-    for i, line in enumerate(lines):
+    while i < len(lines):
+        line = lines[i]
         if any_section_re.match(line) and section_found:
             break
         if section_re.match(line):
@@ -47,12 +49,16 @@ def set_value(cfg_file, section, key, value, create_section=True, create_key=Tru
                 sys.exit(1)
             lines[i] = f"{key}: {value}\n"
             key_found = True
+        i += 1
 
     if not section_found:
         if not create_section:
             print(f"ERROR: Section '{section}' does not exist for update", file=sys.stderr)
             sys.exit(1)
-        lines.insert(i, f"\n[{section}]\n")
+        if i > 0:
+            lines.insert(i, "\n")
+            i += 1
+        lines.insert(i, f"[{section}]\n")
         i += 1
 
     if not key_found:

@@ -1,0 +1,101 @@
+name: Update Release PR Changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'skip-changelog') &&
+      (github.event.pull_request.head.ref == 'develop' || github.event.pull_request.head.ref == 'add-changelog-workflow')
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Generate changelog and update PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+
+          const baseBranch = context.payload.pull_request.base.ref;
+          const headBranch = context.payload.pull_request.head.ref;
+
+          const mainCommits = new Set(
+            execSync(`git log origin/${baseBranch} --format=%H`, { encoding: 'utf8' })
+              .trim().split('\n').filter(Boolean)
+          );
+
+          const { data: prs } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'closed',
+            base: 'develop',
+            sort: 'updated',
+            direction: 'desc',
+            per_page: 100
+          });
+
+          const includedPrs = [];
+
+          for (const pr of prs) {
+            if (!pr.merged_at) continue;
+
+            if (pr.merge_commit_sha && !mainCommits.has(pr.merge_commit_sha)) {
+              includedPrs.push({
+                number: pr.number,
+                title: pr.title,
+                url: pr.html_url,
+                author: pr.user.login,
+                mergedAt: new Date(pr.merged_at)
+              });
+            }
+          }
+
+          includedPrs.sort((a, b) => b.mergedAt - a.mergedAt);
+
+          const changelogSection = includedPrs.length > 0
+            ? [
+                '## 📋 Changelog',
+                '',
+                'This release includes the following pull requests:',
+                '',
+                ...includedPrs.map(pr =>
+                  `- #${pr.number}: ${pr.title} (@${pr.author})`
+                ),
+                ''
+              ].join('\n')
+            : '## 📋 Changelog\n\nNo pull requests found.\n';
+
+          const currentBody = context.payload.pull_request.body || '';
+          const changelogMarkerStart = '<!-- CHANGELOG_START -->';
+          const changelogMarkerEnd = '<!-- CHANGELOG_END -->';
+
+          let newBody;
+          if (currentBody.includes(changelogMarkerStart)) {
+            const beforeChangelog = currentBody.substring(0, currentBody.indexOf(changelogMarkerStart));
+            const afterChangelog = currentBody.includes(changelogMarkerEnd)
+              ? currentBody.substring(currentBody.indexOf(changelogMarkerEnd) + changelogMarkerEnd.length)
+              : '';
+            newBody = `${beforeChangelog}${changelogMarkerStart}\n${changelogSection}${changelogMarkerEnd}${afterChangelog}`;
+          } else {
+            newBody = `${currentBody}\n\n${changelogMarkerStart}\n${changelogSection}${changelogMarkerEnd}`;
+          }
+
+          await github.rest.pulls.update({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            body: newBody.trim()
+          });
+
+          console.log(`Updated PR #${context.payload.pull_request.number} with changelog of ${includedPrs.length} PRs`);

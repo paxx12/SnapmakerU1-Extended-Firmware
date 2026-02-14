@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GIT_URL=https://github.com/horzadome/snapmaker-u1-timelapse-recovery.git
 GIT_SHA=8e2a2e50e8642a4f368e4e4794585b2a2d2e2857

@@ -1,0 +1,40 @@
+From 1001abc34a46326904ad8c5917d2ff10efc08cb3 Mon Sep 17 00:00:00 2001
+From: Kevin O'Connor <kevin@koconnor.net>
+Date: Wed, 27 Nov 2024 22:45:27 -0500
+Subject: [PATCH] toolhead: Use delta_v2 when calculating centripetal force
+
+As a minor math optimization, it's possible to calculate:
+  .5 * self.move_d * self.accel * tan_theta_d2
+using:
+  self.delta_v2 * .25 * tan_theta_d2
+because self.delta_v2 is "2. * self.move_d * self.accel".
+
+Signed-off-by: Dmitry Butyugin <dmbutyugin@google.com>
+Signed-off-by: Kevin O'Connor <kevin@koconnor.net>
+---
+ klippy/toolhead.py | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/klippy/toolhead.py b/klippy/toolhead.py
+index 7c4950469..363959ed0 100644
+--- a/klippy/toolhead.py
++++ b/klippy/toolhead.py
+@@ -104,10 +104,11 @@ class Move:
+         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
+         R_jd = sin_theta_d2 / (1. - sin_theta_d2)
+         # Approximated circle must contact moves no further away than mid-move
+-        tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
+-        move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * self.accel
+-        prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
+-                                    * prev_move.accel)
++        #   centripetal_v2 = .5 * self.move_d * self.accel * tan_theta_d2
++        cos_theta_d2 = math.sqrt(0.5*(1.0+junction_cos_theta))
++        quarter_tan_theta_d2 = .25 * sin_theta_d2 / cos_theta_d2
++        move_centripetal_v2 = self.delta_v2 * quarter_tan_theta_d2
++        prev_move_centripetal_v2 = prev_move.delta_v2 * quarter_tan_theta_d2
+         # Apply limits
+         self.max_start_v2 = min(
+             R_jd * self.junction_deviation * self.accel,
+-- 
+2.47.3
+

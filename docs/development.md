@@ -18,11 +18,30 @@ Each overlay is self-contained and numbered to control application order. This m
 - Maintain different firmware profiles (basic vs extended)
 - Add custom modifications without conflicts
 
+For external third-party components, see [Third-Party Integrations](design/third_party.md).
+
 ## Prerequisites
 
 - Docker installed on your system
 
 The `./dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
+
+## Source Repository
+
+The project is hosted on GitHub with a mirror on Codeberg:
+
+- **GitHub**: [https://github.com/paxx12](https://github.com/paxx12)
+- **Codeberg**: [https://codeberg.org/paxx12-snapmaker-u1](https://codeberg.org/paxx12-snapmaker-u1)
+
+### Using Codeberg Mirror
+
+To use Codeberg as the source instead of GitHub, configure git to automatically remap GitHub URLs:
+
+```bash
+git config --global url."https://codeberg.org/paxx12-snapmaker-u1/".insteadOf "https://github.com/paxx12/"
+```
+
+This remaps all GitHub repository URLs to Codeberg automatically, including submodules and dependencies.
 
 ## Quick Start
 
@@ -185,6 +204,26 @@ To extract and examine the base firmware:
 ```
 
 Output: `tmp/extracted/`
+
+## Upgrade Firmware
+
+To build and deploy firmware directly to a connected printer:
+
+```bash
+./dev.sh ./scripts/dev/upgrade-firmware.sh root@<printer-ip> <profile>
+```
+
+Example:
+
+```bash
+./dev.sh ./scripts/dev/upgrade-firmware.sh root@192.168.1.100 extended
+```
+
+By default, the script uses `snapmaker` as the SSH password. To use a different password:
+
+```bash
+PASSWORD=mypassword ./dev.sh ./scripts/dev/upgrade-firmware.sh root@192.168.1.100 extended
+```
 
 ## Release Process
 

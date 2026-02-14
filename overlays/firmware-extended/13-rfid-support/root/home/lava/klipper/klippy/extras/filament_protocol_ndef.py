@@ -28,10 +28,14 @@ def xxd_dump(data, max_lines=16):
 
 def ndef_parse(data_buf):
     if None == data_buf or isinstance(data_buf, (list, bytes, bytearray)) == False:
-        return NDEF_PARAMETER_ERR, []
+        return NDEF_PARAMETER_ERR, [], []
 
     try:
         data = bytes(data_buf) if isinstance(data_buf, list) else data_buf
+
+        card_uid = []
+        if len(data) >= 8:
+            card_uid = [data[0], data[1], data[2], data[4], data[5], data[6], data[7]]
 
         logging.info("NDEF RFID data:")
         logging.info("\n" + xxd_dump(data))
@@ -118,13 +122,13 @@ def ndef_parse(data_buf):
                 data_io.seek(tlv_len, 1)
 
         if not records:
-            return NDEF_NOT_FOUND_ERR, []
+            return NDEF_NOT_FOUND_ERR, [], card_uid
 
-        return NDEF_OK, records
+        return NDEF_OK, records, card_uid
 
     except Exception as e:
         logging.exception("NDEF parsing failed: %s", str(e))
-        return NDEF_ERR, []
+        return NDEF_ERR, [], []
 
 def parse_color_hex(value):
     try:
@@ -135,7 +139,7 @@ def parse_color_hex(value):
     except (ValueError, TypeError):
         return 0xFFFFFF
 
-def openspool_parse_payload(payload):
+def openspool_parse_payload(payload, card_uid=[]):
     if None == payload or not isinstance(payload, (bytes, bytearray)):
         logging.error("OpenSpool payload parsing failed: Invalid payload parameter")
         return filament_protocol.FILAMENT_PROTO_PARAMETER_ERR, None
@@ -218,7 +222,7 @@ def openspool_parse_payload(payload):
         info['MF_DATE'] = '19700101'
         info['RSA_KEY_VERSION'] = 0
         info['OFFICIAL'] = True
-        info['CARD_UID'] = []
+        info['CARD_UID'] = card_uid
 
         return filament_protocol.FILAMENT_PROTO_OK, info
 
@@ -230,7 +234,7 @@ def openspool_parse_payload(payload):
         return filament_protocol.FILAMENT_PROTO_ERR, None
 
 def ndef_proto_data_parse(data_buf):
-    error, records = ndef_parse(data_buf)
+    error, records, card_uid = ndef_parse(data_buf)
 
     if error != NDEF_OK:
         logging.error(f"NDEF parse failed: NDEF parsing error (code: {error})")
@@ -246,7 +250,7 @@ def ndef_proto_data_parse(data_buf):
 
         if mime_type == 'application/json':
             logging.info(f"Detected OpenSpool format, parsing payload ({len(payload)} bytes)")
-            error_code, info = openspool_parse_payload(payload)
+            error_code, info = openspool_parse_payload(payload, card_uid)
             if error_code != filament_protocol.FILAMENT_PROTO_OK:
                 logging.error(f"OpenSpool parse failed: Payload parsing error (code: {error_code})")
                 continue

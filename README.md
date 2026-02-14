@@ -22,15 +22,33 @@ See [User Documentation](https://snapmakeru1-extended-firmware.pages.dev/) for f
 
 ## Building from Source
 
+**Source repositories:**
+- GitHub: [https://github.com/paxx12](https://github.com/paxx12)
+- Codeberg: [https://codeberg.org/paxx12-snapmaker-u1](https://codeberg.org/paxx12-snapmaker-u1)
+
 See [Building from Source](docs/development.md) for instructions on building custom firmware using Docker.
 
 ## Dependent projects
 
 - [v4l2-mpp](https://github.com/paxx12/v4l2-mpp) - Hardware-accelerated camera stack with WebRTC streaming, V4L2 controls, and settings persistence
+- [screen-apps](https://github.com/paxx12/screen-apps) - U1 touchscreen applications and UI components
+- [prometheus-klipper-exporter](https://github.com/scross01/prometheus-klipper-exporter) - Prometheus metrics exporter for Klipper
+- [snapmaker-u1-timelapse-recovery](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Tool to recover corrupted timelapse videos
+- [rockchip-linux/kernel](https://github.com/rockchip-linux/kernel) - Rockchip kernel source for building additional kernel modules
 
 ## Community
 
 Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
+
+## Issues
+
+For bug reports, please validate the issue against Stock Firmware first before creating a bug report. This helps determine if the issue is specific to the custom firmware or exists in the stock firmware as well.
+
+This repository does not accept feature requests or support issues in general. Pull Requests are the desired way to propose new changes and may be accepted after review.
+
+## Contact
+
+For inquiries about the firmware, contact: paxx12dev@gmail.com
 
 ## Support
 

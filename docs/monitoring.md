@@ -24,12 +24,21 @@ You can create custom metrics collection using the Moonraker API.
 
 Exposes [Klipper metrics](https://github.com/scross01/prometheus-klipper-exporter) via HTTP endpoint for [OpenMetrics/Prometheus](https://github.com/prometheus/OpenMetrics) systems.
 
-**Disabled by default.** Enable in `extended2.cfg`:
+Disabled by default.
+
+#### Using firmware-config Web UI (preferred)
+
+Navigate to the [firmware-config](firmware_config.md) web interface, go to the Monitoring section, and enable Klipper Metrics Exporter.
+
+#### Manual Setup (advanced)
+
+**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` to enable the exporter:
 ```ini
 [monitoring]
 klipper_exporter: :9101
 ```
-Then reboot the printer.
+
+**Step 2:** Reboot the printer for changes to take effect.
 
 ## Collecting Metrics with Home Assistant
 

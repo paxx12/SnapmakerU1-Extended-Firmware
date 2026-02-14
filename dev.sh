@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -13,6 +13,6 @@ fi
 TTY_FLAG=""
 [[ -t 0 ]] && TTY_FLAG="-it"
 
-ENV_FLAGS="-e GIT_VERSION"
+ENV_FLAGS="-e GIT_VERSION -e CI -e PASSWORD"
 
 exec docker run --rm $TTY_FLAG $ENV_FLAGS --cap-add=SYS_ADMIN -w "$PWD" -v "$PWD:$PWD" "$IMAGE_NAME" "$@"

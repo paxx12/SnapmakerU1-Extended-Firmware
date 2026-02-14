@@ -1,0 +1,49 @@
+From 1c8804c1b0b490765ec91c6cb479c8013fb363f0 Mon Sep 17 00:00:00 2001
+From: paxx12 <245230251+paxx12@users.noreply.github.com>
+Date: Sun, 1 Feb 2026 16:42:02 +0100
+Subject: [PATCH] snapmaker: Fix self.test references after upstream refactor
+
+Update SM_FAST_SHAPER_CALIBRATE to use self.generator.vibration_generator
+instead of removed self.test attribute.
+---
+ klippy/extras/resonance_tester.py | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/klippy/extras/resonance_tester.py b/klippy/extras/resonance_tester.py
+index 9b8bbf449..394994971 100644
+--- a/klippy/extras/resonance_tester.py
++++ b/klippy/extras/resonance_tester.py
+@@ -529,22 +529,22 @@ class ResonanceTester:
+ 
+         # axis X
+         freq_start = input_shaper.shapers[0].params.shaper_freq - abs(self.delta_freq)
+-        if (freq_start < self.test.min_freq):
+-            freq_start = self.test.min_freq
++        if (freq_start < self.generator.vibration_generator.min_freq):
++            freq_start = self.generator.vibration_generator.min_freq
+         freq_end = input_shaper.shapers[0].params.shaper_freq + abs(self.delta_freq)
+-        if (freq_end > self.test.max_freq):
+-            freq_end = self.test.max_freq
++        if (freq_end > self.generator.vibration_generator.max_freq):
++            freq_end = self.generator.vibration_generator.max_freq
+         shaper_type = input_shaper.shapers[0].params.shaper_type
+         command = "SHAPER_CALIBRATE AXIS=x SHAPER_TYPES=%s FREQ_START=%d FREQ_END=%d" % (shaper_type, freq_start, freq_end)
+         gcode.run_script_from_command(command)
+ 
+         # axis Y
+         freq_start = input_shaper.shapers[1].params.shaper_freq - abs(self.delta_freq)
+-        if (freq_start < self.test.min_freq):
+-            freq_start = self.test.min_freq
++        if (freq_start < self.generator.vibration_generator.min_freq):
++            freq_start = self.generator.vibration_generator.min_freq
+         freq_end = input_shaper.shapers[1].params.shaper_freq + abs(self.delta_freq)
+-        if (freq_end > self.test.max_freq):
+-            freq_end = self.test.max_freq
++        if (freq_end > self.generator.vibration_generator.max_freq):
++            freq_end = self.generator.vibration_generator.max_freq
+         shaper_type = input_shaper.shapers[1].params.shaper_type
+         command = "SHAPER_CALIBRATE AXIS=y SHAPER_TYPES=%s FREQ_START=%d FREQ_END=%d" % (shaper_type, freq_start, freq_end)
+         gcode.run_script_from_command(command)
+-- 
+2.47.3
+

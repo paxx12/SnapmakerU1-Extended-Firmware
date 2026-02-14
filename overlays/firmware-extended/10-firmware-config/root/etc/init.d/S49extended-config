@@ -31,6 +31,11 @@ start() {
     echo "Copying default config files..."
     cp -rn "$DEFAULT_DIR/." "$EXTENDED_DIR/"
 
+    # Remove invalid symlinks that may exist in the extended config directory
+    # The busybox `find` command does not support `-xtype l`, so we use a workaround to find broken symlinks
+    echo "Removing invalid symlinks..."
+    find "$EXTENDED_DIR" -type l ! -exec test -e {} \; -exec rm -v {} \;
+
     # Remove old .default files and create new ones for files that differ
     echo "Updating .default files..."
     find "$EXTENDED_DIR" -name "*.default" -exec rm -v {} +

@@ -23,7 +23,10 @@ export BUILD_DIR="$(realpath -m "$2")"
 export ROOTFS_DIR="$BUILD_DIR/rootfs"
 export BOOT_IMG="$BUILD_DIR/rk-unpacked/boot.img"
 export ROOTFS_IMG="$BUILD_DIR/rk-unpacked/rootfs.img"
-export GOPATH="$CACHE_DIR/host-go"
+
+# Cache dirs for build tools
+export GOPATH="$ROOT_DIR/tmp/cache-go"
+export CCACHE_DIR="$ROOT_DIR/tmp/ccache"
 
 rm -rf "$BUILD_DIR"
 
@@ -79,8 +82,8 @@ for overlay; do
     # apply all .patch to their respective directories
     while read -r patchfile; do
       echo "[+] Applying patch: $(basename "$patchfile") in subdir $(dirname "$patchfile")"
-      patch -F 0 -d "$ROOTFS_DIR/$(dirname "$patchfile")" -p1 < "$patchfile"
-    done < <(find -type f -name "*.patch")
+      patch -F 0 --no-backup-if-mismatch -d "$ROOTFS_DIR/$(dirname "$patchfile")" -p1 < "$patchfile"
+    done < <(find -type f -name "*.patch" | sort)
     popd > /dev/null
   fi
 

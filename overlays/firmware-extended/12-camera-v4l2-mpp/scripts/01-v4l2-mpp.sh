@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=664e0891089a199d4fc6d9b50bb8f72b67aa4058
+GIT_SHA=10fc3b9d935d9c79bacc014839c05de4a004c4ac
 
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."

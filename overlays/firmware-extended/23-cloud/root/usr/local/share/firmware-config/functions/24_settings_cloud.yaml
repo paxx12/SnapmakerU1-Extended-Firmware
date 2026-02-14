@@ -1,0 +1,65 @@
+settings:
+  remote_access:
+    label: Remote Access
+    items:
+      cloud:
+        label: Cloud Access (Experimental)
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - remote_access
+          - cloud
+          - none
+        options:
+          none:
+            label: None
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
+                /etc/init.d/S99cloud stop
+                /usr/local/bin/octoeverywhere-pkg clean
+                rm -rf /home/lava/printer_data/octoeverywhere-store
+          octoeverywhere:
+            label: OctoEverywhere
+            cmd:
+              - bash
+              - -ec
+              - |
+                if test -f /oem/printer_data/config/extended/moonraker/authorization.cfg; then
+                  echo "ERROR: Authentication is incompatible with OctoEverywhere companion mode."
+                  echo "Disable authentication first to enable OctoEverywhere."
+                  exit 1
+                fi
+                echo "WARNING: OctoEverywhere support is experimental. Higher resource usage may affect print quality."
+                sleep 5
+
+                echo ">> Downloading OctoEverywhere package..."
+                /usr/local/bin/octoeverywhere-pkg download
+
+                echo ">> Enabling OctoEverywhere..."
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere
+
+                echo ">> Restarting OctoEverywhere service..."
+                /etc/init.d/S99cloud restart
+
+                echo
+                echo "OctoEverywhere enabled. Please wait a moment or check the logs for the account linking URL."
+                echo "If you need help, follow this guide:"
+                echo "https://octoeverywhere.com/s/snapmaker-u1"
+                echo "Contact Support: https://octoeverywhere.com/support"
+                echo
+
+                for i in {1..15}; do
+                    echo ">> Looking for authorization URL in logs... ($i)"
+                    if MATCH=$(grep -C 20 "This Plugin Isn't Connected To OctoEverywhere!" /home/lava/printer_data/logs/octoeverywhere.log 2>/dev/null); then
+                        sed -n 's/.*WARNING //p' <<< "$MATCH"
+                        exit 0
+                    fi
+                    sleep 1
+                done
+
+                echo "Authorization URL not found in logs. Please check the logs for more details."
+        default: none

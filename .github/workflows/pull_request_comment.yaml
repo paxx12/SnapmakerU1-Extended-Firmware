@@ -1,0 +1,79 @@
+name: PR Comment
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+      actions: read
+    steps:
+    - name: Download PR info
+      uses: actions/download-artifact@v4
+      with:
+        name: pr-info
+        path: pr-info
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Comment PR with artifact links
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const prNumber = parseInt(fs.readFileSync('pr-info/number', 'utf8').trim());
+          const headSha = fs.readFileSync('pr-info/head_sha', 'utf8').trim();
+          const mergeSha = fs.readFileSync('pr-info/merge_sha', 'utf8').trim();
+          const baseRef = fs.readFileSync('pr-info/base_ref', 'utf8').trim();
+          const version = fs.readFileSync('pr-info/version', 'utf8').trim();
+          const jobStart = parseInt(fs.readFileSync('pr-info/job_start', 'utf8').trim());
+          const jobEnd = parseInt(fs.readFileSync('pr-info/job_end', 'utf8').trim());
+
+          const runId = ${{ github.event.workflow_run.id }};
+          const durationSec = jobEnd - jobStart;
+          const durationMin = Math.floor(durationSec / 60);
+          const durationRemSec = durationSec % 60;
+          const duration = `${durationMin}m ${durationRemSec}s`;
+
+          const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: runId
+          });
+
+          const artifactNames = fs.readFileSync('pr-info/artifacts', 'utf8').trim().split('\n');
+          const buildArtifacts = artifacts.artifacts.filter(a => artifactNames.includes(a.name));
+          const artifactLines = buildArtifacts.map(a => {
+            const url = `https://github.com/${{ github.repository }}/actions/runs/${runId}/artifacts/${a.id}`;
+            const size = (a.size_in_bytes / 1024 / 1024).toFixed(2);
+            return `| [\`${a.name}\`](${url}) | ${size} MB |`;
+          }).join('\n');
+
+          const prHeadSha = headSha.substring(0, 7);
+          const mergeCommitSha = mergeSha.substring(0, 7);
+
+          const body = [
+            '## ✅ Build Artifacts',
+            '',
+            `**Version:** \`${version}\``,
+            `**Build:** \`${mergeCommitSha}\` (merge of [${prHeadSha}](https://github.com/${{ github.repository }}/commit/${headSha}) into \`${baseRef}\`)`,
+            `**Duration:** ${duration}`,
+            '',
+            '| Artifact | Size |',
+            '|----------|------|',
+            artifactLines,
+            '',
+            `[View workflow run](https://github.com/${{ github.repository }}/actions/runs/${runId})`
+          ].join('\n');
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: prNumber,
+            body: body
+          });

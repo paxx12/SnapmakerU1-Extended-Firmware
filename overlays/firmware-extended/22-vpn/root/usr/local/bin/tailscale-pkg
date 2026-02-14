@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 VERSION=1.92.5
 URL="https://pkgs.tailscale.com/stable/tailscale_${VERSION}_arm64.tgz"
 SHA256=13a59c3181337dfc9fdf9dea433b04c1fbf73f72ec059f64d87466b79a3a313c
 
 TAILSCALE_DIR="/oem/apps/tailscale-${VERSION}"
+TAILSCALE_STATE_DIR="/home/lava/printer_data/tailscale"
 TMP_DIR="$TAILSCALE_DIR.tmp"
 
 case "$(basename "$0")" in
@@ -88,7 +89,7 @@ case "$1" in
         ;;
     clean)
         echo "Removing Tailscale installation..."
-        rm -rf "$TAILSCALE_DIR"
+        rm -rf "$TAILSCALE_DIR" "$TAILSCALE_STATE_DIR"
         echo "Removed."
         ;;
     *)
