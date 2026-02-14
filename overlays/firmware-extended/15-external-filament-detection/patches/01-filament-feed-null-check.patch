@@ -1,0 +1,12 @@
+diff -uNr rootfs.original/home/lava/klipper/klippy/extras/filament_feed.py rootfs/home/lava/klipper/klippy/extras/filament_feed.py
+--- rootfs.original/home/lava/klipper/klippy/extras/filament_feed.py
++++ rootfs/home/lava/klipper/klippy/extras/filament_feed.py
+@@ -566,7 +566,7 @@
+                 self.module_exist[ch] = False
+ 
+             if self.config['auto_mode'][ch] == True and self.module_exist[ch] == True:
+-                if self.filament_detect.is_startup_stay() == False:
++                if self.filament_detect is not None and self.filament_detect.is_startup_stay() == False:
+                     self.printer.send_event("filament_feed:port", self.filament_ch[ch],
+                                             self._port[ch].get_filament_detected())
+                 if self._port[ch].get_filament_detected() == False:

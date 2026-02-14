@@ -48,6 +48,7 @@ Toggle settings directly from the web interface:
 | USB Camera | Enabled, Disabled | Enable USB camera support |
 | Remote Screen | Enabled, Disabled | Enable remote screen access |
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
+| Filament Tag Detection | Official, Extended | Select filament detection system |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 | Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
@@ -168,6 +169,27 @@ See [VPN Remote Access](vpn.md) for setup instructions.
 
 See the [3D Printing Clouds](cloud.md) for setup instructions.
 
+#### [filament_detection]
+
+**system** - Filament tag detection system
+- `official` (default) - Snapmaker's official filament detection system
+- `extended` - Custom filament detection system with multi-vendor spool support
+
+**generic** - Mark all filament manufacturers as 'Generic' and strip modifiers (for Snapmaker Orca Compatibility)
+- `false` (default) - Off, keep data as-is
+- `true` - On, replace data with 'Generic'
+
+**creality_key** - Creality tagged filament detection key (32 hex characters)
+- `none` (default) - Creality spools not enabled
+
+**creality_encryption_key** - Creality tagged filament detection encryption key (32 hex characters)
+- `none` (default) - Creality spools not enabled
+
+**bambu_key** - Bambu Lab tagged filament detection key (32 hex characters)
+- `none` (default) - Bambu spools not enabled
+
+See [Filament Detection](filament_detection.md) for supported spool formats and setup instructions.
+
 #### [monitoring]
 
 **klipper_exporter** - Enable Prometheus metrics exporter for Klipper
@@ -206,6 +228,16 @@ vpn: none
 # - none - No cloud services enabled.
 # - octoeverywhere - OctoEverywhere.com remote access
 cloud: none
+
+[filament_detection]
+# Filament tag detection system: official, extended
+system: official
+# Creality tagged filament detection key (32 hex characters)
+creality_key: none
+# Creality tagged filament detection encryption key (32 hex characters)
+creality_encryption_key: none
+# Bambu Lab tagged filament detection key (32 hex characters)
+bambu_key: none
 
 [monitoring]
 # Enable Klipper Prometheus exporter on specified address
@@ -266,4 +298,5 @@ If an invalid configuration breaks Moonraker (printer won't connect to WiFi):
 - [Camera Support](camera_support.md) - Camera features and WebRTC streaming
 - [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files
 - [Data Persistence](data_persistence.md) - Understanding persistent storage
+- [Filament Detection](filament_detection.md) - Extended filament detection with multi-vendor spool support
 - [VPN Remote Access](vpn.md) - Secure remote access via Tailscale

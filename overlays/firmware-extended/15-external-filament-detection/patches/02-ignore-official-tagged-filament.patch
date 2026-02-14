@@ -1,0 +1,14 @@
+diff -uNr rootfs.original/home/lava/klipper/klippy/extras/print_task_config.py rootfs/home/lava/klipper/klippy/extras/print_task_config.py
+--- rootfs.original/home/lava/klipper/klippy/extras/print_task_config.py
++++ rootfs/home/lava/klipper/klippy/extras/print_task_config.py
+@@ -359,8 +359,8 @@ class PrintTaskConfig:
+         if config_extruder < 0 or config_extruder >= PHYSICAL_EXTRUDER_NUM:
+             raise gcmd.error("[print_task_config] extruder{} is out of range[0, {}]".format(config_extruder, PHYSICAL_EXTRUDER_NUM -1))
+ 
+-        if self.print_task_config['filament_official'][config_extruder]:
+-            raise gcmd.error("[print_task_config] filament_config, official filament, not configurable!")
++        #if self.print_task_config['filament_official'][config_extruder]:
++        #    raise gcmd.error("[print_task_config] filament_config, official filament, not configurable!")
+ 
+         if filament_type is not None:
+             self.print_task_config['filament_vendor'][config_extruder] = filament_vendor

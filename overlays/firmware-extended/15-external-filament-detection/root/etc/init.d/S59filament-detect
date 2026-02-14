@@ -1,0 +1,115 @@
+#!/bin/sh
+
+PIDFILE="/var/run/filament-detect.pid"
+FILAMENT_DETECT_DIR="/oem/apps/filament-detect"
+PRINTER_CFG="/oem/printer_data/config/printer.cfg"
+PRINTER_CFG_PATCH="/usr/local/share/filament-detect/printer.cfg.patch"
+
+EXTENDED_CFG="/home/lava/printer_data/config/extended/extended2.cfg"
+FILAMENT_DETECT_SYSTEM=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection system official)
+CREALITY_KEY=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection creality_key none)
+CREALITY_ENCRYPTION_KEY=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection creality_encryption_key none)
+BAMBU_KEY=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection bambu_key none)
+GENERIC=$(/usr/local/bin/extended-config.py get "$EXTENDED_CFG" filament_detection generic false)
+
+start() {
+    if [ "$FILAMENT_DETECT_SYSTEM" != "extended" ]; then
+        echo "Filament tag detection system is not set to 'extended', not starting."
+        return
+    fi
+
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "filament-detect already running"
+        return 0
+    fi
+
+    printf "Applying printer.cfg patch: "
+    if patch --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
+        patch "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
+        echo "OK"
+    else
+        echo "already applied or failed"
+    fi
+
+    cp /usr/local/bin/filament-detect/examples/u1.cfg /tmp/u1.cfg
+
+    if [ "$GENERIC" = "true" ]; then
+        sed -i "s/{{filament\.manufacturer}}/{{'Snapmaker' if filament.manufacturer == 'Snapmaker' else 'Generic'}}/g" /tmp/u1.cfg
+        sed -i "s/{{ filament.modifiers | join(' ') }}/{{ filament.modifiers | join(' ') if filament.manufacturer == 'Snapmaker' else '' }}/g" /tmp/u1.cfg
+        echo "Generic mode enabled (Snapmaker Orca compatibility), all filament will be treated as Generic except those explicitly tagged as Snapmaker."
+    fi
+
+    sed -i 's/^#\[snapmaker_tag_processor\]/[snapmaker_tag_processor]\nkey = 536e61706d616b65725f71776572747975696f705b2c2e3b5d5f317132773365/' /tmp/u1.cfg
+    sed -i 's/^tag_processors = */&snapmaker_tag_processor, /' /tmp/u1.cfg
+
+    if [ "$(echo -n "$CREALITY_KEY" | xxd -r -p | sha256sum | awk '{print $1}')" = "e544d94feb16159bbd7bc227df1e283eca1f38f2bb2015dfcc6161b74473b5c2" ]; then
+        sed -i 's/^#\[creality_tag_processor\]/[creality_tag_processor]\nkey = '$CREALITY_KEY'/' /tmp/u1.cfg
+        sed -i 's/^tag_processors = */&creality_tag_processor, /' /tmp/u1.cfg
+        echo "Creality key is valid, enabled Creality tag processor."
+
+        if [ "$(echo -n "$CREALITY_ENCRYPTION_KEY" | xxd -r -p | sha256sum | awk '{print $1}')" = "acec2106007458579ba522b25610b2cf509ae59d7879cb975f65c45228e5c9a1" ]; then
+            sed -i 's/^\[creality_tag_processor\]/&\nencryption_key = '$CREALITY_ENCRYPTION_KEY'/' /tmp/u1.cfg
+            echo "Creality encryption key is valid, set encryption key for Creality tag processor."
+        else
+            echo "Provided Creality encryption key is missing or invalid, starting Creality tag processor without encryption key."
+        fi
+    else
+        echo "Provided Creality key is missing or invalid, skipping Creality tag processor."
+    fi
+
+    if [ "$(echo -n "$BAMBU_KEY" | xxd -r -p | sha256sum | awk '{print $1}')" = "19cc3c63cb8802668800c3b3bf3fee05b3c59bf59fc5fd256b68e868084ec304" ]; then
+        sed -i 's/^#\[bambu_lab_tag_processor\]/[bambu_lab_tag_processor]\nkey = '$BAMBU_KEY'/' /tmp/u1.cfg
+        sed -i 's/^tag_processors = */&bambu_lab_tag_processor, /' /tmp/u1.cfg
+        echo "Bambu Lab key is valid, enabled Bambu Lab tag processor."
+    else
+        echo "Provided Bambu Lab key is missing or invalid, skipping Bambu Lab tag processor."
+    fi
+
+    printf "Starting filament-detect: "
+    start-stop-daemon -S -b -m \
+        -p "$PIDFILE" \
+        -x /usr/bin/python3 -- /usr/local/bin/filament-detect/main.py /tmp/u1.cfg
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping filament-detect: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE" 
+        echo "OK"
+    else
+        echo "not running"
+    fi
+
+    printf "Reverting printer.cfg patch: "
+    if patch -R --dry-run "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null 2>&1; then
+        patch -R "$PRINTER_CFG" "$PRINTER_CFG_PATCH" >/dev/null
+        echo "OK"
+    else
+        echo "already reverted or failed"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?

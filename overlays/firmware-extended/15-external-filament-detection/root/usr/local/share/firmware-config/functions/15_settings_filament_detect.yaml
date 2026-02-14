@@ -1,0 +1,61 @@
+settings:
+  filament_detection:
+    label: Filament Detection
+    items:
+      system:
+        label: Filament Tag Detection System
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - filament_detection
+          - system
+          - official
+        options:
+          official:
+            label: Official
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system official
+                /etc/init.d/S59filament-detect stop
+                /etc/init.d/S60klipper restart
+          extended:
+            label: Extended
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection system extended
+                /etc/init.d/S59filament-detect start
+                /etc/init.d/S60klipper restart
+                echo Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
+        default: official
+      generic:
+        label: Label All Filament as Generic (Snapmaker Orca Compatibility)
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - filament_detection
+          - generic
+          - "false"
+        options:
+          "true":
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection generic true
+                /etc/init.d/S59filament-detect restart
+          "false":
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg filament_detection generic false
+                /etc/init.d/S59filament-detect restart
+        default: "false"
