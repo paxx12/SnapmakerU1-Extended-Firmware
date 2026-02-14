@@ -188,12 +188,12 @@ The `20-klipper-patches` overlay in `firmware-extended/` backports upstream Klip
 │   ├── rk2918_tools/            Rockchip image tools
 │   └── upfile/                  Firmware unpacking tool
 ├── Makefile                     Build configuration
-└── vars.mk                      Firmware version and kernel configuration
+└── deps.mk                      Firmware version and kernel configuration
 ```
 
 ## Configuration
 
-Edit `vars.mk` to configure base firmware and kernel.
+Edit `deps.mk` to configure base firmware and kernel.
 
 ## Extract Firmware
 

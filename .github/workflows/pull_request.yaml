@@ -38,44 +38,21 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: BUILDKIT_INLINE_CACHE=1
 
-    - name: Load values vars.mk
-      run: cat vars.mk >> "$GITHUB_ENV"
+    - name: Load values deps.mk
+      run: cat deps.mk >> "$GITHUB_ENV"
 
-    - name: Restore Firmwares Cache
-      id: cache-firmwares
-      uses: actions/cache/restore@v4
-      with:
-        path: firmware/
-        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
-
-    - name: Restore Kernel Cache
-      id: cache-kernel
-      uses: actions/cache/restore@v4
-      with:
-        path: tmp/kernel/
-        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
-
-    - name: Restore ccache
-      id: cache-ccache
-      uses: actions/cache/restore@v4
-      with:
-        path: tmp/ccache/
-        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
-        restore-keys: |
-          ccache-${{ runner.os }}-${{ runner.arch }}-
-
-    - name: Restore downloads cache
-      id: cache-downloads
-      uses: actions/cache/restore@v4
+    - name: Persist firmware/ and tmp/cache/
+      id: tmp-cache
+      uses: actions/cache@v4
       with:
         path: |
-          tmp/cache/**/.git
-          tmp/cache/**/*.zip
-          tmp/cache/**/*.gz
-          tmp/cache/**/*.xz
-        key: downloads-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
+          firmware/
+          tmp/ccache/
+          tmp/cache/repos/**/.git
+          tmp/cache/files/
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('deps.mk') }}
         restore-keys: |
-          downloads-${{ runner.os }}-${{ runner.arch }}-
+          ccache-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Set GIT_VERSION (for branch)
       shell: bash
@@ -148,33 +125,3 @@ jobs:
       with:
         name: pr-info
         path: pr-info/
-
-    - name: Save Firmwares Cache
-      if: steps.cache-firmwares.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: firmware/
-        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
-
-    - name: Save Kernel Cache
-      if: steps.cache-kernel.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: tmp/kernel/
-        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
-
-    - name: Save ccache
-      uses: actions/cache/save@v4
-      with:
-        path: tmp/ccache/
-        key: ccache-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
-
-    - name: Save downloads cache
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          tmp/cache/**/.git
-          tmp/cache/**/*.zip
-          tmp/cache/**/*.gz
-          tmp/cache/**/*.xz
-        key: downloads-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}

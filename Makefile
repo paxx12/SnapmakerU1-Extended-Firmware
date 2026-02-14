@@ -1,4 +1,4 @@
-include vars.mk
+include deps.mk
 
 all: tools
 
@@ -54,10 +54,7 @@ tools/%: FORCE
 firmware: firmware/$(FIRMWARE_FILE)
 
 firmware/$(FIRMWARE_FILE):
-	@mkdir -p firmware
-	wget -O $@.tmp "https://public.resource.snapmaker.com/firmware/U1/$(FIRMWARE_FILE)"
-	echo "$(FIRMWARE_SHA256)  $@.tmp" | sha256sum -c --quiet
-	mv $@.tmp $@
+	@./scripts/helpers/cache_file.sh firmware $@
 
 # ================= Test =================
 
