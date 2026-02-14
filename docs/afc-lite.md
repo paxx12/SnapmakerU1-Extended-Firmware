@@ -1,3 +1,7 @@
+---
+title: AFC-Lite Stub Implementation
+---
+
 # AFC-Lite Stub Implementation
 
 **EXPERIMENTAL**: This feature is experimental and may be removed at any point without notice.

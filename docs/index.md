@@ -53,24 +53,38 @@ Stock firmware with SSH access and minimal debugging features:
 
 Heavily expanded firmware with extensive features and customization. Includes all basic features plus:
 
+**Web & Configuration:**
+
 - [Firmware Configuration](firmware_config.md) - Customize firmware behavior via web interface or config file
+- [Fluidd or Mainsail](firmware_config.md#web) (selectable) - Choose your preferred web interface
+
+**Camera & Media:**
+
 - [Camera Support](camera_support.md) - Hardware-accelerated camera stack with WebRTC streaming for internal and USB cameras
-- [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
-- [Klipper Tweaks](tweaks.md) - Experimental [TMC driver optimizations](tweaks.md#tmc-autotune), [reduced current](tweaks.md#tmc-reduced-current), and [object processing for adaptive mesh](tweaks.md#object-processing-for-adaptive-mesh) (firmware-config only)
-- [AFC-Lite Stub](afc-lite.md) - Experimental AFC UI compatibility layer for Fluidd/Mainsail (may be removed)
-- [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format
 - [Remote Screen](remote_screen.md) - View and control printer screen remotely via web browser
-- [Monitoring](monitoring.md) - Integration with Prometheus, Home Assistant, DataDog, and other monitoring systems
-- [VPN Remote Access](vpn.md) - Secure remote access via Tailscale (Experimental)
-- [Fluidd or Mainsail](firmware_config.md#web) (selectable) with timelapse support
-- Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
+- Timelapse Support - Record print timelapses with automatic cleanup
 - [Timelapse Recovery Tool](https://github.com/horzadome/snapmaker-u1-timelapse-recovery) - Recover unplayable timelapse videos
-- [OctoEverywhere](cloud.md) - Cloud-based remote access service for 3D printers
+
+**Klipper Customization:**
+
+- [Klipper and Moonraker Custom Includes](klipper_includes.md) - Add custom configuration files via Fluidd/Mainsail
+- [Klipper Tweaks](tweaks.md) - Experimental [TMC driver optimizations](tweaks.md#tmc-autotune), [reduced current](tweaks.md#tmc-reduced-current), and [object processing for adaptive mesh](tweaks.md#object-processing-for-adaptive-mesh)
+- [AFC-Lite Stub](afc-lite.md) - Experimental AFC UI compatibility layer for Fluidd/Mainsail
+- [RFID Filament Tag Support](rfid_support.md) - NTAG213/215/216 support for OpenSpool format
+
+**Monitoring & Notifications:**
+
+- [Monitoring](monitoring.md) - Integration with Prometheus, Home Assistant, DataDog, and other monitoring systems
+- Moonraker Apprise Notifications - Send print notifications to Discord, Telegram, Slack, and 90+ services
+
+**Remote Access:**
+
+- [VPN Remote Access](vpn.md) - Secure remote access via Tailscale
+- [Cloud Remote Access](cloud.md) - Cloud-based remote access service for 3D printers
 
 ## Support
 
 If you find this project useful and would like to support its development, you can:
-
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)
 
