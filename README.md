@@ -22,6 +22,10 @@ See [User Documentation](https://snapmakeru1-extended-firmware.pages.dev/) for f
 
 ## Building from Source
 
+**Source repositories:**
+- GitHub: [https://github.com/paxx12](https://github.com/paxx12)
+- Codeberg: [https://codeberg.org/paxx12-snapmaker-u1](https://codeberg.org/paxx12-snapmaker-u1)
+
 See [Building from Source](docs/development.md) for instructions on building custom firmware using Docker.
 
 ## Dependent projects
