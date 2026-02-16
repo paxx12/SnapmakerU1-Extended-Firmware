@@ -1,0 +1,48 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - docs
+    paths:
+      - 'docs/**'
+      - 'scripts/build_docs.sh'
+      - '.github/workflows/cloudflare_pages.yaml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: false
+
+      - name: Build documentation
+        run: ./scripts/build_docs.sh
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=snapmakeru1-extended-firmware --branch=${{ github.ref_name }}
+
+      - name: Add deployment comment
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const previewUrl = `https://${branch}.snapmakeru1-extended-firmware.pages.dev`;
+            console.log(`Preview URL: ${previewUrl}`);

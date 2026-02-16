@@ -9,6 +9,8 @@
         :root { --bg: #1a1a1a; --card: #2d2d2d; --item: #3d3d3d; --hover: #4d4d4d; --accent: #4fc3f7; --text: #e0e0e0; --muted: #888; --success: #81c784; --error: #e57373; --warning: #ff9800; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
         .container { max-width: 900px; margin: 0 auto; }
         h1 { color: var(--accent); margin-bottom: 20px; font-size: 24px; display: flex; justify-content: space-between; align-items: center; }
         .card { background: var(--card); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
@@ -305,7 +307,7 @@
                             }).join('');
                             return `<div class="row">
                                 <span class="row-label">${setting.label}</span>
-                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', '${setting.label}', this)">${options}</select>
+                                <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', this)">${options}</select>
                             </div>`;
                         }).join('')}
                     </div>`
@@ -631,12 +633,13 @@
         // Settings Functions
         // ========================================
 
-        function updateSetting(key, label, selectEl) {
+        function updateSetting(key, selectEl) {
             const value = selectEl.value;
             const prevValue = selectEl.dataset.prevValue || value;
             const selectedOption = selectEl.selectedOptions[0];
             const optLabel = decodeURIComponent(selectedOption.dataset.label || value);
             const confirmMsg = decodeURIComponent(selectedOption.dataset.confirm || '');
+            const label = selectEl.parentElement.querySelector('.row-label').textContent;
 
             const message = confirmMsg || `Change ${label} to "${optLabel}"?`;
             const warning = '⚠️ Warning: Changing settings will restart services and may interrupt printing.';

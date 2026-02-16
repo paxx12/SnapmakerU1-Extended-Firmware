@@ -4,9 +4,13 @@
 >
 > Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
 
-## Upgrading to v1.1.0
+## New Features and Key Changes
 
-The configuration file has been renamed from `extended.cfg` to `extended2.cfg`. During the first boot after upgrading a new `extended2.cfg` will be created with default settings. You will need to migrate your custom settings from `extended.cfg` to `extended2.cfg` manually or use `http://IP/firmware-config`.
+- TBD
+
+## Heroes of this release
+
+- TBD
 
 ## Install
 
@@ -20,7 +24,9 @@ Quick steps:
 
 ## Troubleshooting
 
+- **Configuration change**: Since the `v1.1.0` all features has to be configured with http://IP/firmware-config.
 - **Klipper failed to start**: Open Firmware Config at `http://IP/firmware-config`, go to `Recovery` and select `Reset Extended to Defaults`. This will reset all extended settings and reboot the printer.
+- **AFC-Lite Stub**: Has number of [limitations](http://snapmakeru1-extended-firmware.pages.dev/afc-lite#limitations).
 
 ## Revert
 

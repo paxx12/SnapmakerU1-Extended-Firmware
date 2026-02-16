@@ -258,5 +258,15 @@ Web UI → Moonraker Websocket → Klipper filament_tag module → FM175XX RFID 
 **Tag not detected:**
 - Ensure tag is NTAG213/215/216 or Mifare Classic 1K
 - Position tag within 1-3cm of reader antenna
+- Ensure you place on tag on the side next to the U1 housing, which will depend on which side of the printer you load the spool
+- If a vendor tag is present, for example Bambu Lab filament tags, this will usually interfere with reading a user-provided tag (you can cover up the vendor tag with foil tape)
 - Manually read tag: `FILAMENT_DT_UPDATE CHANNEL=<n>` then `FILAMENT_DT_QUERY CHANNEL=<n>`
-- Check `klipper.log` for detection messages
+- Check `klippy.log` for detection messages
+
+**OpenPrintTag tags don't work:**
+- Expected - OpenPrintTag uses ISO15693 which is not supported by U1 hardware
+- Use NTAG tags with OpenSpool format instead
+
+**NTAG tags only work on extended firmware:**
+- Basic and original firmware only support Mifare Classic 1K with Snapmaker proprietary format
+- Extended firmware adds NTAG215/216 support

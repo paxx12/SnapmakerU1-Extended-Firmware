@@ -3,7 +3,7 @@ settings:
     label: Tweaks
     items:
       tmc_reduce_current:
-        label: TMC Reduced Current
+        label: 'TMC Reduced Current (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-reduced-current" target="_blank">link</a>)'
         get_cmd:
           - bash
           - -c
