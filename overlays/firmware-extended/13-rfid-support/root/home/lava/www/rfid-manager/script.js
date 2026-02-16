@@ -232,12 +232,14 @@ async function refreshAllChannels() {
             const channelInfo = detectInfo[i] || {};
             const hasUid = channelInfo.CARD_UID && channelInfo.CARD_UID.length > 0;
             const mainType = channelInfo.MAIN_TYPE && channelInfo.MAIN_TYPE !== 'NONE' ? channelInfo.MAIN_TYPE : null;
+            const tagStatus = channelInfo.TAG_STATUS || null; // 'empty', 'error', or null (valid)
             channelsData.push({
                 channel: i,
                 present: hasUid,
                 uid: channelInfo.CARD_UID || [],
                 card_type: channelInfo.CARD_TYPE || null,
-                malformed: hasUid && !mainType,
+                empty: hasUid && !mainType && tagStatus === 'empty',
+                malformed: hasUid && !mainType && tagStatus !== 'empty',
                 filament: {
                     type: mainType,
                     brand: channelInfo.VENDOR && channelInfo.VENDOR !== 'NONE' ? channelInfo.VENDOR : (channelInfo.MANUFACTURER && channelInfo.MANUFACTURER !== 'NONE' ? channelInfo.MANUFACTURER : null),
@@ -326,6 +328,7 @@ async function refreshSingleChannel(channel) {
 
         // Find and update the channel in our data
         const hasUid = channelInfo.CARD_UID && channelInfo.CARD_UID.length > 0;
+        const tagStatus = channelInfo.TAG_STATUS || null;
         const channelIdx = channelsData.findIndex(c => c.channel === channel);
         if (channelIdx !== -1) {
             channelsData[channelIdx] = {
@@ -333,7 +336,8 @@ async function refreshSingleChannel(channel) {
                 present: hasUid,
                 uid: channelInfo.CARD_UID || [],
                 card_type: channelInfo.CARD_TYPE || null,
-                malformed: hasUid && !mainType,
+                empty: hasUid && !mainType && tagStatus === 'empty',
+                malformed: hasUid && !mainType && tagStatus !== 'empty',
                 filament: filament
             };
         }
@@ -368,6 +372,7 @@ function createChannelCard(channel) {
     card.dataset.channel = channel.channel;
 
     const hasTag = channel.present;
+    const isEmpty = channel.empty;
     const isMalformed = channel.malformed;
     const filament = channel.filament;
 
@@ -375,8 +380,20 @@ function createChannelCard(channel) {
     const header = document.createElement('div');
     header.className = 'channel-header';
     const displayChannel = channel.channel + 1;
-    const badgeClass = isMalformed ? 'tag-error' : (hasTag ? 'tag-present' : 'tag-empty');
-    const badgeText = isMalformed ? 'Tag Error' : (hasTag ? 'Tag Present' : 'No Tag');
+    let badgeClass, badgeText;
+    if (isMalformed) {
+        badgeClass = 'tag-error';
+        badgeText = 'Tag Error';
+    } else if (isEmpty) {
+        badgeClass = 'tag-empty-data';
+        badgeText = 'Empty Tag';
+    } else if (hasTag) {
+        badgeClass = 'tag-present';
+        badgeText = 'Tag Present';
+    } else {
+        badgeClass = 'tag-empty';
+        badgeText = 'No Tag';
+    }
     header.innerHTML = `
         <h3>Extruder ${displayChannel}</h3>
         <span class="tag-status ${badgeClass}">
@@ -399,9 +416,11 @@ function createChannelCard(channel) {
             info.innerHTML += `<div class="info-row"><strong>Type:</strong> ${channel.card_type}</div>`;
         }
 
-        // Malformed tag warning
-        if (isMalformed) {
-            info.innerHTML += `<div class="tag-warning">Tag data could not be read. The tag may be blank or contain invalid data.</div>`;
+        // Tag status messages
+        if (isEmpty) {
+            info.innerHTML += `<div class="tag-info-msg">Tag is blank and ready to be programmed.</div>`;
+        } else if (isMalformed) {
+            info.innerHTML += `<div class="tag-warning">Tag contains invalid or unrecognized data.</div>`;
         }
 
         // Filament info
@@ -493,14 +512,14 @@ function createChannelCard(channel) {
             buttonsHtml += `<button class="btn btn-info btn-export" data-channel="${channel.channel}">Export</button>`;
             buttonsHtml += `<button class="btn btn-info btn-import" data-channel="${channel.channel}">Import</button>`;
         } else if (isMalformed) {
-            // Tag has malformed data - show Create, Erase, and Import
+            // Tag has invalid/unrecognized data - show Create, Erase, and Import
             buttonsHtml = `
                 <button class="btn btn-success btn-create" data-channel="${channel.channel}">Create</button>
                 <button class="btn btn-danger btn-erase" data-channel="${channel.channel}">Erase</button>
                 <button class="btn btn-info btn-import" data-channel="${channel.channel}">Import</button>
             `;
         } else {
-            // Tag is empty - show Create and Import
+            // Tag is empty/blank - show Create and Import
             buttonsHtml = `
                 <button class="btn btn-success btn-create" data-channel="${channel.channel}">Create</button>
                 <button class="btn btn-info btn-import" data-channel="${channel.channel}">Import</button>
@@ -711,61 +730,84 @@ function openEraseModal(channel) {
 // Tag Operations
 // ============================================================================
 
+function toUrlSafeBase64(uint8Array) {
+    const binStr = String.fromCharCode(...uint8Array);
+    return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 async function handleWriteTag(e) {
     e.preventDefault();
 
     const form = e.target;
     const formData = new FormData(form);
+    const channel = formData.get('channel');
 
-    // Build gcode command
-    const params = [];
-    params.push(`CHANNEL=${formData.get('channel')}`);
-    params.push(`TYPE=${formData.get('type')}`);
-    params.push(`BRAND="${escapeGcodeString(formData.get('brand'))}"`);
-
-    // Color - split into RGB and alpha
+    // Map form fields to PrintTag-Web's OpenSpool format
     const colorHex = formData.get('color_hex');
+    let colorRgb, alphaHex;
     if (colorHex.length === 8) {
-        params.push(`COLOR=${colorHex.substring(0, 6)}`);
-        params.push(`ALPHA=${colorHex.substring(6, 8)}`);
-    } else if (colorHex.length === 6) {
-        params.push(`COLOR=${colorHex}`);
+        colorRgb = colorHex.substring(0, 6);
+        alphaHex = colorHex.substring(6, 8);
+    } else {
+        colorRgb = colorHex.length === 6 ? colorHex : 'FFFFFF';
+        alphaHex = 'FF';
     }
 
-    // Additional colors
+    // Generate OpenSpool JSON using PrintTag-Web library
+    const openspoolData = OpenSpool.generateData({
+        materialType: formData.get('type'),
+        colorHex: '#' + colorRgb,
+        brand: formData.get('brand') || 'Generic',
+        minTemp: formData.get('min_temp') || '',
+        maxTemp: formData.get('max_temp') || '',
+        bedTempMin: formData.get('bed_min_temp') || '',
+        bedTempMax: formData.get('bed_max_temp') || '',
+        extendedSubType: formData.get('subtype') || '',
+    });
+
+    // Add fields that OpenSpool.generateData doesn't handle
+    if (alphaHex !== 'FF') {
+        openspoolData.alpha = alphaHex;
+    }
+
+    const additionalColors = [];
     for (let i = 2; i <= 5; i++) {
         const colorVal = formData.get(`color${i}`);
         if (colorVal && colorVal.length === 6 && userModifiedColors.has(`color${i}`)) {
-            params.push(`COLOR${i}=${colorVal}`);
+            additionalColors.push(colorVal.toUpperCase());
         }
     }
-
-    if (formData.get('subtype')) {
-        params.push(`SUBTYPE="${escapeGcodeString(formData.get('subtype'))}"`);
+    if (additionalColors.length > 0) {
+        openspoolData.additional_color_hexes = additionalColors;
     }
 
-    params.push(`DIAMETER=${formData.get('diameter')}`);
-
-    if (formData.get('density')) {
-        params.push(`DENSITY=${formData.get('density')}`);
-    }
-    if (formData.get('min_temp')) {
-        params.push(`MIN_TEMP=${formData.get('min_temp')}`);
-    }
-    if (formData.get('max_temp')) {
-        params.push(`MAX_TEMP=${formData.get('max_temp')}`);
-    }
-    if (formData.get('bed_min_temp')) {
-        params.push(`BED_MIN_TEMP=${formData.get('bed_min_temp')}`);
-    }
-    if (formData.get('bed_max_temp')) {
-        params.push(`BED_MAX_TEMP=${formData.get('bed_max_temp')}`);
-    }
-    if (formData.get('weight')) {
-        params.push(`WEIGHT=${formData.get('weight')}`);
+    const diameter = parseFloat(formData.get('diameter'));
+    if (diameter) {
+        openspoolData.diameter = diameter;
     }
 
-    const gcode = `FILAMENT_TAG_WRITE_OPENSPOOL ${params.join(' ')}`;
+    const density = formData.get('density');
+    if (density) {
+        openspoolData.density = parseFloat(density);
+    }
+
+    const weight = formData.get('weight');
+    if (weight) {
+        openspoolData.weight = parseInt(weight);
+    }
+
+    // Encode to NDEF binary
+    const jsonBytes = new TextEncoder().encode(JSON.stringify(openspoolData));
+    const ndefBytes = NDEF.serialize(jsonBytes, 'application/json');
+
+    if (!ndefBytes) {
+        showStatus('Failed to encode NDEF data', 'error');
+        return;
+    }
+
+    // Convert to URL-safe base64 for gcode transport
+    const base64Str = toUrlSafeBase64(ndefBytes);
+    const gcode = `FILAMENT_TAG_WRITE CHANNEL=${channel} DATA=${base64Str}`;
 
     try {
         showStatus('Writing tag...', 'info');
@@ -775,7 +817,7 @@ async function handleWriteTag(e) {
         document.getElementById('write-modal').close();
 
         // Refresh channel
-        await refreshSingleChannel(parseInt(formData.get('channel')));
+        await refreshSingleChannel(parseInt(channel));
 
         showStatus('Tag written successfully', 'success');
     } catch (error) {
@@ -813,11 +855,6 @@ async function handleEraseTag(e) {
         console.error('Failed to erase tag:', error);
         showStatus(`Failed to erase tag: ${error.message}`, 'error');
     }
-}
-
-function escapeGcodeString(str) {
-    // Escape quotes in gcode string parameters
-    return str.replace(/"/g, '\\"');
 }
 
 // ============================================================================

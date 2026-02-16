@@ -198,9 +198,23 @@ h3 {
     color: white;
 }
 
+.tag-status.tag-empty-data {
+    background-color: var(--info-color);
+    color: white;
+}
+
 .tag-status.tag-error {
     background-color: var(--warning-color);
     color: white;
+}
+
+.tag-info-msg {
+    padding: 8px 12px;
+    background-color: rgba(23, 162, 184, 0.1);
+    border-left: 3px solid var(--info-color);
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 0.9em;
 }
 
 .tag-info {
