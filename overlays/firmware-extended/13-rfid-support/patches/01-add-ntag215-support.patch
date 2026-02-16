@@ -1,6 +1,5 @@
-diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py rootfs/home/lava/klipper/klippy/extras/fm175xx_reader.py
---- rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py	2025-11-06 05:01:19.000000000 +0100
-+++ rootfs/home/lava/klipper/klippy/extras/fm175xx_reader.py	2025-12-01 23:11:18.401585041 +0100
+--- a/home/lava/klipper/klippy/extras/fm175xx_reader.py	2026-02-16 10:12:21.219599981 +0100
++++ b/home/lava/klipper/klippy/extras/fm175xx_reader.py	2026-02-16 10:18:59.102343533 +0100
 @@ -121,6 +121,14 @@
  # RFID card type
  FM175XX_MIFARE_CARD_TYPE_UNKNOWN        = 0xFF  # unknown type
@@ -16,7 +15,16 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py root
  
  # About M1 Card
  # EEPROM
-@@ -584,8 +592,22 @@
+@@ -579,7 +587,7 @@
+         cmd.bits_to_send = 7
+         cmd.bits_to_recv = 0
+         cmd.bytes_to_recv = 2
+-        cmd.timeout = 10
++        cmd.timeout = 50
+         cmd.cmd = FM175XX_CMD_TRANSCEIVE
+         result = self.__command_exe(cmd)
+         ret = result.err_code
+@@ -588,8 +596,22 @@
              if (result.out_param.bytes_recved == 2):
                  self.__picc_a.ATQA[0] = result.out_param.recv_buff[0]
                  self.__picc_a.ATQA[1] = result.out_param.recv_buff[1]
@@ -26,7 +34,7 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py root
 +        else:
 +            logging.info("Wakeup failed with error %d, trying REQA instead", ret)
 +            cmd.send_buff[0] = FM175XX_RF_CMD_REQA
-+            cmd.timeout = 10
++            cmd.timeout = 50
 +            result = self.__command_exe(cmd)
 +            ret = result.err_code
 +            if (result.err_code == FM175XX_OK):
@@ -39,7 +47,7 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py root
  
          return ret
  
-@@ -844,6 +866,60 @@
+@@ -850,6 +872,60 @@
  
          return ret
  
@@ -100,7 +108,18 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py root
      # Reader-A: M1, read all data
      def __reader_a_m1_read_all_data(self, uid:list, auth_mode:int, auth_key:list, retry_times = 3) -> Fm175xxReturnVal:
          ret = Fm175xxReturnVal()
-@@ -967,6 +1043,7 @@
+@@ -907,8 +983,8 @@
+                 self.__need_to_shutdown = False
+                 break
+ 
+-            retry_times_1 = 10
+-            retry_times_2 = 15
++            retry_times_1 = 5
++            retry_times_2 = 5
+             retry_times_3 = 10
+             if (self.__self_test_stage == FM175XX_SELF_TEST_STAGE_READY):
+                 self.__card_info_read_flag = (1 << self.__self_test_channel)
+@@ -975,6 +1051,7 @@
                          # M1 card
                          if (FM175XX_MIFARE_CARD_TYPE_M1 == self.__picc_a.SAK[0]):
                              card_type = FM175XX_MIFARE_CARD_TYPE_M1
@@ -108,7 +127,7 @@ diff -uNr rootfs.original/home/lava/klipper/klippy/extras/fm175xx_reader.py root
                              ret = self.__reader_a_m1_read_all_data(self.__picc_a.UID,
                                                                     FM175XX_M1_CARD_AUTH_MODE_A,
                                                                     self._hkdf_key_a,
-@@ -983,6 +1060,27 @@
+@@ -991,6 +1068,27 @@
                                      self.__self_test_success_cnt += 1
                                      if (self.__card_info_deal_cb != None):
                                          self.__card_info_deal_cb(ch, card_op, card_op_result, card_type, card_data)
