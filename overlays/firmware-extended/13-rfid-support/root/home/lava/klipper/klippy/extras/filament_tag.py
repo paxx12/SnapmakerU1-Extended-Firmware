@@ -1,9 +1,3 @@
-# NTAG tag write and erase operations for filament tracking
-#
-# Copyright (C) 2024 Scott Wiederhold <s.e.wiederhold@gmail.com>
-#
-# This file may be distributed under the terms of the GNU GPLv3 license.
-
 import base64
 import logging
 from . import fm175xx_reader
