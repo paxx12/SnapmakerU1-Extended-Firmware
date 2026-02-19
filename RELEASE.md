@@ -41,7 +41,7 @@ Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-10865
 
 If you find this project useful and would like to support its development, you can:
 
-[![Ko-Fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/paxx12)
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)
 
 🖨️ **Buy a Snapmaker Printer from Official Store** - use referral link and discount code `PAXX12` to get 5% discount on any purchase
 
