@@ -1,9 +1,9 @@
 actions:
   services:
-    label: Services
     items:
       restart-klipper:
         label: Restart Klipper
+        description: Restart the Klipper firmware service.
         confirm: true
         cmd:
           - /etc/init.d/S60klipper
@@ -12,6 +12,7 @@ actions:
 
       restart-moonraker:
         label: Restart Moonraker
+        description: Restart the Moonraker API server.
         confirm: true
         cmd:
           - /etc/init.d/S61moonraker

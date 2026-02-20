@@ -1,9 +1,9 @@
 settings:
   web:
-    label: Web
     items:
       firmware-config:
         label: Firmware Config
+        description: Enable or disable this web configuration interface.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

@@ -1,9 +1,10 @@
 settings:
   tweaks:
-    label: Tweaks
     items:
       tmc_reduce_current:
-        label: 'TMC Reduced Current (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-reduced-current" target="_blank">link</a>)'
+        label: TMC Reduced Current
+        description: Lowers X/Y motor current from 1.2A to 1.0A for quieter operation and less heat.
+        help_url: http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-reduced-current
         get_cmd:
           - bash
           - -c
@@ -11,7 +12,7 @@ settings:
         options:
           enabled:
             label: Enabled
-            confirm: "Enable TMC Reduced Current? This lowers X/Y motor current from 1.2A to 1.0A for quieter operation and less heat. Warning: May cause skipped steps or layer shifts under heavy load. Monitor print quality after enabling."
+            confirm: "Enable TMC Reduced Current? This lowers X/Y motor current from 1.2A to 1.0A for quieter operation and less heat. Monitor motor temperatures and print quality after enabling."
             cmd:
               - bash
               - -xc

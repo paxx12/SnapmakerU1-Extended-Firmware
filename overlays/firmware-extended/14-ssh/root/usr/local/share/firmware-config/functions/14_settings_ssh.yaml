@@ -1,9 +1,9 @@
 settings:
   remote_access:
-    label: Remote Access
     items:
       ssh:
         label: SSH Access
+        description: Enable remote shell access to the printer over SSH.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

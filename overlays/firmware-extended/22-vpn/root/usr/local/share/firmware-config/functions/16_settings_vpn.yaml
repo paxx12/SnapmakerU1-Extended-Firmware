@@ -12,10 +12,10 @@ status:
 
 settings:
   remote_access:
-    label: Remote Access
     items:
       vpn:
         label: VPN Provider (Experimental)
+        description: Connect the printer to a VPN for secure remote access from anywhere.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

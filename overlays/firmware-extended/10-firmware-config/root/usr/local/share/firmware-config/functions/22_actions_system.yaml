@@ -1,9 +1,9 @@
 actions:
   system:
-    label: System
     items:
       reboot-system:
         label: Reboot System
+        description: Reboot the printer system.
         confirm: true
         cmd:
           - /sbin/reboot

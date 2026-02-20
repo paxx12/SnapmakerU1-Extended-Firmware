@@ -1,9 +1,9 @@
 settings:
   remote_access:
-    label: Remote Access
     items:
       authorization:
         label: Web Authentication (Experimental)
+        description: Password-protect access to Fluidd and Firmware Config via Moonraker authentication.
         get_cmd:
           - bash
           - -c

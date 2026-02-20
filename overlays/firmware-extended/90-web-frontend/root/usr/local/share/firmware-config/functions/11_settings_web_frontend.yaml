@@ -7,10 +7,10 @@ links:
 
 settings:
   web:
-    label: Web
     items:
       web-frontend:
         label: Frontend
+        description: Choose between Fluidd and Mainsail as the web interface.
         get_cmd: [/usr/local/bin/extended-config.py, get, /home/lava/printer_data/config/extended/extended2.cfg, web, frontend, fluidd]
         options:
           mainsail:
