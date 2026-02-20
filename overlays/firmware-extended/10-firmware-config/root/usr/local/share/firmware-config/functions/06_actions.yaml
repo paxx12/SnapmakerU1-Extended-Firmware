@@ -1,0 +1,9 @@
+actions:
+  troubleshooting:
+    label: Troubleshooting
+  recovery:
+    label: Recovery
+  services:
+    label: Services
+  system:
+    label: System

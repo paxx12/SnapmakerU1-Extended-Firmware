@@ -1,0 +1,11 @@
+settings:
+  web:
+    label: Web
+  camera:
+    label: Camera
+  remote_access:
+    label: Remote Access
+  tweaks:
+    label: Tweaks
+  monitoring_debugging:
+    label: Monitoring & Debugging

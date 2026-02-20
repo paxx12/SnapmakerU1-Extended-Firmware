@@ -35,8 +35,12 @@
         .info-value { font-family: monospace; font-size: 14px; word-break: break-all; }
         .row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--item); border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s; }
         .row:hover { background: var(--hover); }
-        .row-label { color: #fff; font-size: 14px; font-weight: 500; flex: 1; }
-        .row select { background: var(--card); border: 1px solid #555; border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 13px; cursor: pointer; min-width: 150px; }
+        .row-label-wrap { flex: 1; }
+        .row-label { color: #fff; font-size: 14px; font-weight: 500; }
+        .row-desc { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .row-help { font-size: 12px; color: var(--accent); margin-left: 6px; vertical-align: middle; }
+        .row-help:hover { text-decoration: none; opacity: 0.8; }
+        .row select { align-self: flex-start; background: var(--card); border: 1px solid #555; border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 13px; cursor: pointer; min-width: 150px; }
         .row select:focus { outline: none; border-color: var(--accent); }
         .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
         .link-item { background: var(--item); padding: 12px 16px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
@@ -274,7 +278,10 @@
                         <div class="group-title">${group.label}</div>
                         ${group.items.map(action =>
                             `<div class="row" onclick="runAction('${action.id}')">
-                                <span class="row-label">${action.label}</span>
+                                <div class="row-label-wrap">
+                                    <span class="row-label">${action.label}${action.help_url ? `<a class="row-help" href="${action.help_url}" target="_blank" onclick="event.stopPropagation()">↗</a>` : ''}</span>
+                                    ${action.description ? `<span class="row-desc">${action.description}</span>` : ''}
+                                </div>
                                 <button class="btn btn-primary" style="pointer-events:none">Run</button>
                             </div>`
                         ).join('')}
@@ -305,8 +312,11 @@
                             const options = Object.entries(setting.options).map(([optKey, optVal]) => {
                                 return `<option value="${optKey}" data-label="${encodeURIComponent(optVal.label)}" data-confirm="${encodeURIComponent(optVal.confirm || '')}"${optKey === setting.current ? ' selected' : ''}>${optVal.label}</option>`;
                             }).join('');
-                            return `<div class="row">
-                                <span class="row-label">${setting.label}</span>
+                            return `<div class="row"${setting.help_url ? ` onclick="if(!event.target.closest('select'))window.open('${setting.help_url}','_blank')"` : ''}>
+                                <div class="row-label-wrap">
+                                    <span class="row-label">${setting.label}${setting.help_url ? `<a class="row-help" href="${setting.help_url}" target="_blank" onclick="event.stopPropagation()">↗</a>` : ''}</span>
+                                    ${setting.description ? `<span class="row-desc">${setting.description}</span>` : ''}
+                                </div>
                                 <select data-prev-value="${setting.current}" onchange="updateSetting('${setting.id}', this)">${options}</select>
                             </div>`;
                         }).join('')}
