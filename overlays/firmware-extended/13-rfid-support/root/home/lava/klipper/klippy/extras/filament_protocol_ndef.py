@@ -3,11 +3,25 @@ import io
 import json
 import logging
 from . import filament_protocol
+from . import filament_tag
 
 NDEF_OK = 0
 NDEF_ERR = -1
 NDEF_PARAMETER_ERR = -2
 NDEF_NOT_FOUND_ERR = -3
+
+# Material density defaults (g/cm³)
+MATERIAL_DENSITIES = {
+    'PLA': 1.24,
+    'PETG': 1.27,
+    'ABS': 1.04,
+    'TPU': 1.21,
+    'PVA': 1.19,
+    'NYLON': 1.14,
+    'ASA': 1.07,
+    'PC': 1.20
+}
+
 
 def xxd_dump(data, max_lines=16):
     if isinstance(data, list):
@@ -28,7 +42,7 @@ def xxd_dump(data, max_lines=16):
 
 def ndef_parse(data_buf):
     if None == data_buf or isinstance(data_buf, (list, bytes, bytearray)) == False:
-        return NDEF_PARAMETER_ERR, [], []
+        return NDEF_PARAMETER_ERR, [], [], []
 
     try:
         data = bytes(data_buf) if isinstance(data_buf, list) else data_buf
@@ -42,10 +56,14 @@ def ndef_parse(data_buf):
 
         data_io = io.BytesIO(data)
 
+        # Find the CC (Capability Container) page
+        # On NTAG tags read from page 0, CC is at byte 12 (page 3)
+        # CC magic is 0xE1, but OTP corruption may set extra bits (e.g. 0xF5)
+        # Check with bitmask: (byte & 0xE1) == 0xE1
         start_offset = 0
         if len(data) > 12 and data[0] != 0xE1:
             for i in range(min(16, len(data) - 4)):
-                if data[i] == 0xE1 and (data[i+1] == 0x10 or data[i+1] == 0x11 or data[i+1] == 0x40):
+                if (data[i] & 0xE1) == 0xE1 and (data[i+1] & 0x10) == 0x10:
                     start_offset = i
                     break
 
@@ -53,8 +71,9 @@ def ndef_parse(data_buf):
             data_io.seek(start_offset)
 
         cc = data_io.read(4)
-        if len(cc) < 4 or cc[0] != 0xE1:
-            return NDEF_PARAMETER_ERR, []
+        cc_bytes = list(cc) if len(cc) == 4 else []
+        if len(cc) < 4 or (cc[0] & 0xE1) != 0xE1:
+            return NDEF_PARAMETER_ERR, [], card_uid, cc_bytes
 
         records = []
 
@@ -122,13 +141,13 @@ def ndef_parse(data_buf):
                 data_io.seek(tlv_len, 1)
 
         if not records:
-            return NDEF_NOT_FOUND_ERR, [], card_uid
+            return NDEF_NOT_FOUND_ERR, [], card_uid, cc_bytes
 
-        return NDEF_OK, records, card_uid
+        return NDEF_OK, records, card_uid, cc_bytes
 
     except Exception as e:
         logging.exception("NDEF parsing failed: %s", str(e))
-        return NDEF_ERR, [], []
+        return NDEF_ERR, [], [], []
 
 def parse_color_hex(value):
     try:
@@ -138,6 +157,10 @@ def parse_color_hex(value):
         return int(hex_str, 16)
     except (ValueError, TypeError):
         return 0xFFFFFF
+
+def _get_default_density(material_type):
+    """Get default density for common filament types in g/cm³."""
+    return MATERIAL_DENSITIES.get(material_type.upper(), 1.24)  # Default to PLA
 
 def openspool_parse_payload(payload, card_uid=[]):
     if None == payload or not isinstance(payload, (bytes, bytearray)):
@@ -180,7 +203,18 @@ def openspool_parse_payload(payload, card_uid=[]):
             info[f'RGB_{i}'] = 0
 
         try:
-            info['ALPHA'] = max(0x00, min(0xFF, int(data.get('alpha'))))
+            alpha_val = data.get('alpha')
+            if alpha_val is not None:
+                if isinstance(alpha_val, int):
+                    # Integer value (0-255)
+                    info['ALPHA'] = max(0x00, min(0xFF, alpha_val))
+                elif isinstance(alpha_val, str):
+                    # String - parse as hex (2-char hex string like "22", "FF")
+                    info['ALPHA'] = max(0x00, min(0xFF, int(alpha_val, 16)))
+                else:
+                    info['ALPHA'] = 0xFF
+            else:
+                info['ALPHA'] = 0xFF
         except (ValueError, TypeError):
             info['ALPHA'] = 0xFF
 
@@ -198,6 +232,9 @@ def openspool_parse_payload(payload, card_uid=[]):
         info['DRYING_TEMP'] = 0
         info['DRYING_TIME'] = 0
 
+        # Density from tag data or default based on material type
+        info['DENSITY'] = float(data.get('density', _get_default_density(info['MAIN_TYPE'])))
+
         try:
             min_temp = int(data.get('min_temp', 0))
             max_temp = int(data.get('max_temp', 0))
@@ -210,6 +247,12 @@ def openspool_parse_payload(payload, card_uid=[]):
         try:
             bed_min_temp = int(data.get('bed_min_temp', 0))
             bed_max_temp = int(data.get('bed_max_temp', 0))
+            # Store both min and max separately for encoding
+            if bed_min_temp > 0:
+                info['BED_MIN_TEMP'] = bed_min_temp
+            if bed_max_temp > 0:
+                info['BED_MAX_TEMP'] = bed_max_temp
+            # Also set BED_TEMP for backward compatibility
             info['BED_TEMP'] = bed_min_temp if bed_min_temp > 0 else bed_max_temp
         except (ValueError, TypeError):
             info['BED_TEMP'] = 0
@@ -234,15 +277,23 @@ def openspool_parse_payload(payload, card_uid=[]):
         return filament_protocol.FILAMENT_PROTO_ERR, None
 
 def ndef_proto_data_parse(data_buf):
-    error, records, card_uid = ndef_parse(data_buf)
+    error, records, card_uid, cc_bytes = ndef_parse(data_buf)
+
+    cc_valid = cc_bytes in filament_tag.VALID_CC_VALUES
+    if cc_bytes and not cc_valid:
+        logging.warning("TAG CC mismatch: got [%s], expected NTAG215 [E1 10 3F 00] or NTAG216 [E1 10 6D 00]",
+                        ' '.join(f'{b:02X}' for b in cc_bytes))
 
     if error != NDEF_OK:
-        logging.error(f"NDEF parse failed: NDEF parsing error (code: {error})")
-        return filament_protocol.FILAMENT_PROTO_ERR, None
+        if error == NDEF_NOT_FOUND_ERR:
+            logging.info(f"NDEF parse: valid structure but no records (empty tag)")
+            return filament_protocol.FILAMENT_PROTO_ERR, _create_minimal_info(card_uid, tag_status='empty', cc_bytes=cc_bytes)
+        logging.error(f"NDEF parse failed: NDEF parsing error (code: {error}), returning partial info with UID only")
+        return filament_protocol.FILAMENT_PROTO_ERR, _create_minimal_info(card_uid, tag_status='error', cc_bytes=cc_bytes)
 
     if not records:
-        logging.error("NDEF parse failed: No records found")
-        return filament_protocol.FILAMENT_PROTO_ERR, None
+        logging.info("NDEF parse: no records found (empty tag)")
+        return filament_protocol.FILAMENT_PROTO_ERR, _create_minimal_info(card_uid, tag_status='empty', cc_bytes=cc_bytes)
 
     for record in records:
         mime_type = record['mime_type']
@@ -255,14 +306,31 @@ def ndef_proto_data_parse(data_buf):
                 logging.error(f"OpenSpool parse failed: Payload parsing error (code: {error_code})")
                 continue
             else:
-                logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
+                info['CARD_UID'] = card_uid
+                if cc_bytes:
+                    info['TAG_CC'] = cc_bytes
+                logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}, uid={':'.join(f'{b:02X}' for b in card_uid) if card_uid else 'none'}")
                 return error_code, info
 
         else:
             logging.warning(f"Skipping unsupported MIME type '{mime_type}'")
 
-    logging.error("NDEF parse failed: No supported records found")
-    return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, None
+    logging.error("NDEF parse failed: No supported records found, returning partial info with UID only")
+    return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, _create_minimal_info(card_uid, tag_status='error', cc_bytes=cc_bytes)
+
+def _create_minimal_info(card_uid=None, tag_status='error', cc_bytes=None):
+    """Create a minimal filament info dict with defaults for error cases.
+
+    tag_status: 'empty' for blank/erased tags, 'error' for invalid/corrupt data.
+    cc_bytes: Raw CC bytes from page 3 (list of 4 ints), if available.
+    """
+    info = copy.copy(filament_protocol.FILAMENT_INFO_STRUCT)
+    if card_uid:
+        info['CARD_UID'] = card_uid
+    info['TAG_STATUS'] = tag_status
+    if cc_bytes:
+        info['TAG_CC'] = cc_bytes
+    return info
 
 if __name__ == '__main__':
     import sys

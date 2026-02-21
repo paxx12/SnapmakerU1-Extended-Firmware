@@ -120,6 +120,88 @@ Use the **NFC Tools** app (iOS/Android) to inspect tags:
 **Compatible tag types:** NTAG213/215/216, Mifare Classic 1K
 **Note:** ISO15693 tags (OpenPrintTag) are not supported
 
+## G-code Commands for Tag Management
+
+The extended firmware includes commands to read, write, and update RFID tags directly from G-code.
+
+### FILAMENT_TAG_WRITE - Write Raw NDEF Data to NTAG Tag
+
+Write pre-encoded NDEF binary data to an NTAG tag. The NDEF payload is generated client-side (e.g., by the RFID Manager web UI library) and sent as URL-safe base64.
+
+**Syntax:**
+```gcode
+FILAMENT_TAG_WRITE [CHANNEL=<0-3>] DATA=<base64>
+```
+
+**Parameters:**
+- `CHANNEL` - Filament channel (0-3, default: 0)
+- `DATA` - Tag data starting from page 4 (TLV + payload, no CC) as URL-safe base64 encoded string.
+
+**Example:**
+```gcode
+FILAMENT_TAG_WRITE CHANNEL=0 DATA=AxISUBBhcHBsaWNhdGlvbi9qc29u...
+```
+
+**Safety:**
+- Only works with NTAG tags. Will reject M1 (Snapmaker) tags to prevent corruption.
+- Automatically writes CC bytes (page 3) if they are blank or correctable. CC is OTP (One-Time Programmable) — bits can only be set (0→1), never cleared. If the existing CC has extra bits set that would prevent reaching the correct value, a warning is returned and the CC write is skipped. Fresh blank tags are initialized automatically.
+
+**Typical usage:** The RFID Manager web UI handles encoding automatically. This command is the low-level transport mechanism.
+
+### FILAMENT_TAG_ERASE - Erase NTAG Tag
+
+Erase all data from an NTAG tag to prepare it for reprogramming.
+
+**Syntax:**
+```gcode
+FILAMENT_TAG_ERASE [CHANNEL=<0-3>] CONFIRM=1
+```
+
+**Parameters:**
+- `CHANNEL` - Filament channel (0-3, default: 0)
+- `CONFIRM` - Must be set to 1 to confirm erase operation (required)
+
+**Example:**
+```gcode
+FILAMENT_TAG_ERASE CHANNEL=0 CONFIRM=1
+```
+
+**Safety:**
+- Only works with NTAG tags (will reject M1 tags)
+- Requires CONFIRM=1 parameter to prevent accidental erasure
+- Writes CC bytes (page 3) if blank or correctable, then writes empty NDEF TLV at page 4. This ensures fresh blank tags become NDEF-valid after erase.
+
+## Web UI - RFID Tag Manager
+
+The extended firmware includes a web-based RFID Tag Manager accessible at `/rfid/` (e.g., `http://yourprinter.local/rfid/`).
+
+### Features
+
+- **Visual tag status** - See all 4 extruders at a glance
+- **Create tags** - Write new NTAG tags with OpenSpool format
+- **Update tags** - Modify existing NTAG tag data
+- **Export tags** - Export existing tag data in json format
+- **Import tags** - Import json tag data to selected extruder
+- **Erase tags** - Clear NTAG tags for reprogramming (not needed if updating a tag)
+- **Real-time updates** - Automatic status refresh via Moonraker websocket
+- **Color picker** - Visual color selection with transparency support
+- **Multicolor support** - Add up to 5 colors for rainbow/multicolor filament
+
+### Architecture
+
+The web UI encodes NDEF data client-side using the [PrintTag-Web](https://github.com/paxx12/PrintTag-Web) library, then sends the raw bytes to Klipper for writing:
+
+```
+Web UI (OpenSpool JSON → NDEF encode) → Moonraker Websocket → Klipper FILAMENT_TAG_WRITE → FM175XX RFID reader → NTAG tag
+```
+
+**Static file serving** - UI files served by nginx from `/home/lava/www/rfid-manager/` via `/rfid/` location alias.
+
+### Supported Tags
+
+- ✅ **NTAG215/216** - Full read/write support
+- ❌ **Mifare Classic 1K** - Read-only (cannot write M1 tags)
+
 ## Troubleshooting
 
 **Tag not detected:**
