@@ -1,0 +1,45 @@
+--- rootfs.original/home/lava/moonraker/moonraker/components/spoolman.py
++++ rootfs/home/lava/moonraker/moonraker/components/spoolman.py
+@@ -238,7 +238,10 @@
+     async def _handle_klippy_ready(self) -> None:
+         result: Dict[str, Dict[str, Any]]
+         result = await self.klippy_apis.subscribe_objects(
+-            {"toolhead": ["position", "extruder"]}, self._handle_status_update, {}
++            {
++                "toolhead": ["position", "extruder"],
++                "filament_detect": None
++            }, self._handle_status_update, {}
+         )
+         toolhead = result.get("toolhead", {})
+         self._current_extruder = toolhead.get("extruder", "extruder")
+@@ -259,6 +262,30 @@
+ 
+     def _handle_status_update(self, status: Dict[str, Any], _: float) -> None:
+         toolhead: Optional[Dict[str, Any]] = status.get("toolhead")
++        
++        # Check if filament_detect status has changed
++        filament_detect: Optional[Dict[str, Any]] = status.get("filament_detect")
++        if filament_detect is not None:
++            info_list = filament_detect.get("info", [])
++            
++            # Determine which index is the current active extruder
++            active_idx = 0
++            if self._current_extruder != "extruder":
++                try:
++                    active_idx = int(self._current_extruder.replace("extruder", ""))
++                except ValueError:
++                    pass
++            
++            # If the info array has an entry for the active extruder, get its SPOOL_ID
++            if active_idx < len(info_list):
++                info = info_list[active_idx]
++                # Fallback to checking the dict in case info isn't guaranteed to be fully populated
++                if isinstance(info, dict):
++                    spool_id = info.get("SPOOL_ID", 0)
++                    if spool_id is not None and spool_id > 0 and spool_id != self.spool_id:
++                        logging.info(f"NFC detect triggered Spoolman switch to Spool ID {spool_id} on {self._current_extruder}")
++                        self.set_active_spool(spool_id)
++
+         if toolhead is None:
+             return
+         epos: float = toolhead.get("position", [0, 0, 0, self._highest_epos])[3]
