@@ -8,4 +8,4 @@ fi
 set -eo pipefail
 
 echo ">> Installing Apprise via pip3"
-chroot_firmware.sh "$ROOTFS_DIR" /usr/bin/pip3 install apprise
+chroot_firmware.sh "$ROOTFS_DIR" /usr/bin/pip3 install "apprise==1.9.7"

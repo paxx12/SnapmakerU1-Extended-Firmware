@@ -18,3 +18,22 @@ actions:
           - /etc/init.d/S61moonraker
           - restart
         message: "Restarting Moonraker..."
+
+      restart-nginx:
+        label: Restart Nginx
+        description: Reload the Nginx web server configuration. Use after switching the web frontend.
+        confirm: true
+        cmd:
+          - nginx
+          - -s
+          - reload
+        message: "Reloading Nginx..."
+
+      restart-firmware-config:
+        label: Restart Firmware Config
+        description: Restart the firmware configuration web interface.
+        confirm: true
+        cmd:
+          - /etc/init.d/S99firmware-config
+          - restart
+        message: "Restarting Firmware Config..."

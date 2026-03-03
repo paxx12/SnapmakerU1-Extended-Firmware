@@ -15,3 +15,11 @@ status:
         cmd: "awk '/android.*slot.*=/{gsub(/.*=/,\"\"); print ($0==\"_a\")?\"A\":\"B\"}' /proc/cmdline"
       - label: Device Name
         cmd: cat /home/lava/printer_data/.device_name
+
+  storage:
+    title: Storage
+    items:
+      - label: User Data Free
+        cmd: "df -h /userdata 2>/dev/null | awk 'NR==2{print $4 \" free of \" $2}'"
+      - label: Config Partition Free
+        cmd: "df -h /oem 2>/dev/null | awk 'NR==2{print $4 \" free of \" $2}'"

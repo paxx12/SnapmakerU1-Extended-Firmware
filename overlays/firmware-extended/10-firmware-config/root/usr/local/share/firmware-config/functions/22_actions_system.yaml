@@ -9,3 +9,12 @@ actions:
           - /sbin/reboot
         background: true
         message: "Rebooting system..."
+
+      shutdown-system:
+        label: Shutdown System
+        description: Safely power off the printer system.
+        confirm: true
+        cmd:
+          - /sbin/poweroff
+        background: true
+        message: "Shutting down system..."
