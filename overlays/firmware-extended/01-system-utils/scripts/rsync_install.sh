@@ -37,11 +37,14 @@ echo ">> Cross-compiling rsync for aarch64..."
   cd "$SRC"
   # rsync 3.4.1 uses --disable-* flags (not --without-*) for optional features.
   # OpenSSL is auto-detected via -lcrypto; no --with-openssl flag needed.
+  # The Debian +ds1 tarball strips the bundled zlib/, so we must use the system
+  # zlib (zlib1g-dev:arm64) via --with-included-zlib=no.
   ./configure \
     --host=aarch64-linux-gnu \
     CC=aarch64-linux-gnu-gcc \
     CFLAGS="-O2 -I/usr/include/aarch64-linux-gnu" \
     LDFLAGS="-L/usr/lib/aarch64-linux-gnu" \
+    --with-included-zlib=no \
     --disable-xxhash \
     --disable-zstd \
     --disable-lz4 \
