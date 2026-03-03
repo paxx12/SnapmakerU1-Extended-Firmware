@@ -32,17 +32,15 @@ settings:
                 URL="http://127.0.0.1:7125"
                 echo "Deleting existing admin user..."
                 /usr/local/bin/curl -s -X DELETE "$URL/access/user" -H "Content-Type: application/json" -d '{"username": "admin"}' > /dev/null 2>&1
-                echo "Enabling force_logins in Moonraker..."
-                mkdir -p /oem/printer_data/config/extended/moonraker
-                ln -sf /usr/local/share/firmware-config/tweaks/moonraker/authorization.cfg /oem/printer_data/config/extended/moonraker/authorization.cfg
-                echo "Restarting Moonraker..."
-                /etc/init.d/S61moonraker restart
-                echo "Waiting for Moonraker to restart..."
-                sleep 10
                 PASSWORD=$(head -c 12 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 16)
                 echo "Creating new admin user..."
                 RESULT=$(/usr/local/bin/curl -s -X POST "$URL/access/user" -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"$PASSWORD\"}")
                 if echo "$RESULT" | grep -q '"action": "user_created"'; then
+                  echo "Enabling force_logins in Moonraker..."
+                  mkdir -p /oem/printer_data/config/extended/moonraker
+                  ln -sf /usr/local/share/firmware-config/tweaks/moonraker/authorization.cfg /oem/printer_data/config/extended/moonraker/authorization.cfg
+                  echo "Restarting Moonraker..."
+                  /etc/init.d/S61moonraker restart
                   echo ""
                   echo "============================================"
                   echo "  IMPORTANT: Save these credentials!"
@@ -61,6 +59,7 @@ settings:
                 else
                   echo "Warning: Could not create admin user"
                   echo "$RESULT"
+                  exit 1
                 fi
           disabled:
             label: Disabled
