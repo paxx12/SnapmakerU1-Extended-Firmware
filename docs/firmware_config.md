@@ -51,7 +51,7 @@ Toggle settings directly from the web interface:
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 | Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
-| RFID Detection System | External, Snapmaker | Set how filament is detected ([rfid_support](rfid_support.md)) |
+| RFID Detection System | External, Snapmaker, OpenRFID, OpenRFID (force generic vendor) | Set how filament is detected ([rfid_support](rfid_support.md)) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -156,6 +156,10 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 **rfid** - Filament tag detection system
 - `snapmaker` (default) - Snapmaker's built-in RFID reader
 - `external` - Disable built-in readers (useful for external readers)
+- `openrfid` - Alternative detection with extended spool/tag support
+- `openrfid-generic` - Same as openrfid, labels all spool vendors as generic
+
+See [Alternative Filament Detection](rfid_support.md#alternative-detection-systems) for setup instructions.
 
 #### [remote_access]
 
@@ -204,7 +208,7 @@ usb: none
 rtsp: false
 
 [components]
-# Filament tag detection system: external, snapmaker
+# Filament tag detection system: external, snapmaker, openrfid, openrfid-generic
 rfid: snapmaker
 
 [remote_access]
