@@ -5,6 +5,8 @@ settings:
     label: Camera
   remote_access:
     label: Remote Access
+  snapmaker_components:
+    label: Snapmaker Components
   tweaks:
     label: Tweaks
   monitoring_debugging:

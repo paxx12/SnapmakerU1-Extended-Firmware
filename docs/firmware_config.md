@@ -51,6 +51,7 @@ Toggle settings directly from the web interface:
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 | Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
+| RFID Detection System | External, Snapmaker | Set how filament is detected ([rfid_support](rfid_support.md)) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -150,6 +151,12 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 **logs** - Camera service logging destination
 - `syslog` - Enable logging to `/var/log/messages`
 
+#### [components]
+
+**rfid** - Filament tag detection system
+- `snapmaker` (default) - Snapmaker's built-in RFID reader
+- `external` - Disable built-in readers (useful for external readers)
+
 #### [remote_access]
 
 **ssh** - Enable SSH remote access via dropbear
@@ -195,6 +202,10 @@ internal: paxx12
 usb: none
 # Enable RTSP streaming server: true, false
 rtsp: false
+
+[components]
+# Filament tag detection system: external, snapmaker
+rfid: snapmaker
 
 [remote_access]
 # Enable SSH access: true, false
