@@ -20,6 +20,8 @@ Each overlay is self-contained and numbered to control application order. This m
 
 For external third-party components, see [Third-Party Integrations](design/third_party.md).
 
+For external RFID API and mapping details, see [External RFID Support](design/filament_detect.md).
+
 ## Prerequisites
 
 - Docker installed on your system

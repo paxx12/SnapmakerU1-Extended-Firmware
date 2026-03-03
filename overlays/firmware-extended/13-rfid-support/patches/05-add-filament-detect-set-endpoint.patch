@@ -1,0 +1,72 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py
++++ rootfs/home/lava/klipper/klippy/extras/filament_detect.py
+@@ -52,6 +52,9 @@
+         self.printer.register_event_handler("filament_feed:port", self._feed_port_evt_handle)
+         self.printer.register_event_handler("filament_switch_sensor:runout", self._runout_evt_handle)
+ 
++        self.webhooks = self.printer.lookup_object('webhooks')
++        self.webhooks.register_endpoint("filament_detect/set", self._handle_filament_detect_set)
++
+     def _ready(self):
+         self.filament_feed_objects = self.printer.lookup_objects('filament_feed')
+         self._fm175xx_reader = self.printer.lookup_object('fm175xx_reader')
+@@ -173,6 +176,59 @@
+ 
+         return error, info
+ 
++    def _handle_filament_detect_set(self, web_request):
++        try:
++            channel = web_request.get_int('channel', None)
++            if channel is None:
++                raise web_request.error("channel must be specified!")
++
++            if (channel < 0 or channel >= self._channel_nums):
++                raise web_request.error("channel[%d] is out of range[0, %d]"
++                                        % (channel, self._channel_nums - 1))
++
++            params = web_request.get_dict('info', {})
++            has_params = len(params) > 0
++            filament_info = copy.deepcopy(filament_protocol.FILAMENT_INFO_STRUCT)
++
++            if 'VENDOR' in params:
++                filament_info['VENDOR'] = str(params.pop('VENDOR'))
++            if 'MAIN_TYPE' in params:
++                filament_info['MAIN_TYPE'] = str(params.pop('MAIN_TYPE'))
++            if 'SUB_TYPE' in params:
++                filament_info['SUB_TYPE'] = str(params.pop('SUB_TYPE'))
++
++            if 'HOTEND_MIN_TEMP' in params:
++                filament_info['HOTEND_MIN_TEMP'] = int(params.pop('HOTEND_MIN_TEMP'))
++            if 'HOTEND_MAX_TEMP' in params:
++                filament_info['HOTEND_MAX_TEMP'] = int(params.pop('HOTEND_MAX_TEMP'))
++            if 'BED_TEMP' in params:
++                filament_info['BED_TEMP'] = int(params.pop('BED_TEMP'))
++
++            if 'ALPHA' in params:
++                filament_info['ALPHA'] = int(params.pop('ALPHA')) & 0xFF
++            if 'RGB_1' in params:
++                filament_info['RGB_1'] = int(params.pop('RGB_1')) & 0xFFFFFF
++            filament_info['ARGB_COLOR'] = filament_info['ALPHA'] << 24 | filament_info['RGB_1']
++
++            if 'CARD_UID' in params:
++                filament_info['CARD_UID'] = [int(b) for b in params.pop('CARD_UID')]
++            if 'SKU' in params:
++                filament_info['SKU'] = int(params.pop('SKU'))
++
++            if params:
++                raise web_request.error("unsupported fields: %s" % (', '.join(sorted(params.keys()))))
++
++            filament_info['OFFICIAL'] = has_params
++            self._state[channel] = FILAMENT_DT_STATE_IDLE
++
++            ptc = self.printer.lookup_object('print_task_config', None)
++            if has_params or ptc is not None and ptc.print_task_config['filament_official'][channel]:
++                self._filament_info_update(channel, filament_info, True)
++            web_request.send({'state': 'success'})
++        except Exception as e:
++            logging.error("[filament_detect] set: %s", str(e))
++            web_request.send({'state': 'error', 'message': str(e)})
++
+     def get_all_filament_info(self):
+         return self._filament_info
+ 
