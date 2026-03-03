@@ -32,13 +32,19 @@ tar -xJf "$CACHE_DIR/$FILENAME" -C "$BUILDDIR"
 
 SRC=$(ls -d "$BUILDDIR"/rsync-*)
 
+# The Debian +ds1 tarball strips the bundled zlib/ directory to comply with
+# Debian policy, but rsync's autoconf-generated config.status still references
+# zlib/dummy.in as a template even when --with-included-zlib=no is set.
+# Create a stub to satisfy config.status without affecting the actual build.
+mkdir -p "$SRC/zlib"
+touch "$SRC/zlib/dummy.in"
+
 echo ">> Cross-compiling rsync for aarch64..."
 (
   cd "$SRC"
   # rsync 3.4.1 uses --disable-* flags (not --without-*) for optional features.
   # OpenSSL is auto-detected via -lcrypto; no --with-openssl flag needed.
-  # The Debian +ds1 tarball strips the bundled zlib/, so we must use the system
-  # zlib (zlib1g-dev:arm64) via --with-included-zlib=no.
+  # --with-included-zlib=no forces use of system zlib (zlib1g-dev:arm64).
   ./configure \
     --host=aarch64-linux-gnu \
     CC=aarch64-linux-gnu-gcc \
