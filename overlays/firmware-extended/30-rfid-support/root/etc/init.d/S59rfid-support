@@ -1,0 +1,31 @@
+#!/bin/sh
+
+EXTENDED2_CFG="/oem/printer_data/config/extended/extended2.cfg"
+DISABLE_RFID_READER="/oem/printer_data/config/extended/klipper/disable-rfid-reader.cfg"
+DISABLE_RFID_READER_TWEAK="/usr/local/share/firmware-config/tweaks/klipper/disable-rfid-reader.cfg"
+
+start() {
+    RFID=$(/usr/local/bin/extended-config.py get "$EXTENDED2_CFG" components rfid snapmaker 2>/dev/null)
+    case "$RFID" in
+        snapmaker)
+            rm -vf "$DISABLE_RFID_READER"
+            ;;
+        *)
+            ln -sf "$DISABLE_RFID_READER_TWEAK" "$DISABLE_RFID_READER"
+            ;;
+    esac
+}
+
+case "$1" in
+    start|restart|reload)
+        start
+        ;;
+    stop)
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?
