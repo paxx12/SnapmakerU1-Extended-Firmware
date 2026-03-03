@@ -32,12 +32,16 @@ tar -xJf "$CACHE_DIR/$FILENAME" -C "$BUILDDIR"
 
 SRC=$(ls -d "$BUILDDIR"/rsync-*)
 
-# The Debian +ds1 tarball strips the bundled zlib/ directory to comply with
-# Debian policy, but rsync's autoconf-generated config.status still references
-# zlib/dummy.in as a template even when --with-included-zlib=no is set.
-# Create a stub to satisfy config.status without affecting the actual build.
+# The Debian +ds1 tarball strips bundled libraries (zlib/, popt/) to comply
+# with Debian policy. However, rsync's autoconf-generated config.status still
+# references zlib/dummy.in and popt/dummy.in as AC_CONFIG_FILES templates,
+# even when system libraries are used instead of the bundled copies.
+# Create stubs to satisfy config.status; they don't affect the actual build
+# since we use system zlib (zlib1g-dev:arm64) and system popt (libpopt-dev:arm64).
 mkdir -p "$SRC/zlib"
 touch "$SRC/zlib/dummy.in"
+mkdir -p "$SRC/popt"
+touch "$SRC/popt/dummy.in"
 
 echo ">> Cross-compiling rsync for aarch64..."
 (
@@ -45,6 +49,7 @@ echo ">> Cross-compiling rsync for aarch64..."
   # rsync 3.4.1 uses --disable-* flags (not --without-*) for optional features.
   # OpenSSL is auto-detected via -lcrypto; no --with-openssl flag needed.
   # --with-included-zlib=no forces use of system zlib (zlib1g-dev:arm64).
+  # System libpopt (libpopt-dev:arm64) is auto-detected; no extra flag needed.
   ./configure \
     --host=aarch64-linux-gnu \
     CC=aarch64-linux-gnu-gcc \
