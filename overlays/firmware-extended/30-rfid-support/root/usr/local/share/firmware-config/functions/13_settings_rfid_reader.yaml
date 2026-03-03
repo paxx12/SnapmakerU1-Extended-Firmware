@@ -4,7 +4,7 @@ settings:
     items:
       rfid:
         label: Filament Detection
-        help_url: https://snapmakeru1-extended-firmware.pages.dev/rfid_support#alternative-detection-system
+        help_url: https://snapmakeru1-extended-firmware.pages.dev/rfid_support#alternative-detection-systems
         description: Set how filament is detected.
         get_cmd:
           - /usr/local/bin/extended-config.py
@@ -21,6 +21,7 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /oem/printer_data/config/extended/extended2.cfg components rfid external
+                /etc/init.d/S99openrfid stop
                 /etc/init.d/S59rfid-support restart
                 /etc/init.d/S60klipper restart
           snapmaker:
@@ -30,6 +31,7 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /oem/printer_data/config/extended/extended2.cfg components rfid snapmaker
+                /etc/init.d/S99openrfid stop
                 /etc/init.d/S59rfid-support restart
                 /etc/init.d/S60klipper restart
         default: snapmaker

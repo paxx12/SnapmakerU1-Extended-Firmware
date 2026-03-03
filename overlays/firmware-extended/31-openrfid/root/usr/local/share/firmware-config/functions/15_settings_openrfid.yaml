@@ -1,0 +1,30 @@
+settings:
+  snapmaker_components:
+    items:
+      rfid:
+        options:
+          openrfid:
+            label: OpenRFID
+            confirm: Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /oem/printer_data/config/extended/extended2.cfg components rfid openrfid
+                cp -an /usr/local/share/openrfid/extended/openrfid_user.cfg /oem/printer_data/config/extended/openrfid_user.cfg
+                /etc/init.d/S59rfid-support restart
+                /etc/init.d/S99openrfid start
+                /etc/init.d/S60klipper restart
+          openrfid-generic:
+            label: OpenRFID (force generic vendor)
+            confirm: Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /oem/printer_data/config/extended/extended2.cfg components rfid openrfid-generic
+                cp -an /usr/local/share/openrfid/extended/openrfid_user.cfg /oem/printer_data/config/extended/openrfid_user.cfg
+                /etc/init.d/S59rfid-support restart
+                /etc/init.d/S99openrfid start
+                /etc/init.d/S60klipper restart
+                echo Please read the relevant documentation for this feature. Bambu Lab and Creality spools are not enabled by default.
