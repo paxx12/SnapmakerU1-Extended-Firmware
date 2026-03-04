@@ -27,7 +27,7 @@ let initialized = false; // Track if page has been initialized
 let refreshing = false; // Track if refresh is in progress
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (initialized) {
         console.warn('Already initialized, skipping');
         return;
@@ -35,7 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initialized = true;
     console.log('Initializing RFID Manager');
 
-    initializeWebSocket();
+    // Check authentication before connecting; redirects to login if 401.
+    await initAuth();
+
+    await initializeWebSocket();
     initializeColorPickers();
     initializeEventListeners();
     initializeModals();
@@ -45,11 +48,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // Moonraker Websocket Connection
 // ============================================================================
 
-function initializeWebSocket() {
+async function initializeWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/websocket`;
+    let wsUrl = `${protocol}//${window.location.host}/websocket`;
 
-    console.log('Connecting to Moonraker websocket:', wsUrl);
+    // Obtain a oneshot token to authenticate the WebSocket connection.
+    // This works transparently whether Moonraker auth is enabled or not.
+    try {
+        const resp = await fetch('/access/oneshot_token', {
+            headers: getAuthHeaders()
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            const token = data.result;
+            if (token) {
+                wsUrl += `?token=${encodeURIComponent(token)}`;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not obtain oneshot token, connecting without auth:', e);
+    }
+
+    console.log('Connecting to Moonraker websocket:', wsUrl.split('?')[0]);
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -74,8 +94,8 @@ function initializeWebSocket() {
         console.log('Websocket disconnected');
         wsReady = false;
         showStatus('Disconnected from Moonraker. Reconnecting...', 'error');
-        // Reconnect after 2 seconds
-        setTimeout(() => initializeWebSocket(), 2000);
+        // Reconnect after 2 seconds (re-fetches a fresh oneshot token).
+        setTimeout(async () => initializeWebSocket(), 2000);
     };
 
     ws.onerror = (error) => {
