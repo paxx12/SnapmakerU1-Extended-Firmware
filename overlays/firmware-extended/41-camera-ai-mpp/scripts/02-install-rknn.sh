@@ -21,7 +21,15 @@ chroot_firmware.sh "$ROOTFS_DIR" python3 -m pip install /tmp/$RKNN_FILENAME
 rm "$ROOTFS_DIR/tmp/$RKNN_FILENAME"
 
 echo ">> Installing opencv and numpy..."
-chroot_firmware.sh "$ROOTFS_DIR" python3 -m pip install opencv-python-headless 'numpy<2'
+# Pin exact versions for reproducible builds.
+# numpy is capped at <2 because rknn-toolkit-lite2 2.3.2 requires numpy 1.x.
+# opencv-python-headless 4.10.0.84 is the last release validated against numpy 1.x on aarch64.
+chroot_firmware.sh "$ROOTFS_DIR" python3 -m pip install \
+    "opencv-python-headless==4.10.0.84" \
+    "numpy==1.26.4"
 
 echo ">> Installing paho-mqtt..."
-chroot_firmware.sh "$ROOTFS_DIR" python3 -m pip install paho-mqtt
+# Pin to the last 1.x release. paho-mqtt 2.0 introduced a breaking API change:
+# mqtt.Client() now requires a CallbackAPIVersion argument. fake-camera-agent.py
+# uses the 1.x API and will raise a ValueError at startup under paho-mqtt>=2.0.
+chroot_firmware.sh "$ROOTFS_DIR" python3 -m pip install "paho-mqtt==1.6.1"
