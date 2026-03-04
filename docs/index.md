@@ -84,6 +84,8 @@ Heavily expanded firmware with extensive features and customization. Includes al
 
 ## Support
 
+See [Heroes](https://github.com/paxx12/SnapmakerU1/blob/main/HEROES.md) for contributors who made significant contributions to each release.
+
 If you find this project useful and would like to support its development, you can:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/paxx12)

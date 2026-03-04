@@ -12,6 +12,8 @@
 
 - TBD
 
+See [HEROES.md](HEROES.md) for all-time contributors.
+
 ## Install
 
 For detailed installation instructions, see the [Installation Guide](docs/install.md).
