@@ -9,16 +9,16 @@ Add your Ko-Fi or Buy Me a Coffee link next to your name by opening a PR.
 
 You can thank them here:
 
-| Contributor | Support |
-|---|---|
-| [@horzadome](https://github.com/horzadome) | [![Ko-Fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/horzadome) |
-| [@QuinnDamerell](https://github.com/QuinnDamerell) | |
-| [@Argolein](https://github.com/Argolein) | |
-| [@mcristina422](https://github.com/mcristina422) | |
-| [@MaxKaenner](https://github.com/MaxKaenner) | |
-| [@justinh-rahb](https://github.com/justinh-rahb) | [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/wildtang3nt) |
-| [@suchmememanyskill](https://github.com/suchmememanyskill) | [![Ko-Fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/suchmememanyskill) |
-| [@morgendagen](https://github.com/morgendagen) | |
+| GitHub | Discord | Contributions | Support |
+|---|---|---|---|
+| [@horzadome](https://github.com/horzadome) | `@horzadome` | Timelapse recovery tool, remote screen PWA, monitoring, WLAN powersave | [![Ko-Fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/horzadome) |
+| [@QuinnDamerell](https://github.com/QuinnDamerell) | | OctoEverywhere cloud remote access | |
+| [@Argolein](https://github.com/Argolein) | `@Argolein` | TMC motor driver optimizations and Klipper patches | |
+| [@mcristina422](https://github.com/mcristina422) | | Tailscale VPN remote access | |
+| [@MaxKaenner](https://github.com/MaxKaenner) | | Filament auto-replenish bug fix | |
+| [@justinh-rahb](https://github.com/justinh-rahb) | `@wildtang3nt` | V4L2 camera controls and Mainsail Remote Screen support | [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/wildtang3nt) |
+| [@suchmememanyskill](https://github.com/suchmememanyskill) | `@Sims` | OpenRFID | [![Ko-Fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/suchmememanyskill) |
+| [@morgendagen](https://github.com/morgendagen) | | OpenSpool `subtype` field for material specification | |
 
 ---
 
