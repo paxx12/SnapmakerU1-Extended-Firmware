@@ -6,3 +6,18 @@ tools/rk2918_tools/img_maker
 tools/rk2918_tools/img_unpack
 tools/rk2918_tools/mkkrnlimg
 _site/
+
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Claude.ai files and stuff
+.claude
+plan.md
+research.md
