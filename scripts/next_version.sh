@@ -2,7 +2,7 @@
 
 ROOT_DIR="$(realpath "$(dirname "$0")/..")"
 
-source "$ROOT_DIR/vars.mk"
+source "$ROOT_DIR/deps.mk"
 
 CODENAME="$1"
 VERSION="$2"

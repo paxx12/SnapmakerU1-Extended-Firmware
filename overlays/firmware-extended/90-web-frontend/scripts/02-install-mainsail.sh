@@ -17,11 +17,6 @@ if [[ ! -L "$ROOTFS_DIR/etc/nginx/sites-enabled/fluidd" ]]; then
   exit 1
 fi
 
-VERSION=v2.17.0
-URL=https://github.com/mainsail-crew/mainsail/releases/download/$VERSION/mainsail.zip
-SHA256=d010f4df25557d520ccdbb8e42fc381df2288e6a5c72d3838a5a2433c7a31d4e
-FILENAME=mainsail-$VERSION.zip
-
 rm -rf "$ROOTFS_DIR/home/lava/mainsail"
 
-cache_file.sh "$CACHE_DIR/$FILENAME" "$URL" "$SHA256" "$ROOTFS_DIR/home/lava/mainsail"
+cache_file.sh mainsail "$CACHE_DIR/files/mainsail.zip" "$ROOTFS_DIR/home/lava/mainsail"

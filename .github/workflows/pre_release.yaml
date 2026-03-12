@@ -29,8 +29,8 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Load values vars.mk
-      run: cat vars.mk >> "$GITHUB_ENV"
+    - name: Load values deps.mk
+      run: cat deps.mk >> "$GITHUB_ENV"
 
     - name: Restore Firmwares Cache
       id: cache-firmwares

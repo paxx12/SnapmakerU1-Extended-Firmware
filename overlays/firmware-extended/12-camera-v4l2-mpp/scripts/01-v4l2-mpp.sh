@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-GIT_URL=https://github.com/paxx12/v4l2-mpp.git
-GIT_SHA=10fc3b9d935d9c79bacc014839c05de4a004c4ac
-
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."
   exit 1
@@ -10,8 +7,8 @@ fi
 
 set -eo pipefail
 
-TARGET_DIR="$CACHE_DIR/v4l2-mpp"
-cache_git.sh "$TARGET_DIR" "$GIT_URL" "$GIT_SHA"
+TARGET_DIR="$CACHE_DIR/repos/v4l2-mpp"
+cache_git.sh v4l2-mpp "$TARGET_DIR"
 
 echo ">> Setting up cross-compilation environment..."
 export CROSS_COMPILE=aarch64-linux-gnu-
