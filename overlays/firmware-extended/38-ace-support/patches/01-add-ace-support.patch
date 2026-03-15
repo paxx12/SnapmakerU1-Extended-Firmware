@@ -1,0 +1,58 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py
++++ rootfs/home/lava/klipper/klippy/extras/filament_detect.py
+@@ -161,6 +161,55 @@
+     def request_update_filament_info(self, channel):
+         if channel < 0 or channel >= self._channel_nums:
+             return
++        ace = self.printer.lookup_object('ace_device', None)
++        if ace is not None:
++            rfid_data = ace.get_slot_rfid_info(channel)
++            if rfid_data and rfid_data['rfid'] == 2:
++                info = copy.deepcopy(filament_protocol.FILAMENT_INFO_STRUCT)
++                info['VERSION'] = 1
++                info['VENDOR'] = rfid_data['vendor']
++                info['MANUFACTURER'] = rfid_data['vendor']
++                info['MAIN_TYPE'] = rfid_data['type']
++                info['SUB_TYPE'] = rfid_data['subtype']
++                info['COLOR_NUMS'] = 1
++                info['RGB_1'] = rfid_data['color_rgb']
++                try:
++                    info['ALPHA'] = max(0x00, min(0xFF, int(rfid_data['alpha'])))
++                except (ValueError, TypeError):
++                    info['ALPHA'] = 0xFF
++                info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
++                info['OFFICIAL'] = True
++                info['LENGTH'] = rfid_data['length']
++                try:
++                    info['DIAMETER'] = int(round(float(rfid_data['diameter', 1.75]) * 100))
++                except:
++                    info['DIAMETER'] = 175
++                try:
++                    info['WEIGHT'] = int(rfid_data['weight', 0])
++                except:
++                    info['WEIGHT'] = 0
++                try:
++                    info['HOTEND_MIN_TEMP'] = int(rfid_data['extruder_temp_min', 0])
++                    info['HOTEND_MAX_TEMP'] = int(rfid_data['extruder_temp_max', 0])
++                except:
++                    info['HOTEND_MIN_TEMP'] = 0
++                    info['HOTEND_MAX_TEMP'] = 0
++                try:
++                    bed_min_temp = int(rfid_data['hotbed_temp_min', 0])
++                    bed_max_temp = int(rfid_data['hotbed_temp_max', 0])
++                    info['BED_TEMP'] = bed_min_temp if bed_min_temp > 0 else bed_max_temp
++                except:
++                    info['BED_TEMP'] = 0
++                info['FIRST_LAYER_TEMP'] = info['HOTEND_MIN_TEMP']
++                info['OTHER_LAYER_TEMP'] = info['HOTEND_MIN_TEMP']
++                info['MF_DATE'] = rfid_data['mf_date']
++                info['CARD_UID'] = rfid_data['card_uid']
++                self._state[channel] = FILAMENT_DT_STATE_IDLE
++                logging.info("FilamentDetector: ACE providing info for channel %d", channel)
++                self._filament_info_update(channel, info, is_clear=True)
++                return
++            else:
++                logging.info("FilamentDetector: ACE No RFID data for Slot %d" % channel)
+ 
+         self._state[channel] = FILAMENT_DT_STATE_DETECTING
+         if self._fm175xx_reader is not None:
