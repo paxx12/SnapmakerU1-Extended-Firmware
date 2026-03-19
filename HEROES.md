@@ -22,6 +22,14 @@ You can thank them here:
 
 ---
 
+## v1.1.1-paxx12-14
+
+| Contributor | Contribution | PR |
+|---|---|---|
+| [@suchmememanyskill](https://github.com/suchmememanyskill) | OpenRFID filament-detection service | [#306](https://github.com/paxx12/SnapmakerU1-Extended-Firmware/pull/306) |
+
+---
+
 ## v1.1.1-paxx12-13
 
 | Contributor | Contribution | PR |
