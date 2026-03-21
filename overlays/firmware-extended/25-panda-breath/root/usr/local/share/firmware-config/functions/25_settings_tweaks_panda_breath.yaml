@@ -1,0 +1,34 @@
+settings:
+  tweaks:
+    items:
+      panda_breath:
+        label: Panda Breath Chamber Heater
+        description: BIQU Panda Breath WiFi chamber heater integration via WebSocket. Requires the device on the same network.
+        help_url: https://github.com/justinh-rahb/panda-breath
+        get_cmd:
+          - bash
+          - -c
+          - test -f /oem/printer_data/config/extended/klipper/panda_breath.cfg && echo "enabled" || echo "disabled"
+        options:
+          enabled:
+            label: Enabled
+            confirm: "Enable Panda Breath? This adds chamber heater control via SET_HEATER_TEMPERATURE and M141. The device must be on the same network."
+            cmd:
+              - bash
+              - -xc
+              - |
+                ln -sf /usr/local/share/firmware-config/tweaks/klipper/panda_breath.py /home/lava/klipper/klippy/extras/panda_breath.py &&
+                ln -sf /usr/local/share/firmware-config/tweaks/klipper/panda_breath.cfg /oem/printer_data/config/extended/klipper/panda_breath.cfg &&
+                echo "Panda Breath enabled. Restarting Klipper..." &&
+                /etc/init.d/S60klipper restart
+          disabled:
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                rm -vf /home/lava/klipper/klippy/extras/panda_breath.py &&
+                rm -vf /oem/printer_data/config/extended/klipper/panda_breath.cfg &&
+                echo "Panda Breath disabled. Restarting Klipper..." &&
+                /etc/init.d/S60klipper restart
+        default: disabled
