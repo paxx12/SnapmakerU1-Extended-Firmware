@@ -4,27 +4,9 @@ title: SSH Access
 
 # SSH Access
 
-**Available in: Basic and Extended firmware**
+Starting with v1.2.0, SSH access is supported natively via the printer GUI.
 
-The custom firmware enables SSH access to the Snapmaker U1 printer.
-
-## Configuration (Extended Firmware)
-
-In Extended firmware, SSH is disabled by default.
-
-### Using firmware-config Web UI (preferred)
-
-Navigate to the [firmware-config](firmware_config.md) web interface, go to the Remote Access section, and enable SSH Access.
-
-### Manual Setup (advanced)
-
-**Step 1:** Edit `/home/lava/printer_data/config/extended/extended2.cfg` to enable SSH:
-```ini
-[remote_access]
-ssh: true
-```
-
-**Step 2:** Reboot the printer for changes to take effect.
+Navigate to `Settings` > `Maintenance` > `Root Access` > Agree (scroll down to accept) > `Open`.
 
 ## Credentials
 
