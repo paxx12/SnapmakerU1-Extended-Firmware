@@ -4,7 +4,6 @@ title: Monitoring
 
 # Monitoring
 
-**Available in: Extended firmware**
 
 Expose printer metrics for integration with monitoring systems like Grafana, Home Assistant, or DataDog. Track print progress, temperatures, and operational data.
 

@@ -4,7 +4,6 @@ title: Firmware Configuration
 
 # Firmware Configuration
 
-**Available in: Extended firmware**
 
 > **Note for users upgrading to v1.1.0:** The configuration file has been renamed from `extended.cfg` to `extended2.cfg`. During the first boot after upgrading a new `extended2.cfg` will be created with default settings. You will need to migrate your custom settings from `extended.cfg` to `extended2.cfg` manually or use `http://IP/firmware-config`
 

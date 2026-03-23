@@ -4,8 +4,6 @@ title: VPN Remote Access (Experimental)
 
 # VPN Remote Access (Experimental)
 
-**Available in: Extended firmware only**
-
 Control your printer remotely using a VPN provider.
 
 > **Note**: VPN providers are downloaded on-demand when enabled by the user. See [third-party integration design](design/third_party.md) for details on how external components are managed.
