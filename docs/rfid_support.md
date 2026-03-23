@@ -4,12 +4,11 @@ title: RFID Filament Tag Support
 
 # RFID Filament Tag Support
 
-**Available in: All firmware (extended adds OpenSpool support)**
 
 The Snapmaker U1 automatically detects filament properties by reading RFID tags on spools.
 
 **Firmware Support:**
-- **Original & Basic:** Mifare Classic 1K with Snapmaker proprietary format
+- **Original:** Mifare Classic 1K with Snapmaker proprietary format
 - **Extended:** Adds NTAG215/216 support with OpenSpool format
 
 ## Supported Formats
@@ -122,7 +121,6 @@ Use the **NFC Tools** app (iOS/Android) to inspect tags:
 
 ## Alternative Detection Systems
 
-**Available in: Extended firmware only**
 
 The OpenRFID detection system is an alternative to Snapmaker's built-in filament tag detection, based on the [OpenRFID](https://github.com/suchmememanyskill/OpenRFID) project. It adds support for tagged spools from multiple manufacturers.
 
@@ -182,5 +180,5 @@ After editing, restart the printer.
 - Use NTAG tags with OpenSpool format instead
 
 **NTAG tags only work on extended firmware:**
-- Basic and original firmware only support Mifare Classic 1K with Snapmaker proprietary format
+- Original firmware only supports Mifare Classic 1K with Snapmaker proprietary format
 - Extended firmware adds NTAG215/216 support

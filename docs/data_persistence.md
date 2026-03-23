@@ -4,8 +4,6 @@ title: Data Persistence
 
 # Data Persistence
 
-**Available in: Basic and Extended firmware**
-
 By default, Snapmaker firmware resets all system changes on reboot for stability.
 
 ## Enable System Persistence

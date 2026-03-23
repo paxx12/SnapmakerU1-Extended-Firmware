@@ -37,21 +37,9 @@ For developers who want to build custom firmware, see [Building from Source](dev
 
 Join the [Snapmaker Discord](https://discord.com/invite/snapmaker-official-1086575708903571536) and visit the **#u1-printer** channel to connect with other users using the custom firmware, share experiences, and get help.
 
-## Firmware Variants
+## Features
 
-### Basic Firmware
-
-Stock firmware with SSH access and minimal debugging features:
-
-- [SSH Access](ssh_access.md) - Remote shell access with `root/snapmaker` and `lava/snapmaker`
-- [Firmware Configuration](firmware_config.md) - Web-based system administration and firmware upgrades
-- [Data Persistence](data_persistence.md) - Persistent storage configuration across firmware updates
-- USB Ethernet Adapters - Hot-plug support with automatic DHCP configuration
-- Fluidd web interface with basic camera support
-
-### Extended Firmware
-
-Heavily expanded firmware with extensive features and customization. Includes all basic features plus:
+Heavily expanded firmware with extensive features and customization:
 
 **Web & Configuration:**
 

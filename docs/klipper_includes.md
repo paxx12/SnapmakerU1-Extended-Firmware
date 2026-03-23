@@ -4,7 +4,6 @@ title: Klipper and Moonraker Custom Includes
 
 # Klipper and Moonraker Custom Includes
 
-**Available in: Extended firmware**
 
 Add custom Klipper and Moonraker configuration files through the Fluidd/Mainsail web interface.
 
