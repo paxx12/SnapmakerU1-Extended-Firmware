@@ -1,5 +1,5 @@
---- a/home/lava/moonraker/moonraker/components/file_manager/metadata.py
-+++ b/home/lava/moonraker/moonraker/components/file_manager/metadata.py
+--- rootfs.original/home/lava/moonraker/moonraker/components/file_manager/metadata.py	2026-03-25 15:20:49.474585752 +0100
++++ rootfs/home/lava/moonraker/moonraker/components/file_manager/metadata.py	2026-03-25 15:24:23.677931165 +0100
 @@ -93,7 +93,7 @@
      pattern = pattern.replace(r"(%S)", r"(.*)")
      match = re.search(pattern, data)
@@ -7,5 +7,5 @@
 -        return match.group(1).strip('"')
 +        return match.group(1).replace('"', '')
      return None
-
+ 
  def regex_find_min_float(pattern: str, data: str) -> Optional[float]:
