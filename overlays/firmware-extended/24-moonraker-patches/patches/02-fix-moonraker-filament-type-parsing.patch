@@ -1,0 +1,11 @@
+--- a/home/lava/moonraker/moonraker/components/file_manager/metadata.py
++++ b/home/lava/moonraker/moonraker/components/file_manager/metadata.py
+@@ -93,7 +93,7 @@
+     pattern = pattern.replace(r"(%S)", r"(.*)")
+     match = re.search(pattern, data)
+     if match:
+-        return match.group(1).strip('"')
++        return match.group(1).replace('"', '')
+     return None
+
+ def regex_find_min_float(pattern: str, data: str) -> Optional[float]:
