@@ -1,0 +1,25 @@
+From 18f3da59b0d48d79ab7899c5ce0b0cd4df12d7e0 Mon Sep 17 00:00:00 2001
+From: Wondro <wondro18@hotmail.com>
+Date: Sat, 1 Mar 2025 19:03:44 -0600
+Subject: [PATCH] file_manager: Fix total filament change count parsing for
+ PS/SS
+
+Signed-off-by: Tyler Wondrasek <wondro18@hotmail.com>
+---
+ moonraker/components/file_manager/metadata.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/moonraker/components/file_manager/metadata.py b/moonraker/components/file_manager/metadata.py
+index 2d8a2c407..422be1632 100644
+--- a/moonraker/components/file_manager/metadata.py
++++ b/moonraker/components/file_manager/metadata.py
+@@ -505,6 +505,9 @@ def parse_layer_count(self) -> Optional[int]:
+         return regex_find_int(r"; total layers count = (%D)", self.footer_data)
+
+     def parse_filament_change_count(self) -> Optional[int]:
++        res = regex_find_int(r"; total toolchanges = (%D)", self.footer_data)
++        if res is not None:
++            return res
+         return regex_find_int(r"; total filament change = (%D)", self.footer_data)
+
+ class Slic3rPE(PrusaSlicer):
