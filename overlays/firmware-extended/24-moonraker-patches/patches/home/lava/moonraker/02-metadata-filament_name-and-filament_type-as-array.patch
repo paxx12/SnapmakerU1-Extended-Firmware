@@ -1,0 +1,43 @@
+From 3a54161ce7d274c9dfe70205c2747c97f1eb3294 Mon Sep 17 00:00:00 2001
+From: Pedro Lamas <pedrolamas@gmail.com>
+Date: Wed, 12 Mar 2025 18:19:59 +0000
+Subject: [PATCH] metadata: filament_name and filament_type as array
+
+Signed-off-by: Pedro Lamas <pedrolamas@gmail.com>
+---
+ moonraker/components/file_manager/metadata.py | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/moonraker/components/file_manager/metadata.py b/moonraker/components/file_manager/metadata.py
+index b1e68ea64..b6d23a8f8 100644
+--- a/moonraker/components/file_manager/metadata.py
++++ b/moonraker/components/file_manager/metadata.py
+@@ -429,14 +429,24 @@ def parse_filament_weights(self) -> Optional[List[float]]:
+         return None
+ 
+     def parse_filament_type(self) -> Optional[str]:
+-        return regex_find_string(
+-            r";\sfilament_type\s=\s(%S)", self.footer_data
++        result = regex_find_strings(
++            r";\sfilament_type\s=\s(%S)", ",;", self.footer_data
+         )
++        if len(result) > 1:
++            return json.dumps(result)
++        elif result:
++            return result[0]
++        return None
+ 
+     def parse_filament_name(self) -> Optional[str]:
+-        return regex_find_string(
+-            r";\sfilament_settings_id\s=\s(%S)", self.footer_data
++        result = regex_find_strings(
++            r";\sfilament_settings_id\s=\s(%S)", ",;", self.footer_data
+         )
++        if len(result) > 1:
++            return json.dumps(result)
++        elif result:
++            return result[0]
++        return None
+ 
+     def parse_filament_colors(self) -> Optional[List[str]]:
+         return regex_find_strings(

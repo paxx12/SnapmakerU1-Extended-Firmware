@@ -1,5 +1,5 @@
---- a/home/lava/moonraker/moonraker/components/file_manager/file_manager.py	2026-02-06 19:12:24.179575409 +0100
-+++ b/home/lava/moonraker/moonraker/components/file_manager/file_manager.py	2026-02-06 19:13:16.448036223 +0100
+--- a/moonraker/components/file_manager/file_manager.py	2026-02-06 19:12:24.179575409 +0100
++++ b/moonraker/components/file_manager/file_manager.py	2026-02-06 19:13:16.448036223 +0100
 @@ -825,10 +825,12 @@
              }
              flist['disk_usage'] = disk_usage
