@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 GIT_URL=https://github.com/suchmememanyskill/OpenRFID.git
-GIT_SHA=bd44e3c0beb28021fd834aa98e791a9cc95d4d72
+GIT_SHA=a45aacd7283be88126f0551052fd3baede9da057
 
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."

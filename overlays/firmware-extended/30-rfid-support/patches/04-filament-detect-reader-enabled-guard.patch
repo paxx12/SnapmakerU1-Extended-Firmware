@@ -19,11 +19,12 @@
              self._fm175xx_reader.request_read_card_info(channel)
  
      def request_clear_filament_info(self, channel):
-@@ -160,6 +162,8 @@
+@@ -160,6 +162,9 @@
          if self._fm175xx_reader is not None:
              self._state[channel] = FILAMENT_DT_STATE_DETECTING
              self._fm175xx_reader.request_clear_card_info(channel)
 +        else:
++            self._state[channel] = FILAMENT_DT_STATE_IDLE
 +            self._filament_info_update(channel, copy.deepcopy(filament_protocol.FILAMENT_INFO_STRUCT), True)
  
      def get_a_filament_info(self, channel):
