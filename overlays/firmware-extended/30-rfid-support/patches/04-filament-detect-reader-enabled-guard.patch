@@ -1,0 +1,41 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/filament_detect.py
++++ rootfs/home/lava/klipper/klippy/extras/filament_detect.py
+@@ -55,6 +55,8 @@
+     def _ready(self):
+         self.filament_feed_objects = self.printer.lookup_objects('filament_feed')
+         self._fm175xx_reader = self.printer.lookup_object('fm175xx_reader')
++        if not self._fm175xx_reader.enabled:
++            self._fm175xx_reader = None
+         if (self._fm175xx_reader is not None):
+             self._fm175xx_reader.register_cb_2_card_info_deal(self._fm175xx_card_info_deal_callback)
+ 
+@@ -149,8 +151,8 @@
+         if channel < 0 or channel >= self._channel_nums:
+             return
+ 
++        self._state[channel] = FILAMENT_DT_STATE_DETECTING
+         if self._fm175xx_reader is not None:
+-            self._state[channel] = FILAMENT_DT_STATE_DETECTING
+             self._fm175xx_reader.request_read_card_info(channel)
+ 
+     def request_clear_filament_info(self, channel):
+@@ -160,6 +162,9 @@
+         if self._fm175xx_reader is not None:
+             self._state[channel] = FILAMENT_DT_STATE_DETECTING
+             self._fm175xx_reader.request_clear_card_info(channel)
++        else:
++            self._state[channel] = FILAMENT_DT_STATE_IDLE
++            self._filament_info_update(channel, copy.deepcopy(filament_protocol.FILAMENT_INFO_STRUCT), True)
+ 
+     def get_a_filament_info(self, channel):
+         error = FILAMENT_DT_ERR
+@@ -271,6 +275,9 @@
+         channel = gcmd.get_int('CHANNEL', None)
+         times = gcmd.get_int('TIMES', 100)
+ 
++        if not self._fm175xx_reader:
++            raise gcmd.error("Built-in RFID reader disabled")
++
+         if (channel is None):
+             raise gcmd.error("CHANNEL must be specified!")
+ 

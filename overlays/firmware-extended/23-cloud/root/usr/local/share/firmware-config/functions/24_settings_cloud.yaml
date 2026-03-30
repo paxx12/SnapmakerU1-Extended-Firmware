@@ -1,9 +1,9 @@
 settings:
   remote_access:
-    label: Remote Access
     items:
       cloud:
         label: Cloud Access (Experimental)
+        description: Enable alternative cloud access from outside your network.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

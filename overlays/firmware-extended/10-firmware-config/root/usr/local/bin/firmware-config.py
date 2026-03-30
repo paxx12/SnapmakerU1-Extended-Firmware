@@ -305,6 +305,8 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
                     settings_list.append({
                         "id": setting_id,
                         "label": config["label"],
+                        "description": config.get("description"),
+                        "help_url": config.get("help_url"),
                         "current": current_value,
                         "options": options_data
                     })
@@ -389,6 +391,8 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
                     actions_list.append({
                         "id": action_id,
                         "label": cfg.get("label", action_id),
+                        "description": cfg.get("description"),
+                        "help_url": cfg.get("help_url"),
                         "confirm": cfg.get("confirm", False),
                         "background": cfg.get("background", False),
                         "download_file": cfg.get("download_file")

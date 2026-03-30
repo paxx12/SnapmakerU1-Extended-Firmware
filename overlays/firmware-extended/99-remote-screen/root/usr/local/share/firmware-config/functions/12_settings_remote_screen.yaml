@@ -9,10 +9,10 @@ links:
 
 settings:
   web:
-    label: Web
     items:
       remote-screen:
         label: Remote Screen
+        description: Stream the printer touchscreen to the browser.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

@@ -1,0 +1,158 @@
+Author: paxx12 <245230251+paxx12@users.noreply.github.com>
+Date:   Sun Mar 29 23:16:55 2026 +0200
+
+    Refactor retry logic to use retry flag instead of counter
+
+diff --git a/src/runtime.py b/src/runtime.py
+index 9bf4b8a..dd014f2 100644
+--- a/runtime.py
++++ b/runtime.py
+@@ -56,72 +56,70 @@ class Runtime:
+             for i, reader in enumerate(self.rfid_readers):
+                 if self.config.auto_read_mode or self.read_retries_left[i] > 0:
+                     logging.debug(f"Processing reader {reader.name}, retries left: {self.read_retries_left[i]}")
+-                    result = self.process_reader_single(reader)
+-                    self.read_retries_left[i] -= 1
+-                    scan_result = None
+-
+-                    if result is not None:
+-                        scan_result, filament = result
+-
+-                        for exporter in self.detection_exporters:
+-                                exporter.export_data(scan_result, filament, reader)
+-
+-                        if filament is not None:
+-                            logging.info(f"Processed tag with UID {scan_result.uid.hex().upper()} from reader {reader.name}")
+-
+-                            for exporter in self.success_exporters:
+-                                exporter.export_data(scan_result, filament, reader)
++                    scan_result, filament, retry = self.process_reader_single(reader)
+ 
++                    if not retry:
+                         self.read_retries_left[i] = 0
+-
+                     elif self.read_retries_left[i] <= 0 and not self.config.auto_read_mode:
+                         logging.warning(f"Failed to read from reader {reader.name}, no retries left")
+-                        self.read_retries_left[i] = 0
++                    else:
++                        self.read_retries_left[i] -= 1
++                        logging.info(f"Retrying read for reader {reader.name}, retries left: {self.read_retries_left[i]}")
++                        continue
++
++                    if scan_result:
++                        for exporter in self.detection_exporters:
++                            exporter.export_data(scan_result, filament, reader)
+ 
+-                        for exporter in self.error_exporters:
+-                            exporter.export_data(scan_result, None, reader)
++                    if filament:
++                        logging.info(f"Processed tag with UID {scan_result.uid.hex().upper()}")
++
++                        for exporter in self.success_exporters:
++                            exporter.export_data(scan_result, filament, reader)
+ 
+             time.sleep(self.config.read_interval_seconds)
+         
+-    def process_reader_single(self, reader: RfidReader) -> tuple[ScanResult, GenericFilament|None]|None:
++    def process_reader_single(self, reader: RfidReader) -> tuple[ScanResult|None, GenericFilament|None, bool]:
+         reader.start_session()
+         scan_result = reader.scan()
+         reader.end_session()
+         if scan_result is None:
+             logging.debug("No tag detected")
+-            return
++            return None, None, True
+         
+         uid = scan_result.uid.hex()
+         
+         if self.config.auto_read_mode and reader.is_same_tag(uid):
+             logging.debug("Same tag detected as last read, skipping processing")
+-            return
++            return None, None, False
+         
+         logging.info(f"Detected tag type {scan_result.tag_type.name} with UID {scan_result.uid.hex().upper()}")
+ 
+         filament = None
++        retry = False
+         if scan_result.tag_type == TagType.MifareClassic1k and isinstance(reader, MifareClassicReader):
+-            filament = self.process_mifare_classic(reader, scan_result)
++            filament, retry = self.process_mifare_classic(reader, scan_result)
+         elif scan_result.tag_type == TagType.MifareUltralight and isinstance(reader, MifareUltralightReader):
+-            filament = self.process_mifare_ultralight(reader, scan_result)
+-        
+-        if filament is None:
+-            logging.warning("Failed to read data from tag")
+-            return (scan_result, None)
+-        
+-        logging.info(filament.pretty_text())
+-        
+-        reader.set_last_read_uid(uid)
+-        return (scan_result, filament)
++            filament, retry = self.process_mifare_ultralight(reader, scan_result)
++
++        if filament:
++            logging.info(filament.pretty_text())
++            reader.set_last_read_uid(uid)
++        else:
++            logging.warning(f"Failed to read data from tag.")
++
++        return (scan_result, filament, retry)
++
++    def process_mifare_classic(self, reader: MifareClassicReader, scan_result: ScanResult) -> tuple[GenericFilament | None, bool]:
++        retry = False
+ 
+-    def process_mifare_classic(self, reader: MifareClassicReader, scan_result: ScanResult) -> GenericFilament | None:
+         for processor in self.mifare_classic_processors:
+             reader.start_session()
+ 
+             if reader.scan() == None:
+                 logging.warning("Tag lost before reading")
+                 reader.end_session()
+-                continue
++                return None, True
+ 
+             logging.debug(f"Attempting to read with processor: {processor.name}")
+             auth = processor.authenticate_tag(scan_result)
+@@ -136,20 +134,20 @@ class Runtime:
+ 
+             if card_data is not None:
+                 logging.debug(f"Read MIFARE Classic card data: {card_data.hex().upper()}")
+-                return processor.process_tag(scan_result, card_data)
++                return processor.process_tag(scan_result, card_data), False
+             else:
+                 logging.warning("Failed to read MIFARE Classic card data")
+-                continue
++                retry = True
+ 
+-        return None
++        return None, retry
+     
+-    def process_mifare_ultralight(self, reader: MifareUltralightReader, scan_result: ScanResult) -> GenericFilament | None:
++    def process_mifare_ultralight(self, reader: MifareUltralightReader, scan_result: ScanResult) -> tuple[GenericFilament | None, bool]:
+         reader.start_session()
+ 
+         if reader.scan() == None:
+             logging.warning("Tag lost before reading")
+             reader.end_session()
+-            return None
++            return None, True
+ 
+         card_data = reader.read_mifare_ultralight(scan_result)
+         reader.end_session()
+@@ -160,10 +158,10 @@ class Runtime:
+             for processor in self.mifare_ultralight_processors:
+                 logging.debug(f"Attempting to read with processor: {processor.name}")
+                 filament = processor.process_tag(scan_result, card_data)
+-
+                 if filament is not None:
+-                    return filament
++                    return filament, False
++
++            return None, False
+         else:
+             logging.warning("Failed to read MIFARE Ultralight card data")
+-
+-        return None
+\ No newline at end of file
++            return None, True
+\ No newline at end of file

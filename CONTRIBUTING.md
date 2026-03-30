@@ -2,8 +2,9 @@
 
 ## License Status
 
-This project is free to use for personal usage. Individual components may have
-their own specific licenses as indicated in their respective directories.
+The main project is licensed under the GNU General Public License v3.0
+(GPL-3.0). Individual components may have their own specific licenses as
+indicated in their respective directories.
 
 ## Contributor Agreement
 
@@ -13,13 +14,12 @@ By contributing to this project, you agree to the following terms:
    modifications, or additions you contribute to this project.
 
 2. **License Compatibility**: You understand that contributions to the main
-   project will be covered under the personal use license, while contributions
-   to specific components (such as tools/upfile) will be covered under their
-   respective licenses.
+   project will be covered under GPLv3, while contributions to specific
+   components (such as tools/upfile) will be covered under their respective
+   licenses.
 
 3. **Permission to Use**: You grant permission to distribute, modify, and use
-   your contributions under the project's license terms, including the personal
-   use restriction for the main project.
+   your contributions under the project's applicable license terms.
 
 4. **Original Work**: You certify that your contributions are your original
    work or that you have the right to submit them under these terms.

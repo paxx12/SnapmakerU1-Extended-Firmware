@@ -4,7 +4,6 @@ title: Firmware Configuration
 
 # Firmware Configuration
 
-**Available in: Extended firmware**
 
 > **Note for users upgrading to v1.1.0:** The configuration file has been renamed from `extended.cfg` to `extended2.cfg`. During the first boot after upgrading a new `extended2.cfg` will be created with default settings. You will need to migrate your custom settings from `extended.cfg` to `extended2.cfg` manually or use `http://IP/firmware-config`
 
@@ -51,6 +50,7 @@ Toggle settings directly from the web interface:
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 | Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
+| RFID Detection System | External, Snapmaker, OpenRFID, OpenRFID (force generic vendor) | Set how filament is detected ([rfid_support](rfid_support.md)) |
 
 Changes are applied immediately and relevant services are restarted.
 
@@ -150,6 +150,16 @@ Note: Remote screen requires additional Moonraker configuration. See [Remote Scr
 **logs** - Camera service logging destination
 - `syslog` - Enable logging to `/var/log/messages`
 
+#### [components]
+
+**rfid** - Filament tag detection system
+- `snapmaker` (default) - Snapmaker's built-in RFID reader
+- `external` - Disable built-in readers (useful for external readers)
+- `openrfid` - Alternative detection with extended spool/tag support
+- `openrfid-generic` - Same as openrfid, labels all spool vendors as generic
+
+See [Alternative Filament Detection](rfid_support.md#alternative-detection-systems) for setup instructions.
+
 #### [remote_access]
 
 **ssh** - Enable SSH remote access via dropbear
@@ -195,6 +205,10 @@ internal: paxx12
 usb: none
 # Enable RTSP streaming server: true, false
 rtsp: false
+
+[components]
+# Filament tag detection system: external, snapmaker, openrfid, openrfid-generic
+rfid: snapmaker
 
 [remote_access]
 # Enable SSH access: true, false

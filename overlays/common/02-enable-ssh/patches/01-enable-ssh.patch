@@ -1,11 +1,15 @@
 --- a/etc/init.d/S50dropbear 2025-11-06 06:29:13.000000000 +0100
 +++ b/etc/init.d/S50dropbear 2025-11-20 16:56:47.536854286 +0100
-@@ -3,7 +3,7 @@
+@@ -3,9 +3,9 @@
  # Starts dropbear sshd.
  #
  
--[ x"$(custom_misc vertype 2>/dev/null)" = x"dbg" ] || exit 0
-+# [ x"$(custom_misc vertype 2>/dev/null)" = x"dbg" ] || exit 0
+-if [ "$2" != "--force" ] ; then
+-	[ x"$(custom_misc vertype 2>/dev/null)" = x"dbg" ] || exit 0
+-fi
++# if [ "$2" != "--force" ] ; then
++# 	[ x"$(custom_misc vertype 2>/dev/null)" = x"dbg" ] || exit 0
++# fi
  
  # Allow a few customizations from a config file
  test -r /etc/default/dropbear && . /etc/default/dropbear

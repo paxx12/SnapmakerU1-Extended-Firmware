@@ -32,9 +32,15 @@ endif
 .PHONY: build
 build: $(OUTPUT_FILE)
 
+EXTRACT_DIR := tmp/extracted
+
 .PHONY: extract
 extract: firmware/$(FIRMWARE_FILE) tools
-	./scripts/extract_squashfs.sh $< tmp/extracted
+	./scripts/extract_squashfs.sh $< $(EXTRACT_DIR)
+
+.PHONY: overlays
+overlays:
+	@echo $(OVERLAYS)
 
 .PHONY: profiles
 profiles:

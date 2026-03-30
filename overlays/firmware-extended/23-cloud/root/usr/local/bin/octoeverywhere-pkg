@@ -5,9 +5,9 @@
 # Downloads and installs a pinned version of OctoEverywhere from GitHub
 #
 
-VERSION="4.6.6"
+VERSION="4.6.8"
 URL="https://github.com/QuinnDamerell/OctoPrint-OctoEverywhere/archive/refs/tags/${VERSION}.zip"
-SHA256="8fedea60d50adc5763269cec47a46d81e534ea0066b790176fc819abea1b8db5"
+SHA256="fd16e88824f9b8026b1879a03a48f015f81a4f96b28448cd94fe3093ad52e750"
 
 # These paths are referenced in the init.d script
 APP_DIR="/oem/apps/octoeverywhere"

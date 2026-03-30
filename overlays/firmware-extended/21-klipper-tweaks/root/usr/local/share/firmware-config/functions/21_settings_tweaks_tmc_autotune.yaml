@@ -1,9 +1,10 @@
 settings:
   tweaks:
-    label: Tweaks
     items:
       tmc_autotune:
-        label: 'TMC AutoTune (<a href="http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-autotune" target="_blank">link</a>)'
+        label: TMC AutoTune
+        description: Optimizes TMC2240 driver settings for quieter operation and better performance.
+        help_url: http://snapmakeru1-extended-firmware.pages.dev/tweaks#tmc-autotune
         get_cmd:
           - bash
           - -c
@@ -11,7 +12,7 @@ settings:
         options:
           enabled:
             label: Enabled
-            confirm: "Enable TMC AutoTune? This optimizes TMC2240 driver settings for quieter operation and better performance. Warning: May cause motors to overheat if cooling is insufficient. Monitor temperatures during first use."
+            confirm: "Enable TMC AutoTune? This optimizes TMC2240 driver settings for quieter operation and better performance. Monitor motor temperatures, print quality, and skipped steps during first use."
             cmd:
               - bash
               - -xc

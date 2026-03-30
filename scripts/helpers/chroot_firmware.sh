@@ -11,13 +11,13 @@ shift
 cd "$ROOTFS"
 
 if [[ -e ./etc/resolv.conf ]]; then
-  echo "[!] The ./etc/resolv.conf file already exists. Failing."
-  exit 1
+  mv ./etc/resolv.conf ./etc/resolv.conf.bak
+  trap 'mv ./etc/resolv.conf.bak ./etc/resolv.conf' EXIT
+else
+  trap 'rm -f ./etc/resolv.conf' EXIT
 fi
 
 set -euo pipefail
 
 echo "nameserver 1.1.1.1" > ./etc/resolv.conf
-trap 'rm -f ./etc/resolv.conf' EXIT
-
 chroot "$ROOTFS" "$@"

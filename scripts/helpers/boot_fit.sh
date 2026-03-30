@@ -181,7 +181,7 @@ repack_fit() {
 
     boot_img=$(realpath "$boot_img")
     cd "$input_dir"
-    mkimage -E -p 0x800 -B 0x100 -f boot.its "$boot_img"
+    mkimage -E -p 0x800 -B 0x200 -f boot.its "$boot_img"
     cd - > /dev/null
 
     echo ""

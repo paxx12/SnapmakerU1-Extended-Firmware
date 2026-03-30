@@ -17,10 +17,10 @@ links:
 
 settings:
   camera:
-    label: Camera
     items:
       camera-internal:
         label: Internal Camera
+        description: Select the driver for the built-in MIPI camera.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
@@ -60,6 +60,7 @@ settings:
 
       camera-usb:
         label: USB Camera
+        description: Enable streaming from an attached USB camera.
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
@@ -93,6 +94,7 @@ settings:
 
       camera-rtsp:
         label: RTSP Stream (paxx12 only)
+        description: Enable RTSP stream output for the internal camera (paxx12 driver only).
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get

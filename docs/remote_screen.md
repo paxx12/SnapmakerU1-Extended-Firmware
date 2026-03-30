@@ -4,7 +4,6 @@ title: Remote Screen Access
 
 # Remote Screen Access
 
-**Available in: Extended firmware only**
 
 View and control your printer's touchscreen remotely from any web browser.
 

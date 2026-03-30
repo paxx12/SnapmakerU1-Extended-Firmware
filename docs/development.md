@@ -15,10 +15,11 @@ The custom firmware uses an overlay system to modify the base Snapmaker firmware
 
 Each overlay is self-contained and numbered to control application order. This modular approach makes it easy to:
 - Enable/disable features by including/excluding overlays
-- Maintain different firmware profiles (basic vs extended)
 - Add custom modifications without conflicts
 
 For external third-party components, see [Third-Party Integrations](design/third_party.md).
+
+For external RFID API and mapping details, see [External RFID Support](design/filament_detect.md).
 
 ## Prerequisites
 
@@ -52,12 +53,6 @@ Build tools and download firmware:
 ./dev.sh make firmware
 ```
 
-Build basic firmware:
-
-```bash
-./dev.sh make build PROFILE=basic OUTPUT_FILE=firmware/U1_basic.bin
-```
-
 Build extended firmware:
 
 ```bash
@@ -72,10 +67,7 @@ Open a shell in the development environment:
 
 ## Profiles
 
-The build system supports two profiles:
-
-- `basic` - simple modifications not changing key components of the firmware
-- `extended` - extensive modifications changing key components of the firmware
+The build system supports the `extended` profile with extensive modifications to the firmware.
 
 ## Overlays
 
@@ -83,15 +75,14 @@ Overlays are organized into categories based on their scope and build profile. E
 
 ### Overlay Categories
 
-- **common/** - Core modifications applied to all firmware profiles (basic and extended)
-- **firmware-basic/** - Modifications specific to the basic firmware profile
+- **common/** - Core modifications applied to all firmware profiles
 - **firmware-extended/** - Modifications specific to the extended firmware profile
 - **devel/** - Development tools and utilities (only included with DEVEL=1 flag)
 - **staging/** - Disabled overlays kept for potential future use
 
 ## Build Options
 
-- `basic-devel` or `extended-devel` - Add development overlays from `overlays/devel/` to the selected profile
+- `extended-devel` - Add development overlays from `overlays/devel/`
   - e.g. `./dev.sh make build PROFILE=extended DEVEL=1`
 
 ### Devel Profile Features
@@ -230,7 +221,7 @@ PASSWORD=mypassword ./dev.sh ./scripts/dev/upgrade-firmware.sh root@192.168.1.10
 The project uses GitHub Actions for automated releases:
 
 1. Changes pushed to `main` trigger a pre-release build
-2. Both basic and extended firmwares are built
+2. Extended firmware is built
 3. Version is auto-incremented using `scripts/next_version.sh`
 4. Release artifacts are published to GitHub Releases
 

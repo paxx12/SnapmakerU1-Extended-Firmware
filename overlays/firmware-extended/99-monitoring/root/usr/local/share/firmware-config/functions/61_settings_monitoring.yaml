@@ -1,9 +1,9 @@
 settings:
   monitoring_debugging:
-    label: Monitoring & Debugging
     items:
       klipper-metrics:
         label: Klipper Metrics Exporter
+        description: Export Klipper metrics for scraping by Prometheus.
         get_cmd:
           - bash
           - -c

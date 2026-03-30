@@ -1,9 +1,9 @@
 actions:
   troubleshooting:
-    label: Troubleshooting
     items:
       show-status:
         label: Show MCUs Version
+        description: Display firmware version of all connected MCUs.
         cmd:
           - /home/lava/bin/systemUpgrade.sh
           - show-status
@@ -12,7 +12,8 @@ actions:
 
       collect-logs:
         label: Collect System Logs
-        confirm: "Collecting system logs might take a few minutes. Do not close the window until done. Continue?"
+        description: Bundle and download a system log archive for troubleshooting.
+        confirm: "Collecting system logs might take a few minutes. These logs contain sensitive information like the serial number and Wi-Fi SSID, and should not be shared publicly. Continue?"
         cmd:
           - /home/lava/bin/sysinfoCollection.sh
           - "no"
@@ -21,10 +22,10 @@ actions:
         download_file: /userdata/logs.tar.gz
 
   recovery:
-    label: Recovery
     items:
       reset-extended-to-defaults:
         label: Reset Extended to Defaults
+        description: Clear all extended settings and reboot to a clean state.
         confirm: "Reset all extended settings to defaults and reboot?"
         background: true
         cmd:
@@ -38,6 +39,7 @@ actions:
 
       reset-to-backup-firmware:
         label: Reset Extended to Backup Firmware
+        description: Clear all extended settings, switch to the backup firmware slot, and reboot.
         confirm: "Reset all extended settings to defaults, switch to backup firmware and reboot?"
         background: true
         cmd:
@@ -51,6 +53,7 @@ actions:
 
       switch-to-backup-firmware:
         label: Switch to Backup Firmware
+        description: Boot from the backup firmware slot on next reboot.
         confirm: "Switch to backup firmware and reboot?"
         background: true
         cmd:

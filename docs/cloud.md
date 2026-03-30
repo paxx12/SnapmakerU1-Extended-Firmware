@@ -4,7 +4,6 @@ title: Cloud Remote Access (Experimental)
 
 # Cloud Remote Access (Experimental)
 
-**Available in: Extended firmware only**
 
 Control your printer remotely using cloud-based remote access providers.
 

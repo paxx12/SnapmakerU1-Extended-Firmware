@@ -4,7 +4,6 @@ title: Camera Support
 
 # Camera Support
 
-**Available in: Extended firmware only**
 
 The extended firmware includes hardware-accelerated camera support with WebRTC streaming.
 

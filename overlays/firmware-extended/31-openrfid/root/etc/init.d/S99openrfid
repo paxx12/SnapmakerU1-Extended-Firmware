@@ -1,0 +1,74 @@
+#!/bin/sh
+
+PIDFILE="/var/run/openrfid.pid"
+EXTENDED2_CFG="/oem/printer_data/config/extended/extended2.cfg"
+
+start() {
+    RFID=$(/usr/local/bin/extended-config.py get "$EXTENDED2_CFG" components rfid snapmaker 2>/dev/null)
+    DETECT_CONFIG=""
+    case "$RFID" in
+        openrfid)
+            DETECT_CONFIG=/usr/local/share/openrfid/extended/openrfid_u1_vendor.cfg
+            ;;
+
+        openrfid-generic)
+            DETECT_CONFIG=/usr/local/share/openrfid/extended/openrfid_u1_generic.cfg
+            ;;
+
+        *)
+            echo "Filament tag detection not set to openrfid or openrfid-generic, not starting."
+            return
+            ;;
+    esac
+
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "OpenRFID already running"
+        return 0
+    fi
+
+    ADDITIONAL_CONFIG=/oem/printer_data/config/extended/openrfid_user.cfg
+    if ! test -f "$ADDITIONAL_CONFIG"; then
+        ADDITIONAL_CONFIG=""
+    fi
+
+    printf "Starting OpenRFID: "
+    start-stop-daemon -S -b -m \
+        -p "$PIDFILE" \
+        -x /usr/bin/python3 -- /usr/local/bin/openrfid.py \
+        /tmp/openrfid.cfg \
+        /usr/local/share/openrfid/extended/openrfid_u1_base.cfg \
+        $DETECT_CONFIG \
+        $ADDITIONAL_CONFIG
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping OpenRFID: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?
