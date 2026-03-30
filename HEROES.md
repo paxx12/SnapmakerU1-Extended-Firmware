@@ -22,7 +22,7 @@ You can thank them here:
 
 ---
 
-## v1.1.1-paxx12-14
+## v1.2.0-paxx12-14
 
 | Contributor | Contribution | PR |
 |---|---|---|
