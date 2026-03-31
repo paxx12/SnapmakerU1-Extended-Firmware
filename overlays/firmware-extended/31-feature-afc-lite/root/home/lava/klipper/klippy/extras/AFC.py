@@ -28,9 +28,9 @@ class AFC:
     def _get_current_lane(self):
         try:
             toolhead = self.printer.lookup_object('toolhead')
-            current_extruder = toolhead.extruder.name
+            current_extruder = toolhead.extruder.get_name()
             for lane_name, lane in self.lanes.items():
-                if lane.extruder == current_extruder:
+                if lane.extruder_name == current_extruder:
                     return lane_name
         except:
             pass
