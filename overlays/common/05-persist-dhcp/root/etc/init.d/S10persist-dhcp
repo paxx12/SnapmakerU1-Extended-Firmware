@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+
+case "$1" in
+  start)
+    mkdir -p /oem/dhcpcd
+    if [ ! -L /var/db/dhcpcd ]; then
+      rm -rf /var/db/dhcpcd
+      ln -s /oem/dhcpcd /var/db/dhcpcd
+    fi
+    ;;
+  stop|restart|status)
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
