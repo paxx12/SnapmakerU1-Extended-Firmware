@@ -69,4 +69,4 @@ vi /home/lava/printer_data/config/extended/moonraker/04_remote_screen.cfg
 
 ## Technical Details
 
-The remote screen uses a lightweight Python HTTP server (`fb-http-server.py`) that captures framebuffer snapshots and processes touch input, served through nginx. For implementation details, see [overlay README](../overlays/firmware-extended/99-remote-screen/README.md).
+The remote screen uses a lightweight Python HTTP server (`fb-http-server.py`) that captures framebuffer snapshots and processes touch input, served through nginx. For implementation details, see [overlay README](../overlays/firmware-extended/61-app-remote-screen/README.md).
