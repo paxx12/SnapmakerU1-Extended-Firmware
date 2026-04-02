@@ -1,5 +1,7 @@
 FROM debian:trixie
 
+RUN sed -i 's/^Components: .*/Components: main contrib non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources
+
 # The ccache is installed separately
 # as otherwise not all symlinks are created
 RUN apt-get update -y && \
@@ -24,6 +26,7 @@ RUN apt-get update -y && \
       golang-go \
       ffmpeg \
       u-boot-tools \
+      firmware-realtek \
     && apt-get -y install ccache \
     && git config --global --add safe.directory '*' \
     && rm -rf /var/lib/apt/lists/*
