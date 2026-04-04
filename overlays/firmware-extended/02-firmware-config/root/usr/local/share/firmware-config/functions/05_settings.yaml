@@ -9,5 +9,7 @@ settings:
     label: Snapmaker Components
   tweaks:
     label: Tweaks
+  troubleshooting:
+    label: Troubleshooting
   monitoring_debugging:
     label: Monitoring & Debugging
