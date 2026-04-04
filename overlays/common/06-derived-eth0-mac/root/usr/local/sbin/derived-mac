@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -eu
+
+is_random_mac() {
+  case "$1" in
+    [0-9a-fA-F][0-9a-fA-F]:*)
+      first_octet="${1%%:*}"
+      first_octet_value=$((0x$first_octet))
+      [[ $((first_octet_value & 0x02)) -ne 0 ]] && [[ $((first_octet_value & 0x01)) -eq 0 ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+ifname="${1:-}"
+
+if [[ -z "$ifname" ]]; then
+  echo "Usage: $0 <ifname>" >&2
+  exit 1
+fi
+
+if [[ ! -e "/sys/class/net/$ifname/address" ]]; then
+  echo "Interface '$ifname' does not exist" >&2
+  exit 1
+fi
+
+current_mac="$(cat "/sys/class/net/$ifname/address" 2>/dev/null || true)"
+if ! is_random_mac "$current_mac"; then
+  echo "The $ifname MAC is not random, leaving it unchanged" >&2
+  exit 0
+fi
+
+serial="$(cat /oem/printer_data/.lava.sn 2>/dev/null || true)"
+
+if [[ -z "$serial" ]]; then
+  serial="$(grep '^Serial[[:space:]]*:' /proc/cpuinfo 2>/dev/null | awk '{print $3}' | head -n 1)"
+fi
+
+if [[ -z "$serial" ]]; then
+  echo "Serial not found in /oem/printer_data/.lava.sn or /proc/cpuinfo" >&2
+  exit 1
+fi
+
+hash="$(printf '%s:%s\n' "$serial" "$ifname" | sha256sum | cut -d ' ' -f 1)"
+stable_mac="02:${hash:0:2}:${hash:2:2}:${hash:4:2}:${hash:6:2}:${hash:8:2}"
+
+[[ "$current_mac" == "$stable_mac" ]] || /sbin/ip link set dev "$ifname" address "$stable_mac"

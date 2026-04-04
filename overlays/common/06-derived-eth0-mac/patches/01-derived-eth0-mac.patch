@@ -1,0 +1,7 @@
+--- a/etc/network/interfaces.d/eth0
++++ b/etc/network/interfaces.d/eth0
+@@ -1,3 +1,4 @@
+ iface eth0 inet manual
++	pre-up /usr/local/sbin/derived-mac eth0
+ 	dhcp-up /sbin/dhcpcd
+ 	dhcp-down /sbin/dhcpcd -k
