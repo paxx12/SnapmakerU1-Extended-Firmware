@@ -19,9 +19,12 @@ settings:
               - -xc
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloudflared_token "" &&
                 /etc/init.d/S99cloud stop
                 /usr/local/bin/octoeverywhere-pkg clean
+                /usr/local/bin/cloudflared-pkg clean
                 rm -rf /home/lava/printer_data/octoeverywhere-store
+                rm -rf /home/lava/printer_data/config/cloudflared
           octoeverywhere:
             label: OctoEverywhere
             cmd:
@@ -62,4 +65,30 @@ settings:
                 done
 
                 echo "Authorization URL not found in logs. Please check the logs for more details."
+          cloudflared:
+            label: Cloudflared
+            cmd:
+              - bash
+              - -ec
+              - |
+                echo "WARNING: Cloudflared support is experimental."
+                sleep 2
+
+                echo ">> Downloading Cloudflared package..."
+                /usr/local/bin/cloudflared-pkg download
+
+                echo ">> Enabling Cloudflared..."
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud cloudflared
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloudflared_token YOUR_TUNNEL_TOKEN_HERE 
+
+                echo
+                echo "Cloudflared has been enabled."
+                echo
+                echo "NEXT STEP: Add your Cloudflare tunnel token to the configuration file."
+                echo "Edit /home/lava/printer_data/config/extended/extended2.cfg and replace YOUR_TUNNEL_TOKEN_HERE with your actual tunnel token"
+                echo
+                echo "Then restart the cloud service:"
+                echo "/etc/init.d/S99cloud restart"
+                echo
+                echo "You can find your tunnel token in the Cloudflare dashboard."
         default: none

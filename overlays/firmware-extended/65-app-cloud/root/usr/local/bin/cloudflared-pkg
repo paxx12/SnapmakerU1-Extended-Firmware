@@ -1,0 +1,82 @@
+#!/bin/bash
+
+#
+# Cloudflared package manager
+# Downloads and installs a pinned version of Cloudflared from GitHub
+#
+
+VERSION="2026.3.0"
+URL="https://github.com/cloudflare/cloudflared/releases/download/${VERSION}/cloudflared-linux-arm64"
+SHA256="0755ba4cbab59980e6148367fcf53a8f3ec85a97deefd63c2420cf7850769bee"
+
+# Paths
+BINARY_PATH="/usr/local/bin/cloudflared"
+CONFIG_DIR="/home/lava/printer_data/config/cloudflared"
+CONFIG_FILE="${CONFIG_DIR}/config.yaml"
+
+check() {
+    if [[ -f "$BINARY_PATH" ]]; then
+        echo "Cloudflared is installed."
+        return 0
+    else
+        echo "Cloudflared is not installed."
+        return 1
+    fi
+}
+
+download() {
+    rm -f "$BINARY_PATH"
+    mkdir -p "$(dirname "$BINARY_PATH")"
+
+    echo "Downloading Cloudflared ${VERSION} From GitHub..."
+    if ! /usr/local/bin/curl -sfSL -o "$BINARY_PATH" "$URL"; then
+        echo "Download failed"
+        return 1
+    fi
+
+    echo "Verifying SHA256 checksum..."
+    ACTUAL_SHA256=$(sha256sum "$BINARY_PATH" | awk '{print $1}')
+    if [[ "$ACTUAL_SHA256" != "$SHA256" ]]; then
+        echo "SHA256 mismatch!"
+        echo "  Expected: $SHA256"
+        echo "  Actual:   $ACTUAL_SHA256"
+        return 1
+    fi
+    echo "Checksum verified."
+
+    chmod +x "$BINARY_PATH"
+    echo "Cloudflared installed successfully to $BINARY_PATH"
+}
+
+case "$1" in
+    check)
+        check
+        ;;
+    download)
+        if check; then
+            echo "Cloudflared is already installed."
+            exit 0
+        fi
+        if ! download; then
+            rm -f "$BINARY_PATH"
+            exit 1
+        fi
+        ;;
+    update)
+        echo "Updating Cloudflared..."
+        if ! download; then
+            rm -f "$BINARY_PATH"
+            exit 1
+        fi
+        ;;
+    clean)
+        echo "Removing Cloudflared installation..."
+        rm -f "$BINARY_PATH"
+        rm -rf "$CONFIG_DIR"
+        echo "Removed."
+        ;;
+    *)
+        echo "Usage: $0 {check|download|update|clean}"
+        exit 1
+        ;;
+esac
