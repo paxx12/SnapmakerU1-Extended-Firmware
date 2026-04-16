@@ -29,6 +29,12 @@ Writable fields:
 | `BED_TEMP` | `int` | Integer | |
 | `CARD_UID` | `list[int]` | Array of byte ints | |
 | `SKU` | `int` | Integer | |
+| `DIAMETER` | `int` | Integer (mm × 100, e.g. `175` = 1.75 mm) | |
+| `WEIGHT` | `int` | Integer grams | |
+| `DRYING_TEMP` | `int` | Integer °C | |
+| `DRYING_TIME` | `int` | Integer hours | |
+| `MF_DATE` | `string` | `YYYYMMDD` | |
+| `TD` | `float` | Transmission distance in mm (e.g. `0.45`) | Not in base `FILAMENT_INFO_STRUCT`; added dynamically |
 
 Read-only fields (returned by query, not accepted by `set`):
 
@@ -41,15 +47,10 @@ Read-only fields (returned by query, not accepted by `set`):
 | `TRAY` | |
 | `COLOR_NUMS` | |
 | `RGB_2..RGB_5` | |
-| `DIAMETER` | |
-| `WEIGHT` | |
 | `LENGTH` | |
-| `DRYING_TEMP` | |
-| `DRYING_TIME` | |
 | `BED_TYPE` | |
 | `FIRST_LAYER_TEMP` | |
 | `OTHER_LAYER_TEMP` | |
-| `MF_DATE` | |
 | `RSA_KEY_VERSION` | |
 
 ## API Contract: `filament_detect/set`
@@ -73,7 +74,13 @@ Request shape:
     "HOTEND_MAX_TEMP": 220,
     "BED_TEMP": 55,
     "CARD_UID": [161, 178, 195, 212],
-    "SKU": 12345
+    "SKU": 12345,
+    "DIAMETER": 175,
+    "WEIGHT": 1000,
+    "DRYING_TEMP": 50,
+    "DRYING_TIME": 8,
+    "MF_DATE": "20250101",
+    "TD": 0.45
   }
 }
 ```
@@ -135,11 +142,11 @@ OpenSpool U1 Extended mapping profile:
 | `min_temp` | `HOTEND_MIN_TEMP` | `N/A` | stored in `filament_detect` only |
 | `max_temp` | `HOTEND_MAX_TEMP` | `N/A` | stored in `filament_detect` only |
 | `bed_min_temp`/`bed_max_temp` | `BED_TEMP` | `N/A` | collapsed to single bed temp |
+| `diameter` | `DIAMETER` | `N/A` | converted: `int(float * 100)` (e.g. `1.75` → `175`) |
+| `weight` | `WEIGHT` | `N/A` | integer grams |
 | `protocol` | `N/A` | `N/A` | parser validation only |
 | `version` | `N/A` | `N/A` | no endpoint field |
 | `additional_color_hexes` | `N/A` | `N/A` | no endpoint field; parser-only path supports extra colors |
-| `diameter` | `N/A` | `N/A` | no endpoint field |
-| `weight` | `N/A` | `N/A` | no endpoint field |
 
 ### Example
 

@@ -1,0 +1,22 @@
+actions:
+  rfid:
+    label: RFID
+    items:
+      restart-openrfid:
+        label: Restart OpenRFID
+        description: Restart the OpenRFID service (re-reads all inserted tags).
+        confirm: false
+        cmd:
+          - /etc/init.d/S99openrfid
+          - restart
+        message: "Restarting OpenRFID..."
+
+      openrfid-log:
+        label: OpenRFID Log
+        description: Show recent OpenRFID entries from the system log.
+        confirm: false
+        cmd:
+          - sh
+          - -c
+          - "logread 2>/dev/null | grep -i openrfid | tail -80"
+        message: "Fetching OpenRFID log entries..."

@@ -10,7 +10,7 @@
      def _ready(self):
          self.filament_feed_objects = self.printer.lookup_objects('filament_feed')
          self._fm175xx_reader = self.printer.lookup_object('fm175xx_reader')
-@@ -173,6 +176,59 @@
+@@ -173,6 +176,71 @@
  
          return error, info
  
@@ -52,6 +52,19 @@
 +                filament_info['CARD_UID'] = [int(b) for b in params.pop('CARD_UID')]
 +            if 'SKU' in params:
 +                filament_info['SKU'] = int(params.pop('SKU'))
++
++            if 'DIAMETER' in params:
++                filament_info['DIAMETER'] = int(params.pop('DIAMETER'))
++            if 'WEIGHT' in params:
++                filament_info['WEIGHT'] = int(params.pop('WEIGHT'))
++            if 'DRYING_TEMP' in params:
++                filament_info['DRYING_TEMP'] = int(params.pop('DRYING_TEMP'))
++            if 'DRYING_TIME' in params:
++                filament_info['DRYING_TIME'] = int(params.pop('DRYING_TIME'))
++            if 'MF_DATE' in params:
++                filament_info['MF_DATE'] = str(params.pop('MF_DATE'))
++            if 'TD' in params:
++                filament_info['TD'] = float(params.pop('TD'))
 +
 +            if params:
 +                raise web_request.error("unsupported fields: %s" % (', '.join(sorted(params.keys()))))

@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RFID Spools</title>
+    <meta name="theme-color" content="#1a1a1a">
+    <style>
+        /* Variables match firmware-config for consistent look */
+        :root {
+            --bg: #1a1a1a; --card: #2d2d2d; --item: #3d3d3d; --hover: #4d4d4d;
+            --accent: #4fc3f7; --text: #e0e0e0; --muted: #888;
+            --success: #81c784; --error: #e57373; --warning: #ff9800; --info: #64b5f6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; }
+        code { font-family: monospace; background: #1a1a1a; padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--accent); }
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        h1 { color: var(--accent); margin-bottom: 20px; font-size: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* Cards */
+        .card { background: var(--card); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-title { font-weight: 600; color: #fff; font-size: 15px; }
+
+        /* Buttons */
+        .btn { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; min-height: 34px; transition: background 0.15s; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover:not(:disabled) { background: #29b6f6; }
+        .btn-success { background: var(--success); color: #000; }
+        .btn-success:hover:not(:disabled) { background: #66bb6a; }
+        .btn-secondary { background: #555; color: #fff; }
+        .btn-secondary:hover:not(:disabled) { background: #666; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-warning:hover:not(:disabled) { background: #ffa726; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; min-height: 28px; }
+
+        /* Input */
+        .input { background: var(--item); border: 1px solid #555; border-radius: 6px; padding: 10px 12px; color: var(--text); font-size: 14px; width: 100%; }
+        .input:focus { outline: none; border-color: var(--accent); }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .badge-ok    { background: rgba(129,199,132,0.2); color: var(--success); border: 1px solid rgba(129,199,132,0.35); }
+        .badge-warn  { background: rgba(255,152,0,0.2);   color: var(--warning); border: 1px solid rgba(255,152,0,0.35); }
+        .badge-error { background: rgba(229,115,115,0.2); color: var(--error);   border: 1px solid rgba(229,115,115,0.35); }
+        .badge-muted { background: rgba(136,136,136,0.15);color: var(--muted);   border: 1px solid rgba(136,136,136,0.25); }
+        .badge-info  { background: rgba(100,181,246,0.15);color: var(--info);    border: 1px solid rgba(100,181,246,0.25); }
+
+        /* Notices */
+        .notice { display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+        .notice.visible { display: block; }
+        .notice a { color: inherit; font-weight: 700; }
+        .notice-warn  { background: rgba(255,152,0,0.12);   border: 1px solid rgba(255,152,0,0.3);   color: var(--warning); }
+        .notice-error { background: rgba(229,115,115,0.12); border: 1px solid rgba(229,115,115,0.3); color: var(--error); }
+
+        /* Config card */
+        .config-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+        .config-row { display: flex; gap: 8px; align-items: center; }
+        .config-row .input { flex: 1; }
+
+        /* Status message */
+        .status-msg { font-size: 12px; padding: 8px 12px; border-radius: 6px; margin-top: 10px; display: none; }
+        .status-msg.visible { display: block; }
+        .status-msg.ok  { background: rgba(129,199,132,0.15); color: var(--success); }
+        .status-msg.err { background: rgba(229,115,115,0.15); color: var(--error); }
+        .status-msg.info { background: rgba(100,181,246,0.12); color: var(--info); }
+
+        /* Loading / spinner */
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #555; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading { color: var(--muted); font-size: 13px; padding: 32px; text-align: center; }
+
+        /* Channel grid */
+        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+
+        /* Channel card */
+        .channel-card { background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid #3a3a3a; display: flex; flex-direction: column; }
+        .channel-card.empty { border-color: #2d2d2d; }
+        .channel-card.active-spool { border-color: rgba(79,195,247,0.45); }
+
+        /* Top color bar */
+        .color-bar { height: 5px; width: 100%; flex-shrink: 0; }
+
+        /* Channel header */
+        .ch-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; border-bottom: 1px solid #3a3a3a; }
+        .ch-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+
+        /* Filament summary */
+        .fil-summary { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid #3a3a3a; }
+        .color-swatch { width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; }
+        .fil-text { flex: 1; min-width: 0; }
+        .fil-vendor { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fil-material { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2; }
+        .fil-subtype { font-size: 12px; color: var(--muted); }
+
+        /* Detail rows */
+        .detail-rows { padding: 2px 14px 4px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-key { font-size: 11px; color: var(--muted); flex-shrink: 0; margin-right: 8px; }
+        .detail-val { font-family: monospace; font-size: 12px; color: var(--text); text-align: right; display: flex; align-items: center; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+        .detail-val.dim { color: var(--muted); font-size: 11px; }
+
+        /* Empty slot */
+        .empty-slot { padding: 28px; text-align: center; color: var(--muted); font-size: 13px; flex: 1; }
+
+        /* Spoolman section */
+        .sm-section { padding: 10px 14px; background: rgba(0,0,0,0.18); border-top: 1px solid #3a3a3a; margin-top: auto; }
+        .sm-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+        .sm-info { font-size: 12px; color: var(--muted); min-width: 0; flex: 1; }
+        .sm-info .sm-name { color: var(--text); font-size: 13px; font-weight: 500; word-break: break-word; }
+        .sm-info .sm-sub { font-size: 11px; margin-top: 2px; }
+        .sm-buttons { display: flex; gap: 5px; flex-wrap: wrap; flex-shrink: 0; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.visible { display: flex; }
+        .modal { background: var(--card); border-radius: 12px; padding: 24px; width: 500px; max-width: 100%; max-height: 88vh; overflow-y: auto; }
+        .modal-title { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 16px; }
+        .modal-sep { border: none; border-top: 1px solid #3a3a3a; margin: 14px 0; }
+        .field-group { margin-bottom: 12px; }
+        .field-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+        /* Spool list (link modal) */
+        .spool-search { margin-bottom: 8px; }
+        .spool-list { max-height: 260px; overflow-y: auto; border-radius: 6px; border: 1px solid #3a3a3a; }
+        .spool-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid #3a3a3a; }
+        .spool-item:last-child { border-bottom: none; }
+        .spool-item:hover { background: var(--hover); }
+        .spool-item.selected { background: rgba(79,195,247,0.1); outline: 1px solid var(--accent); }
+        .spool-dot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.2); }
+        .spool-text .spool-name { font-size: 13px; color: #fff; }
+        .spool-text .spool-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+        /* Color input group */
+        .color-input-group { display: flex; gap: 8px; align-items: center; }
+        .color-input-group .input { flex: 1; }
+        input[type="color"] { width: 38px; height: 38px; border: none; border-radius: 6px; cursor: pointer; padding: 2px; background: var(--item); flex-shrink: 0; }
+
+        /* Debug log pane */
+        .log-card { background: var(--card); border-radius: 8px; margin-top: 16px; border: 1px solid #3a3a3a; }
+        .log-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+        .log-header:hover { background: var(--hover); border-radius: 8px; }
+        .log-title { font-size: 13px; font-weight: 600; color: var(--muted); }
+        .log-controls { display: flex; gap: 6px; align-items: center; }
+        .log-body { display: none; }
+        .log-body.open { display: block; }
+        .log-output { background: #111; color: #ccc; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11px; line-height: 1.5; padding: 10px 14px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; border-top: 1px solid #3a3a3a; border-radius: 0 0 8px 8px; }
+        .log-output .log-ts { color: #666; }
+        .log-output .log-info { color: var(--info); }
+        .log-output .log-warn { color: var(--warning); }
+        .log-output .log-err { color: var(--error); }
+        .log-output .log-key { color: #888; }
+        .log-output .log-val { color: var(--accent); }
+
+        @media (max-width: 580px) {
+            .channel-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>
+        RFID Spools
+        <div class="header-right">
+            <span id="badge-moonraker" class="badge badge-muted">&#8857; Moonraker</span>
+            <span id="badge-spoolman" class="badge badge-muted">&#8857; Spoolman</span>
+            <button class="btn btn-warning btn-sm" id="btn-reread" onclick="rereadTags()">&#128225; Re-read Tags</button>
+            <button class="btn btn-primary btn-sm" onclick="refreshAll()">&#8635; Refresh</button>
+        </div>
+    </h1>
+
+    <!-- Notices -->
+    <div id="notice-auth" class="notice notice-warn">
+        Not authenticated. Please <a href="/">log in to Fluidd</a> first, then return to this page.
+    </div>
+    <div id="notice-no-url" class="notice notice-warn">
+        Spoolman URL not configured. Enter it below to enable Spoolman sync.
+    </div>
+
+    <!-- Config card -->
+    <div class="card" id="config-card">
+        <div class="card-header">
+            <span class="card-title">Spoolman Base URL</span>
+            <button class="btn btn-secondary btn-sm" onclick="toggleConfig()">Hide</button>
+        </div>
+        <div id="config-body">
+            <div class="config-desc">
+                Base URL of your Spoolman instance &mdash; saved in browser localStorage.
+                Requests are proxied via nginx on this printer (no CORS). Example: <code>http://192.168.1.50:7912</code><br>
+                Leave empty and save to disable Spoolman integration.
+            </div>
+            <div class="config-row">
+                <input type="url" class="input" id="spoolman-url-input" placeholder="http://spoolman-ip:7912" oninput="validateUrl()">
+                <button class="btn btn-primary" id="btn-save-url" onclick="saveUrl()" disabled>Save</button>
+                <button class="btn btn-secondary" id="btn-test-url" onclick="testProxy()" disabled>Test</button>
+            </div>
+            <div style="margin-top:8px">
+                <button class="btn btn-secondary btn-sm" id="btn-setup-fields" onclick="setupSpoolmanFields()" disabled>Setup Spoolman Custom Fields</button>
+                <span style="font-size:11px;color:var(--muted);margin-left:8px">Creates extra fields for RFID data (TD, subtype, drying, etc.)</span>
+            </div>
+            <div id="url-status" class="status-msg"></div>
+        </div>
+    </div>
+
+    <!-- Channel cards -->
+    <div id="channels-grid" class="channel-grid">
+        <div class="loading"><span class="spinner"></span> Loading RFID data&hellip;</div>
+    </div>
+
+    <!-- Debug log pane -->
+    <div class="log-card" id="log-card">
+        <div class="log-header" onclick="toggleLog()">
+            <span class="log-title">▶ Debug Log</span>
+            <div class="log-controls">
+                <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
+                    <input type="checkbox" id="log-autopoll" onchange="toggleAutoPoll()"> Auto-poll
+                </label>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();pollOnce()" style="padding:3px 8px;font-size:11px">Poll Now</button>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();fetchOpenRfidLog()" style="padding:3px 8px;font-size:11px">OpenRFID Log</button>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();fetchKlipperLog()" style="padding:3px 8px;font-size:11px">Klipper Log</button>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();copyLog()" style="padding:3px 8px;font-size:11px">Copy All</button>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();clearLog()" style="padding:3px 8px;font-size:11px">Clear</button>
+            </div>
+        </div>
+        <div class="log-body" id="log-body">
+            <div class="log-output" id="log-output"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Import to Spoolman modal ── -->
+<div class="modal-overlay" id="import-modal">
+    <div class="modal">
+        <div class="modal-title" id="import-title">Import to Spoolman</div>
+
+        <div class="field-group">
+            <div class="field-label">Vendor / Brand</div>
+            <input type="text" class="input" id="imp-vendor" placeholder="e.g. Kingroon">
+        </div>
+        <div class="field-row">
+            <div class="field-group">
+                <div class="field-label">Material <span style="color:var(--error)">*</span></div>
+                <input type="text" class="input" id="imp-material" placeholder="e.g. PETG">
+            </div>
+            <div class="field-group">
+                <div class="field-label">Sub-type</div>
+                <input type="text" class="input" id="imp-subtype" placeholder="e.g. Basic">
+            </div>
+        </div>
+        <div class="field-group">
+            <div class="field-label">Color (hex, without #)</div>
+            <div class="color-input-group">
+                <input type="text" class="input" id="imp-color" placeholder="e.g. 141E2C" maxlength="6" oninput="syncColorPicker()">
+                <input type="color" id="imp-color-picker" oninput="syncColorText()">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field-group">
+                <div class="field-label">Hotend temp (&deg;C)</div>
+                <input type="number" class="input" id="imp-hotend" placeholder="e.g. 235">
+            </div>
+            <div class="field-group">
+                <div class="field-label">Bed temp (&deg;C)</div>
+                <input type="number" class="input" id="imp-bed" placeholder="e.g. 70">
+            </div>
+        </div>
+        <div class="field-group">
+            <div class="field-label">Initial weight on spool (g, optional)</div>
+            <input type="number" class="input" id="imp-weight" placeholder="e.g. 1000">
+        </div>
+        <div class="field-group">
+            <div class="field-label">Diameter (mm, optional)</div>
+            <input type="number" class="input" id="imp-diam" placeholder="1.75" step="0.01">
+        </div>
+        <div class="field-row">
+            <div class="field-group">
+                <div class="field-label">Drying temp (&deg;C)</div>
+                <input type="number" class="input" id="imp-drying-temp" placeholder="e.g. 55">
+            </div>
+            <div class="field-group">
+                <div class="field-label">Drying time (h)</div>
+                <input type="number" class="input" id="imp-drying-time" placeholder="e.g. 8">
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field-group">
+                <div class="field-label">TD &mdash; Transmission Distance (mm)</div>
+                <input type="number" class="input" id="imp-td" placeholder="e.g. 1.56" step="0.01">
+            </div>
+            <div class="field-group">
+                <div class="field-label">Manufacturing date</div>
+                <input type="text" class="input" id="imp-mfg-date" placeholder="YYYYMMDD" maxlength="8">
+            </div>
+        </div>
+
+        <div id="imp-status" class="status-msg"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('import-modal')">Cancel</button>
+            <button class="btn btn-success" id="imp-confirm" onclick="doImport()">Import Spool</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Link to existing spool modal ── -->
+<div class="modal-overlay" id="link-modal">
+    <div class="modal">
+        <div class="modal-title">Link to Existing Spool</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px">
+            Select a spool from Spoolman. Its RFID tag UID will be stored in the spool comment for future automatic matching.
+        </div>
+        <input type="text" class="input spool-search" id="spool-search" placeholder="Search by name, material, vendor&hellip;" oninput="filterSpools()">
+        <div class="spool-list" id="spool-list"></div>
+        <div id="link-status" class="status-msg"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal('link-modal')">Cancel</button>
+            <button class="btn btn-primary" id="link-confirm" onclick="doLink()" disabled>Link &amp; Set Active</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getJWT() {
+    const key = `user-token-${window.location.host.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    let t = localStorage.getItem(key);
+    if (t) return t;
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('user-token-')) { t = localStorage.getItem(k); if (t) return t; }
+    }
+    return null;
+}
+function authHeaders() { const j = getJWT(); return j ? { Authorization: `Bearer ${j}` } : {}; }
+
+async function moonFetch(path, opts = {}) {
+    opts.headers = { ...authHeaders(), ...opts.headers };
+    const r = await fetch(path, opts);
+    if (r.status === 401) { $('notice-auth').classList.add('visible'); throw new Error('auth'); }
+    $('notice-auth').classList.remove('visible');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const text = await r.text();
+    return text ? JSON.parse(text) : {};
+}
+
+async function smFetch(path, opts = {}) {
+    if (!state.spoolmanUrl) throw new Error('no-spoolman-url');
+    if (!opts.headers) opts.headers = {};
+    opts.headers['X-Spoolman-Target'] = state.spoolmanUrl;
+    if (opts.body) opts.headers['Content-Type'] = 'application/json';
+    const r = await fetch(SM_PROXY + path, opts);
+    if (!r.ok) {
+        let detail = '';
+        try {
+            const j = await r.json();
+            if (Array.isArray(j.detail)) {
+                detail = j.detail.map(e => `${(e.loc||[]).join('.')}: ${e.msg}`).join('; ');
+            } else {
+                detail = j.message || j.detail || JSON.stringify(j);
+            }
+        } catch {}
+        throw new Error(`Spoolman ${r.status}${detail ? ': ' + detail : ''}`);
+    }
+    const text = await r.text();
+    return text ? JSON.parse(text) : {};
+}
+
+function rgb1ToHex(n) {
+    if (!n) return null;
+    return '#' + (n >>> 0).toString(16).padStart(6, '0').toUpperCase();
+}
+function uidToHex(bytes) {
+    if (!Array.isArray(bytes) || !bytes.length) return '';
+    return bytes.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('');
+}
+function colorDot(hex, size) {
+    size = size || 14;
+    return `<span style="display:inline-block;width:${size}px;height:${size}px;border-radius:50%;background:${escHtml(hex||'#555')};border:1px solid rgba(255,255,255,0.18);flex-shrink:0"></span>`;
+}
+function showMsg(id, msg, cls) {
+    const el = $(id);
+    el.textContent = msg;
+    el.className = `status-msg${cls ? ' ' + cls : ''} visible`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Spoolman constants
+//   SM_API   — API path prefix
+//   SM_PROXY — nginx proxy base; all Spoolman calls go through this to
+//              avoid browser CORS restrictions
+// ─────────────────────────────────────────────────────────────
+const SM_API   = '/api/v1';
+const SM_PROXY = '/rfid-spools/spoolman';
+
+// ─────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────
+const state = {
+    spoolmanUrl: localStorage.getItem('rfid-spoolman-url') || '',
+    channels: [],
+    spools: [],
+    activeSpoolId: null,
+};
+let importCtx = null;
+let linkCtx = null;
+let linkSelectedId = null;
+let allSpoolsForLink = [];
+
+// ─────────────────────────────────────────────────────────────
+// Config panel
+// ─────────────────────────────────────────────────────────────
+function initConfig() {
+    $('spoolman-url-input').value = state.spoolmanUrl;
+    validateUrl();
+    if (!state.spoolmanUrl) $('notice-no-url').classList.add('visible');
+}
+function toggleConfig() {
+    const b = $('config-body'); const btn = $('config-card').querySelector('button');
+    const hidden = b.style.display === 'none';
+    b.style.display = hidden ? '' : 'none';
+    btn.textContent = hidden ? 'Hide' : 'Show';
+}
+function validateUrl() {
+    const v = $('spoolman-url-input').value.trim();
+    let validUrl = false;
+    try { validUrl = v && ['http:', 'https:'].includes(new URL(v).protocol); } catch {}
+    $('btn-save-url').disabled = false;
+    $('btn-test-url').disabled = !validUrl;
+    $('btn-setup-fields').disabled = !validUrl;
+}
+function saveUrl() {
+    const v = $('spoolman-url-input').value.trim().replace(/\/$/, '');
+    state.spoolmanUrl = v;
+    if (v) {
+        localStorage.setItem('rfid-spoolman-url', v);
+        $('notice-no-url').classList.remove('visible');
+        showMsg('url-status', '\u2713 Saved', 'ok');
+    } else {
+        localStorage.removeItem('rfid-spoolman-url');
+        $('notice-no-url').classList.add('visible');
+        showMsg('url-status', 'Spoolman disabled', 'info');
+    }
+    refreshAll();
+}
+async function testProxy() {
+    const v = $('spoolman-url-input').value.trim().replace(/\/$/, '');
+    if (!v) return;
+    showMsg('url-status', '\u23f3 Testing\u2026', 'info');
+    try {
+        let ver = '?';
+        try {
+            const r = await fetch(SM_PROXY + SM_API + '/health', {
+                headers: { 'X-Spoolman-Target': v },
+                signal: AbortSignal.timeout(5000),
+            });
+            if (r.ok) { const d = await r.json(); ver = d.version || '?'; }
+            else throw new Error();
+        } catch {
+            const r = await fetch(SM_PROXY + SM_API + '/vendor', {
+                headers: { 'X-Spoolman-Target': v },
+                signal: AbortSignal.timeout(5000),
+            });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        }
+        showMsg('url-status', `\u2713 Spoolman reachable${ver !== '?' ? ' (v' + ver + ')' : ''}`, 'ok');
+    } catch (e) {
+        showMsg('url-status', `\u2717 Cannot reach Spoolman \u2014 ${e.message}`, 'err');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Setup Spoolman Custom Fields
+// ─────────────────────────────────────────────────────────────
+async function setupSpoolmanFields() {
+    const v = $('spoolman-url-input').value.trim().replace(/\/$/, '') || state.spoolmanUrl;
+    if (!v) { showMsg('url-status', 'Set Spoolman URL first', 'err'); return; }
+    showMsg('url-status', '\u23f3 Creating custom fields\u2026', 'info');
+    const fields = [
+        ['filament', 'td',             { name: 'Transmission Distance', field_type: 'float', unit: 'mm' }],
+        ['filament', 'subtype',         { name: 'Subtype',              field_type: 'text' }],
+        ['filament', 'hotend_min_temp', { name: 'Min Hotend Temp',      field_type: 'integer', unit: '\u00b0C' }],
+        ['filament', 'drying_temp',     { name: 'Drying Temperature',   field_type: 'integer', unit: '\u00b0C' }],
+        ['filament', 'drying_time',     { name: 'Drying Time',          field_type: 'integer', unit: 'h' }],
+        ['filament', 'mfg_date',        { name: 'Manufacturing Date',   field_type: 'text' }],
+        ['spool',    'rfid_uid',        { name: 'RFID Tag UID',         field_type: 'text' }],
+        ['spool',    'tigertag_product_id', { name: 'TigerTag Product ID', field_type: 'text' }],
+    ];
+    let ok = 0, skip = 0, fail = 0;
+    for (const [entity, key, body] of fields) {
+        try {
+            const r = await fetch(SM_PROXY + SM_API + '/field/' + entity + '/' + key, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Spoolman-Target': v },
+                body: JSON.stringify(body),
+            });
+            if (r.ok) ok++;
+            else if (r.status === 409) skip++;
+            else fail++;
+        } catch { fail++; }
+    }
+    const msg = `Fields: ${ok} created, ${skip} already exist, ${fail} failed`;
+    showMsg('url-status', (fail ? '\u26a0 ' : '\u2713 ') + msg, fail ? 'err' : 'ok');
+}
+
+// ─────────────────────────────────────────────────────────────
+// Data loading
+// ─────────────────────────────────────────────────────────────
+async function loadChannels() {
+    const data = await moonFetch('/printer/objects/query?filament_detect&print_task_config');
+    const status = (data.result || {}).status || {};
+    const fd  = status.filament_detect    || {};
+    const ptc = status.print_task_config  || {};
+
+    const fdInfo     = fd.info                     || [];
+    const ptcVendor  = ptc.filament_vendor         || [];
+    const ptcType    = ptc.filament_type           || [];
+    const ptcSub     = ptc.filament_sub_type       || [];
+    const ptcColor   = ptc.filament_color_rgba     || [];
+    const ptcExist   = ptc.filament_exist          || [];
+
+    const n = Math.max(fdInfo.length, ptcVendor.length, 4);
+    const channels = [];
+
+    for (let ch = 0; ch < n; ch++) {
+        const f = fdInfo[ch] || {};
+
+        // Core filament identity
+        // Firmware fills "NONE" as default when no RFID tag is present
+        let vendor   = (f.VENDOR   && f.VENDOR   !== 'NONE') ? f.VENDOR   : '';
+        let material = (f.MAIN_TYPE && f.MAIN_TYPE !== 'NONE') ? f.MAIN_TYPE : '';
+        let subtype  = (f.SUB_TYPE && f.SUB_TYPE  !== 'NONE') ? f.SUB_TYPE  : '';
+
+        // Colors
+        let rgb1 = f.RGB_1 || 0;
+        let alpha = (f.ALPHA != null) ? f.ALPHA : 255;
+        const extraRgb = [f.RGB_2, f.RGB_3, f.RGB_4, f.RGB_5].filter(Boolean);
+
+        // Physical properties (available on richer tags)
+        let hotendMin  = f.HOTEND_MIN_TEMP || 0;
+        let hotendMax  = f.HOTEND_MAX_TEMP || 0;
+        let bedTemp    = f.BED_TEMP        || 0;
+        let weight     = f.WEIGHT          || 0;
+        let diameter   = f.DIAMETER        || 0;  // mm * 100
+        let dryingTemp = f.DRYING_TEMP     || 0;
+        let dryingTime = f.DRYING_TIME     || 0;
+        let td         = f.TD              || null;  // transmission distance (mm)
+        let mfDate     = f.MF_DATE         || '';    // manufacturing date (YYYYMMDD)
+
+        // RFID identifier
+        const cardUid = uidToHex(f.CARD_UID);
+        const official = !!f.OFFICIAL;
+        const hasRfid = !!f.MAIN_TYPE;
+
+        // Fall back to print_task_config when no RFID data
+        if (!material) {
+            vendor   = ptcVendor[ch] || '';
+            material = ptcType[ch]   || '';
+            subtype  = ptcSub[ch]    || '';
+            const rgba = ptcColor[ch] || '';
+            if (rgba.length >= 6) {
+                rgb1 = parseInt(rgba.slice(0, 6), 16) || 0;
+                if (rgba.length >= 8) alpha = parseInt(rgba.slice(6, 8), 16);
+            }
+        }
+
+        const colorHex    = rgb1ToHex(rgb1);
+        const extraColors = extraRgb.map(rgb1ToHex).filter(Boolean);
+        const exist = ptcExist[ch] != null ? ptcExist[ch] : !!material;
+
+        channels.push({ ch, vendor, material, subtype, colorHex, alpha, extraColors,
+            cardUid, official, hasRfid, hotendMin, hotendMax, bedTemp, weight, diameter,
+            dryingTemp, dryingTime, td, mfDate, exist });
+    }
+    return channels;
+}
+
+async function loadSpools() {
+    const spools = await smFetch(SM_API + '/spool');
+    return Array.isArray(spools) ? spools.filter(s => !s.archived) : [];
+}
+
+async function loadActiveSpool() {
+    try {
+        const d = await moonFetch('/server/spoolman/status');
+        return (d.result || {}).spool_id || null;
+    } catch { return null; }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Matching
+// ─────────────────────────────────────────────────────────────
+function matchChannel(ch, spools) {
+    if (!ch.material) return { type: 'empty', spool: null };
+
+    // 1. Exact RFID UID match in comment ("rfid:XXXX")
+    if (ch.cardUid) {
+        const tag = `rfid:${ch.cardUid}`;
+        const s = spools.find(sp => (sp.comment || '').includes(tag));
+        if (s) return { type: 'uid', spool: s };
+    }
+
+    // 2. Vendor + material + color property match
+    const mat = ch.material.toUpperCase();
+    const col = ch.colorHex ? ch.colorHex.replace('#', '').toUpperCase() : null;
+    const ven = (ch.vendor || '').toLowerCase();
+
+    const s = spools.find(sp => {
+        const f = sp.filament; if (!f) return false;
+        const matOk = (f.material || '').toUpperCase() === mat;
+        const venOk = !ven
+            || (f.vendor && f.vendor.name.toLowerCase() === ven)
+            || (!f.vendor && ven === 'generic');
+        const colOk = !col || !f.color_hex
+            || f.color_hex.toUpperCase() === col;
+        return matOk && venOk && colOk;
+    });
+    if (s) return { type: 'prop', spool: s };
+
+    return { type: 'none', spool: null };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Rendering
+// ─────────────────────────────────────────────────────────────
+function renderGrid() {
+    const grid = $('channels-grid');
+    if (!state.channels.length) {
+        grid.innerHTML = '<div class="loading">No channel data.</div>';
+        return;
+    }
+    grid.innerHTML = state.channels
+        .map(ch => renderCard(ch, matchChannel(ch, state.spools), state.activeSpoolId))
+        .join('');
+}
+
+function renderCard(ch, match, activeId) {
+    const isEmpty   = !ch.material;
+    const isActive  = !!(match.spool && match.spool.id === activeId);
+    const allColors = [ch.colorHex, ...ch.extraColors].filter(Boolean);
+
+    const barBg = allColors.length > 1
+        ? `linear-gradient(90deg,${allColors.map((c,i,a)=>`${c} ${100*i/a.length}%,${c} ${100*(i+1)/a.length}%`).join(',')})`
+        : (allColors[0] || '#3a3a3a');
+
+    const swatchBg = allColors.length > 1
+        ? `conic-gradient(${allColors.map((c,i,a)=>`${c} ${360*i/a.length}deg ${360*(i+1)/a.length}deg`).join(',')})`
+        : (allColors[0] || '#555');
+
+    let badge = '';
+    if (isEmpty)           badge = `<span class="badge badge-muted">Empty</span>`;
+    else if (isActive)     badge = `<span class="badge badge-ok">\u2b24 Active</span>`;
+    else if (match.type === 'uid')  badge = `<span class="badge badge-ok">\u2b24 In Spoolman</span>`;
+    else if (match.type === 'prop') badge = `<span class="badge badge-info">\u2248 Matched</span>`;
+    else                   badge = `<span class="badge badge-warn">\uff0b Not in Spoolman</span>`;
+
+    // ── Detail rows — show all fields, "—" when empty ──
+    const dim = '\u2014'; // em-dash for missing values
+    const rows = [];
+    rows.push(['RFID UID', `<span class="detail-val dim">${ch.cardUid ? escHtml(ch.cardUid) : dim}</span>`]);
+    rows.push(['Official', `<span class="detail-val">${ch.official ? '<span class="badge badge-ok" style="font-size:10px">Yes</span>' : '<span class="badge badge-muted" style="font-size:10px">No</span>'}</span>`]);
+    rows.push(['Color', `<span class="detail-val">${ch.colorHex ? colorDot(ch.colorHex) + ' ' + escHtml(ch.colorHex) : dim}${ch.alpha != null && ch.alpha !== 255 ? ' \u03b1' + ch.alpha : ''}</span>`]);
+    if (ch.extraColors.length)
+        rows.push(['Extra colors', `<span class="detail-val">${ch.extraColors.map(c => colorDot(c) + ' ' + escHtml(c)).join('&ensp;')}</span>`]);
+    rows.push(['Hotend temp', `<span class="detail-val">${ch.hotendMin || ch.hotendMax ? (ch.hotendMin && ch.hotendMax ? `${ch.hotendMin} \u2013 ${ch.hotendMax}` : `${ch.hotendMin || ch.hotendMax}`) + ' \u00b0C' : dim}</span>`]);
+    rows.push(['Bed temp', `<span class="detail-val">${ch.bedTemp ? ch.bedTemp + ' \u00b0C' : dim}</span>`]);
+    rows.push(['Diameter', `<span class="detail-val">${ch.diameter ? (ch.diameter / 100).toFixed(2) + ' mm' : dim}</span>`]);
+    rows.push(['Weight', `<span class="detail-val">${ch.weight ? ch.weight + ' g' : dim}</span>`]);
+    rows.push(['Drying temp', `<span class="detail-val">${ch.dryingTemp ? ch.dryingTemp + ' \u00b0C' : dim}</span>`]);
+    rows.push(['Drying time', `<span class="detail-val">${ch.dryingTime ? ch.dryingTime + ' h' : dim}</span>`]);
+    rows.push(['TD', `<span class="detail-val">${ch.td != null ? ch.td + ' mm' : dim}</span>`]);
+    rows.push(['Mfg date', `<span class="detail-val">${ch.mfDate && ch.mfDate !== '19700101' ? escHtml(ch.mfDate) : dim}</span>`]);
+    if (!ch.hasRfid && ch.material)
+        rows.push(['Source', `<span class="badge badge-muted" style="font-size:10px">Manual / no RFID</span>`]);
+
+    const detailsHtml = rows.length ? `
+        <div class="detail-rows">
+            ${rows.map(([k,v]) => `
+            <div class="detail-row">
+                <span class="detail-key">${escHtml(k)}</span>
+                ${v}
+            </div>`).join('')}
+        </div>` : '';
+
+    // ── Spoolman section ──
+    let smHtml = '';
+    if (!isEmpty) {
+        const hasUrl = !!state.spoolmanUrl;
+        if (!hasUrl) {
+            smHtml = `<div class="sm-section"><span style="font-size:12px;color:var(--muted)">Configure Spoolman URL above</span></div>`;
+        } else if (match.type === 'none') {
+            smHtml = `<div class="sm-section">
+                <div class="sm-row">
+                    <span class="sm-info">Not found in Spoolman</span>
+                    <div class="sm-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="openImport(${ch.ch})">Import</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openLink(${ch.ch})">Link</button>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            const s = match.spool;
+            const f = s.filament || {};
+            const fName = f.name || [(f.vendor||{}).name, f.material].filter(Boolean).join(' ') || 'Spool';
+            const remaining = s.remaining_weight != null ? `${Math.round(s.remaining_weight)} g remaining` : '';
+            const matchNote = match.type === 'prop' ? '<div class="sm-sub" style="color:var(--warning)">\u26a0 matched by properties</div>' : '';
+            const setBtnHtml = isActive
+                ? `<span class="badge badge-ok" style="align-self:center">Active</span>`
+                : `<button class="btn btn-primary btn-sm" onclick="setActive(${s.id},${ch.ch})">Set active</button>`;
+            smHtml = `<div class="sm-section">
+                <div class="sm-row">
+                    <div class="sm-info">
+                        <div class="sm-name">${escHtml(fName)} <span style="color:var(--muted);font-size:11px">#${s.id}</span></div>
+                        ${remaining ? `<div class="sm-sub">${escHtml(remaining)}</div>` : ''}
+                        ${matchNote}
+                    </div>
+                    <div class="sm-buttons">
+                        ${setBtnHtml}
+                        <button class="btn btn-secondary btn-sm" onclick="openLink(${ch.ch})">Re-link</button>
+                        <button class="btn btn-secondary btn-sm" onclick="doUnlink(${ch.ch},${s.id})">Unlink</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+    }
+
+    const laneNames = ['E0','E1','E2','E3'];
+    const lane = laneNames[ch.ch] || `E${ch.ch}`;
+    const cardClass = `channel-card${isEmpty?' empty':''}${isActive?' active-spool':''}`;
+
+    return `<div class="${cardClass}" id="card-${ch.ch}">
+        <div class="color-bar" style="background:${barBg}"></div>
+        <div class="ch-header">
+            <span class="ch-label">Channel ${ch.ch} / ${lane}</span>
+            ${badge}
+        </div>
+        ${isEmpty ? `<div class="empty-slot">No filament detected</div>` : `
+        <div class="fil-summary">
+            <div class="color-swatch" style="background:${swatchBg}"></div>
+            <div class="fil-text">
+                ${ch.vendor ? `<div class="fil-vendor">${escHtml(ch.vendor)}</div>` : ''}
+                <div class="fil-material">${escHtml(ch.material)}${ch.subtype ? `<span style="font-size:12px;font-weight:400;color:var(--muted);margin-left:5px">${escHtml(ch.subtype)}</span>` : ''}</div>
+            </div>
+        </div>
+        ${detailsHtml}`}
+        ${smHtml}
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Connection badge helpers
+// ─────────────────────────────────────────────────────────────
+function badge(id, ok, label) {
+    const el = $(id);
+    if (ok === null) { el.className = 'badge badge-muted'; el.textContent = `\u2299 ${label}`; }
+    else if (ok)     { el.className = 'badge badge-ok';    el.textContent = `\u2b24 ${label}`; }
+    else             { el.className = 'badge badge-error'; el.textContent = `\u2298 ${label}`; }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Set active spool
+// ─────────────────────────────────────────────────────────────
+async function setActive(spoolId, ch) {
+    try {
+        await moonFetch('/server/spoolman/spool_id', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spool_id: spoolId }),
+        });
+        state.activeSpoolId = spoolId;
+        renderGrid();
+    } catch (e) {
+        alert(`Could not set active spool: ${e.message}`);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Import modal
+// ─────────────────────────────────────────────────────────────
+function openImport(chIdx) {
+    const ch = state.channels.find(c => c.ch === chIdx);
+    if (!ch) return;
+    importCtx = ch;
+    $('import-title').textContent = `Import Channel ${chIdx} to Spoolman`;
+    $('imp-vendor').value   = ch.vendor   || '';
+    $('imp-material').value = ch.material || '';
+    $('imp-subtype').value  = ch.subtype  || '';
+    const hex = ch.colorHex ? ch.colorHex.replace('#','') : '';
+    $('imp-color').value = hex;
+    if (hex.length === 6) $('imp-color-picker').value = ch.colorHex;
+    $('imp-hotend').value = ch.hotendMax || ch.hotendMin || '';
+    $('imp-bed').value    = ch.bedTemp || '';
+    $('imp-weight').value = ch.weight || '';
+    $('imp-diam').value   = ch.diameter ? (ch.diameter / 100).toFixed(2) : '';
+    $('imp-drying-temp').value = ch.dryingTemp || '';
+    $('imp-drying-time').value = ch.dryingTime || '';
+    $('imp-td').value          = ch.td || '';
+    $('imp-mfg-date').value    = ch.mfDate && ch.mfDate !== '19700101' ? ch.mfDate : '';
+    $('imp-status').className = 'status-msg';
+    $('imp-confirm').disabled = false;
+    $('import-modal').classList.add('visible');
+}
+function syncColorText() {
+    $('imp-color').value = $('imp-color-picker').value.replace('#','').toUpperCase();
+}
+function syncColorPicker() {
+    const v = $('imp-color').value.trim();
+    if (/^[0-9A-Fa-f]{6}$/.test(v)) $('imp-color-picker').value = '#' + v;
+}
+
+async function doImport() {
+    const ch = importCtx;
+    const vendor   = $('imp-vendor').value.trim();
+    const material = $('imp-material').value.trim();
+    const subtype  = $('imp-subtype').value.trim();
+    const colorRaw = $('imp-color').value.trim().replace('#','');
+    const hotend   = parseInt($('imp-hotend').value) || null;
+    const bed      = parseInt($('imp-bed').value) || null;
+    const weight   = parseFloat($('imp-weight').value) || null;
+    const diam     = parseFloat($('imp-diam').value) || null;
+    const dryingTemp = parseInt($('imp-drying-temp').value) || null;
+    const dryingTime = parseInt($('imp-drying-time').value) || null;
+    const td         = parseFloat($('imp-td').value) || null;
+    const mfgDate    = $('imp-mfg-date').value.trim();
+
+    if (!material) { showMsg('imp-status', 'Material is required', 'err'); return; }
+
+    $('imp-confirm').disabled = true;
+    showMsg('imp-status', '\u23f3 Importing\u2026', 'info');
+
+    try {
+        // 1. Find or create vendor
+        let vendorId = null;
+        if (vendor) {
+            const vlist = await smFetch(SM_API + '/vendor');
+            const ev = vlist.find(v => v.name.toLowerCase() === vendor.toLowerCase());
+            if (ev) {
+                vendorId = ev.id;
+            } else {
+                const nv = await smFetch(SM_API + '/vendor', { method:'POST', body: JSON.stringify({ name: vendor }) });
+                vendorId = nv.id;
+            }
+        }
+
+        // 2. Find or create filament
+        const colorHex = /^[0-9A-Fa-f]{6}$/.test(colorRaw) ? colorRaw.toUpperCase() : null;
+        const flist = await smFetch(SM_API + '/filament');
+        let filament = flist.find(f => {
+            const matOk = (f.material||'').toUpperCase() === material.toUpperCase();
+            const venOk = (f.vendor ? f.vendor.id : null) === vendorId;
+            const colOk = !colorHex || !f.color_hex || f.color_hex.toUpperCase() === colorHex;
+            return matOk && venOk && colOk;
+        });
+        if (!filament) {
+            const nameParts = [vendor, material, subtype].filter(Boolean);
+            const fd = { name: nameParts.join(' '), material };
+            if (vendorId != null) fd.vendor_id = vendorId;
+            if (colorHex)        fd.color_hex = colorHex;
+            fd.diameter = diam || 1.75;
+            fd.density = 1.24;
+            const settings = {};
+            if (hotend) settings.extruder_temp = hotend;
+            if (bed)    settings.bed_temp = bed;
+            if (Object.keys(settings).length) fd.settings = settings;
+
+            // Extra fields (require Setup Spoolman Custom Fields)
+            // Spoolman extra values must be valid JSON literals:
+            //   text fields → JSON.stringify() to produce '"value"'
+            //   numeric fields → String() to produce '50' or '1.4'
+            const extra = {};
+            if (subtype)    extra.subtype = JSON.stringify(subtype);
+            if (dryingTemp) extra.drying_temp = String(dryingTemp);
+            if (dryingTime) extra.drying_time = String(dryingTime);
+            if (td)         extra.td = String(td);
+            if (mfgDate)    extra.mfg_date = JSON.stringify(mfgDate);
+            if (Object.keys(extra).length) fd.extra = extra;
+
+            filament = await smFetch(SM_API + '/filament', { method:'POST', body: JSON.stringify(fd) });
+        }
+
+        // 3. Create spool
+        const sd = { filament_id: filament.id };
+        if (ch.cardUid) sd.comment = `rfid:${ch.cardUid}`;
+        if (weight)     sd.initial_weight = weight;
+        // Store UID in extra field too (if custom fields are set up)
+        if (ch.cardUid) sd.extra = { rfid_uid: JSON.stringify(ch.cardUid) };
+        const spool = await smFetch(SM_API + '/spool', { method:'POST', body: JSON.stringify(sd) });
+
+        // 4. Set active
+        try {
+            await moonFetch('/server/spoolman/spool_id', {
+                method:'POST',
+                headers: { 'Content-Type':'application/json' },
+                body: JSON.stringify({ spool_id: spool.id }),
+            });
+            state.activeSpoolId = spool.id;
+        } catch {}
+
+        showMsg('imp-status', `\u2713 Created spool #${spool.id} and set as active`, 'ok');
+        state.spools = await loadSpools();
+        renderGrid();
+        setTimeout(() => closeModal('import-modal'), 1500);
+    } catch (e) {
+        showMsg('imp-status', `\u2717 ${e.message}`, 'err');
+        $('imp-confirm').disabled = false;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Link modal
+// ─────────────────────────────────────────────────────────────
+function openLink(chIdx) {
+    const ch = state.channels.find(c => c.ch === chIdx);
+    if (!ch) return;
+    linkCtx = ch;
+    linkSelectedId = null;
+    $('link-confirm').disabled = true;
+    $('link-status').className = 'status-msg';
+    $('spool-search').value = '';
+    allSpoolsForLink = state.spools;
+    renderSpoolList(state.spools);
+    $('link-modal').classList.add('visible');
+}
+function filterSpools() {
+    const q = $('spool-search').value.trim().toLowerCase();
+    renderSpoolList(q
+        ? allSpoolsForLink.filter(s => {
+            const f = s.filament || {};
+            return (f.name||'').toLowerCase().includes(q)
+                || (f.material||'').toLowerCase().includes(q)
+                || ((f.vendor||{}).name||'').toLowerCase().includes(q)
+                || (s.comment||'').toLowerCase().includes(q);
+        })
+        : allSpoolsForLink);
+}
+function renderSpoolList(spools) {
+    const list = $('spool-list');
+    if (!spools.length) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">No spools found</div>';
+        return;
+    }
+    list.innerHTML = spools.map(s => {
+        const f = s.filament || {};
+        const col = f.color_hex ? `#${f.color_hex}` : '#555';
+        const name = f.name || [(f.vendor||{}).name, f.material].filter(Boolean).join(' ') || 'Spool';
+        const meta = [f.material, (f.vendor||{}).name, s.remaining_weight != null ? `${Math.round(s.remaining_weight)}g` : null].filter(Boolean).join(' \u00b7 ');
+        const sel = linkSelectedId === s.id ? ' selected' : '';
+        return `<div class="spool-item${sel}" onclick="selectSpool(${s.id},this)">
+            <span class="spool-dot" style="background:${escHtml(col)}"></span>
+            <div class="spool-text">
+                <div class="spool-name">${escHtml(name)} <span style="color:var(--muted);font-size:11px">#${s.id}</span></div>
+                <div class="spool-meta">${escHtml(meta)}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+function selectSpool(id, el) {
+    $('spool-list').querySelectorAll('.spool-item').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    linkSelectedId = id;
+    $('link-confirm').disabled = false;
+}
+async function doLink() {
+    if (!linkCtx || !linkSelectedId) return;
+    const ch = linkCtx;
+    const spool = state.spools.find(s => s.id === linkSelectedId);
+    if (!spool) return;
+    $('link-confirm').disabled = true;
+    showMsg('link-status', '\u23f3 Linking\u2026', 'info');
+    try {
+        // Tag spool with UID
+        if (ch.cardUid) {
+            const tag = `rfid:${ch.cardUid}`;
+            const existing = spool.comment || '';
+            if (!existing.includes(tag)) {
+                await smFetch(SM_API + `/spool/${spool.id}`, {
+                    method:'PATCH',
+                    body: JSON.stringify({ comment: existing ? `${existing} ${tag}` : tag }),
+                });
+            }
+        }
+        // Set active
+        await moonFetch('/server/spoolman/spool_id', {
+            method:'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify({ spool_id: spool.id }),
+        });
+        state.activeSpoolId = spool.id;
+        showMsg('link-status', `\u2713 Linked to spool #${spool.id} and set as active`, 'ok');
+        state.spools = await loadSpools();
+        renderGrid();
+        setTimeout(() => closeModal('link-modal'), 1500);
+    } catch (e) {
+        showMsg('link-status', `\u2717 ${e.message}`, 'err');
+        $('link-confirm').disabled = false;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Modal helpers
+// ─────────────────────────────────────────────────────────────
+function closeModal(id) { $(id).classList.remove('visible'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Unlink spool
+// ─────────────────────────────────────────────────────────────
+async function doUnlink(chIdx, spoolId) {
+    const ch = state.channels.find(c => c.ch === chIdx);
+    if (!ch) return;
+    try {
+        const spool = state.spools.find(s => s.id === spoolId);
+        if (spool && ch.cardUid) {
+            const tag = `rfid:${ch.cardUid}`;
+            const comment = (spool.comment || '').replace(tag, '').replace(/  +/g, ' ').trim();
+            await smFetch(SM_API + `/spool/${spool.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ comment }),
+            });
+        }
+        // Clear active spool if it was the active one
+        if (state.activeSpoolId === spoolId) {
+            try {
+                await moonFetch('/server/spoolman/spool_id', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spool_id: 0 }),
+                });
+                state.activeSpoolId = null;
+            } catch {}
+        }
+        state.spools = await loadSpools();
+        renderGrid();
+    } catch (e) {
+        alert(`Unlink failed: ${e.message}`);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main refresh
+// ─────────────────────────────────────────────────────────────
+async function refreshAll() {
+    $('channels-grid').innerHTML = '<div class="loading"><span class="spinner"></span> Loading RFID data\u2026</div>';
+    badge('badge-moonraker', null, 'Moonraker');
+    badge('badge-spoolman',  null, 'Spoolman');
+
+    try {
+        [state.channels, state.activeSpoolId] = await Promise.all([loadChannels(), loadActiveSpool()]);
+        badge('badge-moonraker', true, 'Moonraker');
+    } catch (e) {
+        badge('badge-moonraker', false, 'Moonraker');
+        $('channels-grid').innerHTML = e.message !== 'auth'
+            ? `<div class="loading" style="color:var(--error)">Moonraker error: ${escHtml(e.message)}</div>`
+            : '<div class="loading" style="color:var(--error)">Authentication required.</div>';
+        return;
+    }
+
+    if (state.spoolmanUrl) {
+        try {
+            state.spools = await loadSpools();
+            badge('badge-spoolman', true, 'Spoolman');
+        } catch (e) {
+            badge('badge-spoolman', false, 'Spoolman');
+            state.spools = [];
+        }
+    } else {
+        state.spools = [];
+        badge('badge-spoolman', null, 'Spoolman');
+    }
+
+    renderGrid();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Re-read RFID tags
+// ─────────────────────────────────────────────────────────────
+async function rereadTags() {
+    const btn = $('btn-reread');
+    btn.disabled = true;
+    btn.textContent = '\u23f3 Reading\u2026';
+    try {
+        // Restart OpenRFID via firmware-config action API
+        // (on startup it re-reads all slots with state=1)
+        const resp = await fetch('/firmware-config/api/action/restart-openrfid', {
+            method: 'POST',
+            headers: authHeaders(),
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const text = await resp.text();
+        if (text.includes('ERROR')) throw new Error(text.split('\n').filter(l => l.includes('ERROR')).join('; '));
+        // Wait for OpenRFID to start, connect to Klipper, and read tags
+        await new Promise(ok => setTimeout(ok, 8000));
+        await refreshAll();
+    } catch (e) {
+        alert('Re-read failed: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '\ud83d\udce1 Re-read Tags';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Debug Log
+// ─────────────────────────────────────────────────────────────
+let logAutoPollTimer = null;
+
+function toggleLog() {
+    const body = $('log-body');
+    const title = $('log-card').querySelector('.log-title');
+    const isOpen = body.classList.toggle('open');
+    title.textContent = (isOpen ? '\u25bc' : '\u25b6') + ' Debug Log';
+}
+
+function logAppend(cls, text) {
+    const out = $('log-output');
+    const ts = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.innerHTML = `<span class="log-ts">[${ts}]</span> <span class="${cls}">${text}</span>`;
+    out.appendChild(line);
+    // Keep max 500 lines
+    while (out.children.length > 500) out.removeChild(out.firstChild);
+    out.scrollTop = out.scrollHeight;
+}
+
+function logJson(label, obj) {
+    // Pretty-print with syntax coloring
+    const json = JSON.stringify(obj, null, 2);
+    const colored = escHtml(json)
+        .replace(/"([^"]+)"\s*:/g, '<span class="log-key">"$1"</span>:')
+        .replace(/: ("[^"]*")/g, ': <span class="log-val">$1</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="log-val">$1</span>')
+        .replace(/: (true|false|null)/g, ': <span class="log-val">$1</span>');
+    logAppend('log-info', escHtml(label));
+    const out = $('log-output');
+    const pre = document.createElement('div');
+    pre.style.cssText = 'margin:0 0 4px 16px;';
+    pre.innerHTML = colored;
+    out.appendChild(pre);
+    out.scrollTop = out.scrollHeight;
+}
+
+function clearLog() { $('log-output').innerHTML = ''; }
+
+function copyLog() {
+    const out = $('log-output');
+    const text = out.innerText;
+    navigator.clipboard.writeText(text).then(
+        () => logAppend('log-info', 'Copied to clipboard (' + text.length + ' chars)'),
+        () => {
+            // Fallback for older browsers / insecure contexts
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px';
+            document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            logAppend('log-info', 'Copied to clipboard (fallback)');
+        }
+    );
+}
+
+async function fetchOpenRfidLog() {
+    logAppend('log-info', 'Fetching OpenRFID syslog ...');
+    try {
+        // Use firmware-config action API to read syslog
+        const resp = await fetch('/firmware-config/api/action/openrfid-log', {
+            method: 'POST',
+            headers: authHeaders(),
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const text = await resp.text();
+        // Strip the header/footer lines added by firmware-config
+        const lines = text.split('\n').filter(l =>
+            l && !l.startsWith('===') && !l.startsWith('SUCCESS:') && !l.startsWith('ERROR:') && l !== 'Fetching OpenRFID log entries...'
+        );
+        if (lines.length) {
+            logAppend('log-info', '\u2500\u2500 OpenRFID syslog (last lines) \u2500\u2500');
+            lines.forEach(line => {
+                const cls = /error|fail|exception/i.test(line) ? 'log-err'
+                    : /warn/i.test(line) ? 'log-warn' : 'log-info';
+                logAppend(cls, escHtml(line));
+            });
+        } else {
+            logAppend('log-warn', 'No OpenRFID entries in syslog.');
+        }
+    } catch (e) {
+        logAppend('log-err', 'Could not fetch syslog: ' + escHtml(e.message));
+        logAppend('log-warn', 'Tip: SSH into the printer and run:');
+        logAppend('log-warn', '  logread | grep -i openrfid | tail -50');
+        logAppend('log-warn', '  # or for live following:');
+        logAppend('log-warn', '  logread -f | grep -i openrfid');
+    }
+}
+
+async function fetchKlipperLog() {
+    logAppend('log-info', 'Fetching klippy.log tail (filament_detect lines) ...');
+    try {
+        // Moonraker serves klippy.log via its file manager
+        const resp = await fetch('/server/files/klippy.log', { headers: authHeaders() });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const text = await resp.text();
+        // Get last ~200 lines, filter for filament_detect related entries  
+        const lines = text.split('\n');
+        const tail = lines.slice(-500);
+        const filtered = tail.filter(l =>
+            /filament_detect|filament_info|RFID|rfid|openrfid|tag_read|nfc/i.test(l)
+        );
+        if (filtered.length) {
+            logAppend('log-info', `\u2500\u2500 klippy.log (${filtered.length} matching lines) \u2500\u2500`);
+            filtered.slice(-80).forEach(line => {
+                const cls = /error|fail|exception/i.test(line) ? 'log-err'
+                    : /warn/i.test(line) ? 'log-warn' : 'log-info';
+                logAppend(cls, escHtml(line));
+            });
+        } else {
+            logAppend('log-warn', 'No filament_detect/RFID entries in recent klippy.log');
+            // Show last 20 lines as fallback
+            logAppend('log-info', '\u2500\u2500 klippy.log (last 20 lines) \u2500\u2500');
+            lines.slice(-20).forEach(l => logAppend('log-info', escHtml(l)));
+        }
+    } catch (e) {
+        logAppend('log-err', 'Could not fetch klippy.log: ' + escHtml(e.message));
+    }
+}
+
+async function pollOnce() {
+    logAppend('log-info', 'Polling filament_detect + print_task_config ...');
+    try {
+        const data = await moonFetch('/printer/objects/query?filament_detect&print_task_config');
+        const status = (data.result || {}).status || {};
+        const fd  = status.filament_detect   || {};
+        const ptc = status.print_task_config || {};
+
+        const fdInfo = fd.info || [];
+        for (let i = 0; i < fdInfo.length; i++) {
+            const f = fdInfo[i];
+            const keys = Object.keys(f).filter(k => {
+                const v = f[k];
+                if (v === 0 || v === '' || v === 'NONE') return false;
+                if (Array.isArray(v) && v.every(x => x === 0)) return false;
+                return true;
+            });
+            if (keys.length === 0) {
+                logAppend('log-warn', `CH${i}: empty / no tag`);
+            } else {
+                logJson(`CH${i} filament_detect.info[${i}]`, f);
+            }
+        }
+
+        // Also log print_task_config arrays (summary only)
+        const ptcSummary = {};
+        for (const k of Object.keys(ptc)) {
+            const v = ptc[k];
+            if (Array.isArray(v) && v.some(x => x && x !== 'NONE' && x !== '00000000')) ptcSummary[k] = v;
+        }
+        if (Object.keys(ptcSummary).length) {
+            logJson('print_task_config (non-empty)', ptcSummary);
+        }
+
+        logAppend('log-info', `Poll complete — ${fdInfo.length} channel(s)`);
+    } catch (e) {
+        logAppend('log-err', 'Poll error: ' + escHtml(e.message));
+    }
+}
+
+function toggleAutoPoll() {
+    if ($('log-autopoll').checked) {
+        // Open the log pane if not already
+        if (!$('log-body').classList.contains('open')) toggleLog();
+        pollOnce();
+        logAutoPollTimer = setInterval(pollOnce, 3000);
+    } else {
+        clearInterval(logAutoPollTimer);
+        logAutoPollTimer = null;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────
+initConfig();
+refreshAll();
+</script>
+</body>
+</html>

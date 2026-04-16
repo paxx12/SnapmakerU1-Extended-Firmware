@@ -1,0 +1,113 @@
+Author: paxx12 <245230251+paxx12@users.noreply.github.com>
+Date:   Tue Apr 15 12:00:00 2026 +0200
+
+    Add TigerTag TD and bed temperature extraction
+
+    Parse Transmission Distance (TD) from user data offset 44-45
+    (2-byte big-endian uint16, value/10 = mm) and bed temp min/max
+    from offsets 30-31 per TigerTag V1.0 spec.
+
+    Add td attribute to GenericFilament with default 0.0 so existing
+    processors are unaffected.
+
+diff --git a/tag/tigertag/constants.py b/tag/tigertag/constants.py
+index b7e42f9..e1a2b3c 100644
+--- a/tag/tigertag/constants.py
++++ b/tag/tigertag/constants.py
+@@ -22,6 +22,9 @@ OFF_TEMP_MAX = 26
+ OFF_DRY_TEMP = 28
+ OFF_DRY_TIME = 29
+ OFF_TIMESTAMP = 32
++OFF_BED_TEMP_MIN = 30
++OFF_BED_TEMP_MAX = 31
++OFF_TD = 44
+ OFF_METADATA = 48
+ OFF_SIGNATURE = 80
+ 
+diff --git a/tag/tigertag/processor.py b/tag/tigertag/processor.py
+index 7d8b5ea..f3c1d2e 100644
+--- a/tag/tigertag/processor.py
++++ b/tag/tigertag/processor.py
+@@ -57,6 +57,18 @@ class TigerTagProcessor(MifareUltralightTagProcessor):
+             dry_temp = user_data[Constants.OFF_DRY_TEMP]
+             dry_time = user_data[Constants.OFF_DRY_TIME]
+ 
++            bed_temp_min = user_data[Constants.OFF_BED_TEMP_MIN]
++            bed_temp_max = user_data[Constants.OFF_BED_TEMP_MAX]
++
++            # TD (Transmission Distance) is in the extended data area
++            td_raw = 0
++            td_mm = 0.0
++            if len(user_data) > Constants.OFF_TD + 1:
++                td_raw = struct.unpack_from('>H', user_data, Constants.OFF_TD)[0]
++                # Valid range per TigerTag spec: 1-1000 (0.1-100.0 mm)
++                if 0 < td_raw <= 1000:
++                    td_mm = td_raw / 10.0
++
+             timestamp_raw = struct.unpack_from('>I', user_data, Constants.OFF_TIMESTAMP)[0]
+ 
+             material_label = Constants.MATERIAL_ID_TO_LABEL.get(material_id, f"Unknown({material_id})")
+@@ -84,6 +96,8 @@ class TigerTagProcessor(MifareUltralightTagProcessor):
+             self.logger.debug("  Nozzle Temp: %d-%d °C", temp_min, temp_max)
+             self.logger.debug("  Dry: %d °C for %d hours", dry_temp, dry_time)
+             self.logger.debug("  Timestamp: %d (%s)", timestamp_raw, manufacturing_date)
++            self.logger.debug("  Bed Temp: %d-%d °C", bed_temp_min, bed_temp_max)
++            self.logger.debug("  TD: raw=%d → %.1f mm", td_raw, td_mm)
+ 
+             return GenericFilament(
+                 source_processor=self.name,
+@@ -97,10 +111,11 @@ class TigerTagProcessor(MifareUltralightTagProcessor):
+                 weight_grams=weight_grams,
+                 hotend_min_temp_c=float(temp_min),
+                 hotend_max_temp_c=float(temp_max),
+-                bed_temp_c=0.0,
++                bed_temp_c=float(max(bed_temp_min, bed_temp_max)),
+                 drying_temp_c=float(dry_temp),
+                 drying_time_hours=float(dry_time),
+                 manufacturing_date=manufacturing_date,
++                td=td_mm,
+             )
+ 
+         except Exception as e:
+diff --git a/filament/generic.py b/filament/generic.py
+index 73cf147..a5b2c3d 100644
+--- a/filament/generic.py
++++ b/filament/generic.py
+@@ -25,7 +25,8 @@ class GenericFilament:
+                  bed_temp_c: float,
+                  drying_temp_c: float,
+                  drying_time_hours: float,
+-                 manufacturing_date: str # ISO 8601 date string
++                 manufacturing_date: str, # ISO 8601 date string
++                 td: float = 0.0 # Transmission Distance in mm
+                  ):
+         self.source_processor = source_processor
+         self.unique_id = unique_id
+@@ -40,6 +41,7 @@ class GenericFilament:
+         self.drying_temp_c = drying_temp_c
+         self.drying_time_hours = drying_time_hours
+         self.manufacturing_date = manufacturing_date
++        self.td = td
+ 
+         if "CF" in self.modifiers:
+             self.type += "-CF"
+@@ -59,7 +61,8 @@ class GenericFilament:
+             f"- Hotend Temp: {self.hotend_min_temp_c:.1f}C - {self.hotend_max_temp_c:.1f}C",
+             f"- Bed Temp: {self.bed_temp_c:.1f}C",
+             f"- Drying: {self.drying_temp_c:.1f}C for {self.drying_time_hours:.1f} hours",
+-            f"- Manufactured on: {self.manufacturing_date}"
++            f"- Manufactured on: {self.manufacturing_date}",
++            f"- TD: {self.td:.1f} mm"
+         ])
+ 
+     @property
+@@ -83,7 +86,8 @@ class GenericFilament:
+             "bed_temp_c": self.bed_temp_c,
+             "drying_temp_c": self.drying_temp_c,
+             "drying_time_hours": self.drying_time_hours,
+-            "manufacturing_date": self.manufacturing_date
++            "manufacturing_date": self.manufacturing_date,
++            "td": self.td
+         }
+     
+     @staticmethod
