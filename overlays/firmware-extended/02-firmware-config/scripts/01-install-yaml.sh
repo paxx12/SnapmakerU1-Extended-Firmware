@@ -8,4 +8,4 @@ fi
 set -eo pipefail
 
 echo ">> Installing PyYAML via pip3"
-chroot_firmware.sh "$ROOTFS_DIR" /usr/bin/pip3 install pyyaml
+cache_pip.sh "$ROOTFS_DIR" pyyaml
