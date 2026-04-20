@@ -27,6 +27,7 @@ export ROOTFS_IMG="$BUILD_DIR/rk-unpacked/rootfs.img"
 # Cache dirs for build tools
 export GOPATH="$ROOT_DIR/tmp/cache-go"
 export CCACHE_DIR="$ROOT_DIR/tmp/ccache"
+export CHROOT_CACHE="$ROOT_DIR/tmp/cache-chroot"
 
 rm -rf "$BUILD_DIR"
 

@@ -11,4 +11,4 @@ echo ">> Installing screen-apps"
 make -C "$ROOT_DIR/deps/screen-apps" install DESTDIR="$ROOTFS_DIR"
 
 echo ">> Installing Python dependencies for fb-http"
-chroot_firmware.sh "$ROOTFS_DIR" /usr/bin/pip3 install $(cat "$ROOT_DIR/deps/screen-apps/apps/fb-http/requirements.txt")
+cache_pip.sh "$ROOTFS_DIR" $(cat "$ROOT_DIR/deps/screen-apps/apps/fb-http/requirements.txt")
