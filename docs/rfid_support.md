@@ -190,7 +190,7 @@ Enable them by removing the `#` prefix from the tag processor.
 - Ensure you place on tag on the side next to the U1 housing, which will depend on which side of the printer you load the spool
 - If a vendor tag is present, for example Bambu Lab filament tags, this will usually interfere with reading a user-provided tag (you can cover up the vendor tag with foil tape)
 - Manually read tag: `FILAMENT_DT_UPDATE CHANNEL=<n>` then `FILAMENT_DT_QUERY CHANNEL=<n>`
-- Check `klippy.log` for detection messages
+- For OpenRFID issues, open Fluidd **Logs** and fetch `openrfid.log`
 
 **OpenPrintTag tags don't work:**
 - Expected - OpenPrintTag uses ISO15693 which is not supported by U1 hardware
