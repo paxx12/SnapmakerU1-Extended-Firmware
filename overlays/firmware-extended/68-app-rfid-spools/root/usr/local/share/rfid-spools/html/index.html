@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFID Spool Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>RFID Spool Management</h1>
+    <div id="status-bar" class="status-bar">
+        <span id="connection-status" class="status-dot disconnected"></span>
+        <span id="connection-text">Connecting...</span>
+        <button id="scan-btn" class="scan-btn" onclick="scanAll()">Scan All</button>
+    </div>
+</header>
+
+<main>
+    <section id="channels" class="channels-grid">
+        <!-- Channel cards rendered by JS -->
+    </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
