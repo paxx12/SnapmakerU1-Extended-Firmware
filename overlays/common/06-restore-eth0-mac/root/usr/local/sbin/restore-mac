@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -eu
+
+is_locally_administered_unicast_mac() {
+  case "$1" in
+    [0-9a-fA-F][0-9a-fA-F]:*)
+      first_octet="${1%%:*}"
+      first_octet_value=$((0x$first_octet))
+      [[ $((first_octet_value & 0x02)) -ne 0 ]] && [[ $((first_octet_value & 0x01)) -eq 0 ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_valid_mac_address() {
+  [[ "$1" =~ ^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$ ]]
+}
+
+generate_random_mac() {
+  local raw
+
+  raw="$(hexdump -n 5 -v -e '/1 "%02x"' /dev/urandom)"
+
+  printf 'fe:%s:%s:%s:%s:%s\n' \
+    "${raw:0:2}" \
+    "${raw:2:2}" \
+    "${raw:4:2}" \
+    "${raw:6:2}" \
+    "${raw:8:2}"
+}
+
+ifname="${1:-}"
+
+if [[ $# -ne 1 || -z "$ifname" ]]; then
+  echo "Usage: $0 <ifname>" >&2
+  exit 1
+fi
+
+if [[ ! -e "/sys/class/net/$ifname/address" ]]; then
+  echo "Interface '$ifname' does not exist" >&2
+  exit 1
+fi
+
+current_mac="$(cat "/sys/class/net/$ifname/address" 2>/dev/null || true)"
+if ! is_locally_administered_unicast_mac "$current_mac"; then
+  echo "The $ifname MAC is not random, leaving it unchanged" >&2
+  exit 0
+fi
+
+mac_dir="/oem/printer_data/network"
+mac_file="$mac_dir/${ifname}.address"
+mkdir -p "$mac_dir"
+
+stable_mac="$(cat "$mac_file" 2>/dev/null || true)"
+if ! is_valid_mac_address "$stable_mac"; then
+  stable_mac="$(generate_random_mac)"
+  printf '%s\n' "$stable_mac" > "$mac_file"
+fi
+
+[[ "$current_mac" == "$stable_mac" ]] || /sbin/ip link set dev "$ifname" address "$stable_mac"
