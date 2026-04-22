@@ -170,56 +170,23 @@ DEFAULT_CONFIG = {
         "mfg_date": False,
         "modifiers": False,
     },
-    "tag_mappings": {
-        "tigertag": [
-            {"to": "manufacturer",    "from": "manufacturer"},
-            {"to": "type",            "from": "type"},
-            {"to": "modifiers",       "from": "modifiers"},
-            {"to": "color",           "from": "colors"},
-            {"to": "hotend_min_temp", "from": "hotend_min_temp_c"},
-            {"to": "hotend_max_temp", "from": "hotend_max_temp_c"},
-            {"to": "bed_temp_min",    "from": "bed_temp_min_c"},
-            {"to": "bed_temp_max",    "from": "bed_temp_max_c"},
-            {"to": "diameter_mm",     "from": "diameter_mm"},
-            {"to": "weight_grams",    "from": "weight_grams"},
-            {"to": "drying_temp",     "from": "drying_temp_c"},
-            {"to": "drying_time",     "from": "drying_time_hours"},
-            {"to": "manufacturing_date", "from": "manufacturing_date"},
-            {"to": "td",              "from": "td"},
-            {"to": "message",         "from": "message"},
-        ],
-        "snapmaker": [
-            {"to": "manufacturer",    "from": "VENDOR"},
-            {"to": "type",            "from": "MAIN_TYPE"},
-            {"to": "modifiers",       "from": "SUB_TYPE"},
-            {"to": "color",           "from": "RGB_1"},
-            {"to": "hotend_min_temp", "from": "HOTEND_MIN_TEMP"},
-            {"to": "hotend_max_temp", "from": "HOTEND_MAX_TEMP"},
-            {"to": "bed_temp_max",    "from": "BED_TEMP"},
-            {"to": "diameter_mm",     "from": "DIAMETER"},
-            {"to": "weight_grams",    "from": "WEIGHT"},
-            {"to": "drying_temp",     "from": "DRYING_TEMP"},
-            {"to": "drying_time",     "from": "DRYING_TIME"},
-            {"to": "manufacturing_date", "from": "MF_DATE"},
-        ],
-        "generic": [
-            {"to": "manufacturer",    "from": "manufacturer"},
-            {"to": "type",            "from": "type"},
-            {"to": "modifiers",       "from": "modifiers"},
-            {"to": "color",           "from": "colors"},
-            {"to": "hotend_min_temp", "from": "hotend_min_temp_c"},
-            {"to": "hotend_max_temp", "from": "hotend_max_temp_c"},
-            {"to": "bed_temp_min",    "from": "bed_temp_min_c"},
-            {"to": "bed_temp_max",    "from": "bed_temp_max_c"},
-            {"to": "diameter_mm",     "from": "diameter_mm"},
-            {"to": "weight_grams",    "from": "weight_grams"},
-            {"to": "drying_temp",     "from": "drying_temp_c"},
-            {"to": "drying_time",     "from": "drying_time_hours"},
-            {"to": "manufacturing_date", "from": "manufacturing_date"},
-            {"to": "td",              "from": "td"},
-            {"to": "message",         "from": "message"},
-        ],
-    },
+    "tag_mappings": [
+        {"to": "manufacturer",       "from": "manufacturer"},
+        {"to": "type",               "from": "type"},
+        {"to": "modifiers",          "from": "modifiers"},
+        {"to": "color",              "from": "colors"},
+        {"to": "hotend_min_temp",    "from": "hotend_min_temp_c"},
+        {"to": "hotend_max_temp",    "from": "hotend_max_temp_c"},
+        {"to": "bed_temp_min",       "from": "bed_temp_min_c"},
+        {"to": "bed_temp_max",       "from": "bed_temp_c"},
+        {"to": "diameter_mm",        "from": "diameter_mm"},
+        {"to": "weight_grams",       "from": "weight_grams"},
+        {"to": "drying_temp",        "from": "drying_temp_c"},
+        {"to": "drying_time",        "from": "drying_time_hours"},
+        {"to": "manufacturing_date", "from": "manufacturing_date"},
+        {"to": "td",                 "from": "td"},
+        {"to": "message",            "from": "message"},
+    ],
 }
 
 
@@ -235,9 +202,16 @@ def load_config():
 
     config = dict(DEFAULT_CONFIG)
     config.update(saved)
-    # Deep-merge tag_mappings so saved keys override defaults but missing keys remain
+    # tag_mappings is a flat list; migrate old per-processor dict format if needed
     if "tag_mappings" not in saved:
-        config["tag_mappings"] = dict(DEFAULT_CONFIG["tag_mappings"])
+        config["tag_mappings"] = list(DEFAULT_CONFIG["tag_mappings"])
+    elif isinstance(saved.get("tag_mappings"), dict):
+        # Migrate: use the 'generic' block if present, otherwise reset to defaults
+        config["tag_mappings"] = saved["tag_mappings"].get("generic", list(DEFAULT_CONFIG["tag_mappings"]))
+    # Fix: bed_temp_max was mistakenly mapped from bed_temp_max_c; correct to bed_temp_c
+    for m in config.get("tag_mappings", []):
+        if isinstance(m, dict) and m.get("to") == "bed_temp_max" and m.get("from") == "bed_temp_max_c":
+            m["from"] = "bed_temp_c"
     return config
 
 
@@ -386,16 +360,8 @@ def resolve_display_fields(tag_event, config):
     """Apply tag_mappings config to resolve display fields from a raw tag event."""
     filament = tag_event.get('filament') or {}
 
-    proc = filament.get('source_processor', '')
-    if 'tigertag' in proc:
-        processor_key = 'tigertag'
-    elif 'snapmaker' in proc:
-        processor_key = 'snapmaker'
-    else:
-        processor_key = 'generic'
-
     mappings = {}
-    for rule in config.get('tag_mappings', {}).get(processor_key, []):
+    for rule in config.get('tag_mappings', []):
         to_key = rule.get('to')
         from_key = rule.get('from')
         if to_key and from_key:
@@ -514,7 +480,7 @@ def sync_to_spoolman(base_url, fields, name, extra_fields=None, override_filamen
     v = _int_pos(fields.get('hotend_min_temp_c'))
     if v is not None:
         filament_payload['settings_extruder_temp'] = v
-    v = _int_pos(fields.get('bed_temp_min_c'))
+    v = _int_pos(fields.get('bed_temp_min_c')) or _int_pos(fields.get('bed_temp_max_c'))
     if v is not None:
         filament_payload['settings_bed_temp'] = v
     v = _float_pos(fields.get('diameter_mm'))

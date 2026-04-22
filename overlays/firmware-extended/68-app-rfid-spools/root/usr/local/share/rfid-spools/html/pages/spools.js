@@ -41,7 +41,7 @@ var SpoolsPage = (function () {
             if (mk.CARD_UID.length === 4) processorKey = 'snapmaker';
         }
 
-        var tagMappings = config && config.tag_mappings && config.tag_mappings[processorKey];
+        var tagMappings = config && Array.isArray(config.tag_mappings) ? config.tag_mappings : null;
 
         // If mappings are configured, resolve each display field from the mapping
         // Otherwise fall through to the defaults below

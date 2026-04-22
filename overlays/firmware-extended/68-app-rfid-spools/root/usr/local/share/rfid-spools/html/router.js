@@ -14,15 +14,27 @@ var Router = (function () {
             module: function () { return SpoolsPage; },
             headerButtons: ['scan-btn']
         },
-        config: {
-            label: 'Config',
-            icon: '⚙️',
-            module: function () { return ConfigPage; },
+        'config-spoolman': {
+            label: 'Spoolman',
+            icon: '🔗',
+            module: function () { return SpoolmanConfigPage; },
+            headerButtons: []
+        },
+        'config-slots': {
+            label: 'Slot config',
+            icon: '🗂️',
+            module: function () { return SlotConfigPage; },
+            headerButtons: []
+        },
+        'config-mapping': {
+            label: 'Tag mapping',
+            icon: '🏷️',
+            module: function () { return TagMappingConfigPage; },
             headerButtons: []
         }
     };
 
-    var pageOrder = ['spools', 'config'];
+    var pageOrder = ['spools', 'config-spoolman', 'config-slots', 'config-mapping'];
 
     function navigate(pageKey) {
         if (currentPage === pageKey) return;
