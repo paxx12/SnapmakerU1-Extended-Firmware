@@ -11,9 +11,10 @@
     <h1>RFID Spool Management</h1>
     <div id="status-bar" class="status-bar">
         <span id="connection-status" class="status-dot disconnected"></span>
-        <span id="connection-text">Connecting...</span>
-        <button id="refresh-btn" class="header-btn" onclick="SpoolsPage.fetchChannels()">Refresh</button>
-        <button id="scan-btn" class="header-btn" onclick="scanAll()">Scan All</button>
+        <span id="connection-text">RFID: Connecting...</span>
+        <span id="spoolman-status-dot" class="status-dot" style="display:none;margin-left:0.6rem"></span>
+        <span id="spoolman-status-text" style="display:none">Spoolman</span>
+        <button id="scan-btn" class="header-btn" onclick="scanAll()">Read spool tags</button>
     </div>
 </header>
 

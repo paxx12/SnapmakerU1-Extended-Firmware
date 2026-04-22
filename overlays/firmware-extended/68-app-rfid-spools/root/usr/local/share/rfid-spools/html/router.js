@@ -12,7 +12,7 @@ var Router = (function () {
             label: 'Spools',
             icon: '🧵',
             module: function () { return SpoolsPage; },
-            headerButtons: ['refresh-btn', 'scan-btn']
+            headerButtons: ['scan-btn']
         },
         config: {
             label: 'Config',

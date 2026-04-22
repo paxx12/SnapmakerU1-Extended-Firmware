@@ -108,18 +108,25 @@ header h1 {
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
     display: inline-block;
+    font-size: 0.8rem;
+    font-weight: bold;
+    line-height: 1;
+    vertical-align: middle;
 }
 
 .status-dot.connected {
-    background: var(--success);
+    color: var(--success);
+}
+.status-dot.connected::before {
+    content: '\2713'; /* ✓ */
 }
 
 .status-dot.disconnected {
-    background: var(--accent);
+    color: var(--accent);
+}
+.status-dot.disconnected::before {
+    content: '\2717'; /* ✗ */
 }
 
 .header-btn {
@@ -157,6 +164,8 @@ header h1 {
     border: 1px solid var(--card-border);
     border-radius: 8px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .channel-header {
@@ -196,6 +205,7 @@ header h1 {
 
 .channel-body {
     padding: 1rem;
+    flex: 1;
 }
 
 .channel-empty {
@@ -574,53 +584,88 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 0;
-    padding: 0.5rem 0;
+    padding: 0.4rem 0.5rem 0.5rem;
     border-top: 1px solid var(--border);
+    margin-top: auto;
 }
-.spoolman-name-row {
-    padding: 0.4rem 0.75rem 0.25rem;
-    display: flex;
-}
-.spoolman-name-row .spoolman-name-input {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
+
+/* Sync box — self-contained form, auto-width */
+.spoolman-sync-box {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 13rem;
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem 0.4rem;
     box-sizing: border-box;
 }
+.spoolman-sync-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.1rem;
+    border-bottom: 1px solid var(--border);
+}
+.spoolman-sync-box-title {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    opacity: 0.75;
+}
+
+/* Label–input field rows */
+.spoolman-sync-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+}
+.spoolman-sync-label {
+    width: 4.2rem;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.73rem;
+    color: var(--text-dim);
+}
+
+/* Indented rows (find existing, sync button) — aligned with input column */
+.spoolman-sync-indent-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    padding-left: calc(4.2rem + 0.45rem);
+    flex-wrap: wrap;
+}
+
 .spoolman-name-input {
     flex: 1;
-    min-width: 0;
+    min-width: 7rem;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text);
     font-size: 0.8rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.22rem 0.45rem;
 }
 .spoolman-name-input:focus {
     border-color: var(--accent);
     outline: none;
 }
-.spoolman-density-row {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0 0.75rem 0.3rem;
-    flex-wrap: nowrap;
-}
-.spoolman-density-label {
-    color: var(--text-dim);
-    font-size: 0.78rem;
-    white-space: nowrap;
-}
 .spoolman-density-input {
-    width: 4.5rem;
+    width: 4.2rem;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text);
     font-size: 0.8rem;
-    padding: 0.25rem 0.4rem;
+    padding: 0.22rem 0.4rem;
     text-align: right;
 }
 .spoolman-density-input:focus {
@@ -629,9 +674,8 @@ header h1 {
 }
 .spoolman-density-unit {
     color: var(--text-dim);
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     white-space: nowrap;
-    flex: 1;
 }
 .spoolman-sync-btn {
     background: var(--accent);
@@ -640,60 +684,57 @@ header h1 {
     color: #fff;
     cursor: pointer;
     font-size: 0.8rem;
-    padding: 0.25rem 0.6rem;
+    padding: 0.25rem 0.7rem;
     white-space: nowrap;
 }
 .spoolman-sync-btn:hover    { opacity: 0.85; }
 .spoolman-sync-btn:disabled { opacity: 0.5; cursor: default; }
 .spoolman-sync-status {
     display: block;
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     white-space: normal;
     word-break: break-word;
-    padding: 0.2rem 0.75rem 0.3rem;
-    margin-top: 0.15rem;
-    min-height: 1.2em;
+    padding: 0.25rem 0 0.05rem;
+    min-height: 1em;
 }
 .spoolman-sync-ok  { color: #4caf50; }
 .spoolman-sync-err { color: #f44336; }
 
-/* ── Spoolman link-to-existing row ──────────────────────────────────────── */
-.spoolman-link-row {
+/* ── Spoolman sync state badge + spinner (inside box header) ─────────────── */
+@keyframes spoolman-spin { to { transform: rotate(360deg); } }
+.spoolman-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: rgba(255,255,255,0.7);
+    border-radius: 50%;
+    animation: spoolman-spin 0.7s linear infinite;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+/* Full-body loading state */
+.spoolman-sync-body-loading {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0 0.75rem 0.5rem;
-    flex-wrap: wrap;
+    padding: 0.6rem 0.4rem;
 }
-.spoolman-find-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+.spoolman-sync-body-loading-text {
+    font-size: 0.73rem;
     color: var(--text-dim);
-    cursor: pointer;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    white-space: nowrap;
 }
-.spoolman-find-btn:hover    { border-color: var(--accent); color: var(--accent); }
-.spoolman-find-btn:disabled { opacity: 0.5; cursor: default; }
-.spoolman-link-select {
-    flex: 1;
-    min-width: 0;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text);
-    font-size: 0.75rem;
-    padding: 0.2rem 0.4rem;
+.spoolman-sync-body-loading .spoolman-spinner {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
 }
-.spoolman-link-select:focus { border-color: var(--accent); outline: none; }
-
-/* ── Spoolman sync state badge ───────────────────────────────────────────── */
-.spoolman-sync-badge-row {
-    padding: 0.4rem 0.75rem 0;
+/* Full-body error state */
+.spoolman-sync-body-error {
+    padding: 0.45rem 0.2rem 0.3rem;
+    font-size: 0.73rem;
+    color: #f44336;
+    opacity: 0.85;
 }
 .spoolman-sync-badge {
     display: inline-block;
@@ -701,8 +742,8 @@ header h1 {
     border: 1px solid rgba(76, 175, 80, 0.4);
     border-radius: 4px;
     color: #4caf50;
-    font-size: 0.7rem;
-    padding: 0.15rem 0.45rem;
+    font-size: 0.68rem;
+    padding: 0.12rem 0.4rem;
     text-decoration: none;
     white-space: nowrap;
 }

@@ -6,6 +6,8 @@
 var SpoolsPage = (function () {
 
     var _sse = null;
+    var _spoolmanCache = {};           // channel → {name, density, filament_id}
+    var _spoolmanFetchPending = false; // prevents overlapping refresh batches
 
     // Density defaults (g/cm³) by material type — mirrors backend MATERIAL_DENSITY table.
     var DENSITY_DEFAULTS = {
@@ -278,99 +280,124 @@ var SpoolsPage = (function () {
             var spoolmanFooter = document.createElement('div');
             spoolmanFooter.className = 'channel-spoolman-footer';
 
-            // Sync state badge (if already synced)
             var syncState = ch.spoolman_sync;
-            if (syncState && syncState.filament_id) {
-                var badgeRow = document.createElement('div');
-                badgeRow.className = 'spoolman-sync-badge-row';
+            var channelIndex = ch.channel;
+
+            // Cache state — resolved once, used throughout
+            var isLinked = !!(syncState && syncState.filament_id);
+            var cached = isLinked ? _spoolmanCache[channelIndex] : null;
+            var cacheValid = !!(cached && cached.filament_id === syncState.filament_id);
+
+            // ── Sync box ────────────────────────────────────────────────────
+            var syncBox = document.createElement('div');
+            syncBox.className = 'spoolman-sync-box';
+
+            // Header row: title + badge (when cached) or spinner (while loading)
+            var boxHeader = document.createElement('div');
+            boxHeader.className = 'spoolman-sync-box-header';
+            var boxTitle = document.createElement('span');
+            boxTitle.className = 'spoolman-sync-box-title';
+            boxTitle.textContent = 'Spoolman sync';
+            boxHeader.appendChild(boxTitle);
+            if (isLinked && cacheValid) {
                 var badge = document.createElement('a');
                 badge.className = 'spoolman-sync-badge';
-                badge.href = spoolmanUrl.replace(/\/$/, '') + '/filament/' + syncState.filament_id;
+                badge.href = spoolmanUrl.replace(/\/$/, '') + '/filament/show/' + syncState.filament_id;
                 badge.target = '_blank';
                 badge.rel = 'noopener noreferrer';
                 var badgeParts = ['Synced \u2713 \u00b7 Filament #' + syncState.filament_id];
                 if (syncState.spool_id) badgeParts.push('Spool #' + syncState.spool_id);
                 badge.textContent = badgeParts.join(' \u00b7 ');
-                badgeRow.appendChild(badge);
-                spoolmanFooter.appendChild(badgeRow);
+                boxHeader.appendChild(badge);
             }
+            syncBox.appendChild(boxHeader);
 
-            // Name row (full width)
-            var nameRow = document.createElement('div');
-            nameRow.className = 'spoolman-name-row';
-            var nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.className = 'spoolman-name-input';
-            nameInput.placeholder = 'Filament name';
-            // Smart pre-fill: TigerTag uses message, others use type + manufacturer
-            if (f.message) {
-                nameInput.value = f.message;
+            // Compute body state
+            var cacheError = isLinked && !!(cached && cached.error === true);
+            var isLoading = isLinked && !cacheValid && !cacheError;
+
+            if (isLoading) {
+                // Loading body: spinner while Spoolman data is being fetched
+                var loadingBody = document.createElement('div');
+                loadingBody.className = 'spoolman-sync-body-loading';
+                var bodySpinner = document.createElement('span');
+                bodySpinner.className = 'spoolman-spinner';
+                loadingBody.appendChild(bodySpinner);
+                var loadingText = document.createElement('span');
+                loadingText.className = 'spoolman-sync-body-loading-text';
+                loadingText.textContent = 'Loading…';
+                loadingBody.appendChild(loadingText);
+                syncBox.appendChild(loadingBody);
+            } else if (cacheError) {
+                // Error body: Spoolman unreachable
+                var errorBody = document.createElement('div');
+                errorBody.className = 'spoolman-sync-body-error';
+                errorBody.textContent = '\u26a0 Spoolman unreachable';
+                syncBox.appendChild(errorBody);
             } else {
-                var nameParts = [f.type, f.manufacturer].filter(Boolean);
-                if (nameParts.length) nameInput.value = nameParts.join(' ');
+                // Normal body: name/density fields + sync button
+                // Name field row
+                var nameRow = document.createElement('div');
+                nameRow.className = 'spoolman-sync-field-row';
+                var nameLabel = document.createElement('span');
+                nameLabel.className = 'spoolman-sync-label';
+                nameLabel.textContent = 'Name';
+                var nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'spoolman-name-input';
+                nameInput.placeholder = 'Filament name';
+                // Priority: cached Spoolman name > TigerTag message > empty
+                if (cacheValid && cached.name) {
+                    nameInput.value = cached.name;
+                } else if (f.message) {
+                    nameInput.value = f.message;
+                }
+                nameRow.appendChild(nameLabel);
+                nameRow.appendChild(nameInput);
+                syncBox.appendChild(nameRow);
+
+                // Density field row
+                var densityRow = document.createElement('div');
+                densityRow.className = 'spoolman-sync-field-row';
+                var densityLabel = document.createElement('span');
+                densityLabel.className = 'spoolman-sync-label';
+                densityLabel.textContent = 'Density';
+                var densityInput = document.createElement('input');
+                densityInput.type = 'number';
+                densityInput.className = 'spoolman-density-input';
+                densityInput.step = '0.01';
+                densityInput.min = '0.1';
+                densityInput.max = '3.0';
+                densityInput.value = (cacheValid && cached.density) ? cached.density : defaultDensity(f.type);
+                var densityUnit = document.createElement('span');
+                densityUnit.className = 'spoolman-density-unit';
+                densityUnit.textContent = 'g/cm\u00b3';
+                densityRow.appendChild(densityLabel);
+                densityRow.appendChild(densityInput);
+                densityRow.appendChild(densityUnit);
+                syncBox.appendChild(densityRow);
+
+                // Action row (indented to align with inputs)
+                var linkedFilamentId = cacheValid ? cached.filament_id : null;
+                var syncBtn = document.createElement('button');
+                syncBtn.className = 'spoolman-sync-btn';
+                syncBtn.textContent = isLinked ? 'Sync \u2197' : 'Import to Spoolman \u2197';
+                var syncBtnRow = document.createElement('div');
+                syncBtnRow.className = 'spoolman-sync-indent-row';
+                syncBtnRow.appendChild(syncBtn);
+                syncBox.appendChild(syncBtnRow);
+
+                // Status line
+                var syncStatus = document.createElement('div');
+                syncStatus.className = 'spoolman-sync-status';
+                syncBox.appendChild(syncStatus);
+
+                syncBtn.addEventListener('click', function () {
+                    syncToSpoolman(channelIndex, nameInput, densityInput, syncStatus, syncBtn, linkedFilamentId);
+                });
             }
-            nameRow.appendChild(nameInput);
 
-            // Density + sync row
-            var densityRow = document.createElement('div');
-            densityRow.className = 'spoolman-density-row';
-            var densityLabel = document.createElement('span');
-            densityLabel.className = 'spoolman-density-label';
-            densityLabel.textContent = 'Density';
-            var densityInput = document.createElement('input');
-            densityInput.type = 'number';
-            densityInput.className = 'spoolman-density-input';
-            densityInput.step = '0.01';
-            densityInput.min = '0.1';
-            densityInput.max = '3.0';
-            densityInput.value = defaultDensity(f.type);
-            var densityUnit = document.createElement('span');
-            densityUnit.className = 'spoolman-density-unit';
-            densityUnit.textContent = 'g/cm\u00b3';
-            var syncBtn = document.createElement('button');
-            syncBtn.className = 'spoolman-sync-btn';
-            syncBtn.textContent = 'Sync \u2197';
-            densityRow.appendChild(densityLabel);
-            densityRow.appendChild(densityInput);
-            densityRow.appendChild(densityUnit);
-            densityRow.appendChild(syncBtn);
-
-            var syncStatus = document.createElement('div');
-            syncStatus.className = 'spoolman-sync-status';
-
-            var channelIndex = ch.channel;
-
-            // Link-to-existing row (secondary)
-            var linkRow = document.createElement('div');
-            linkRow.className = 'spoolman-link-row';
-
-            var findBtn = document.createElement('button');
-            findBtn.className = 'spoolman-find-btn';
-            findBtn.textContent = '\u21c4 Find existing';
-
-            var linkSelect = document.createElement('select');
-            linkSelect.className = 'spoolman-link-select';
-            var defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = '\u2014 Create new spool \u2014';
-            linkSelect.appendChild(defaultOpt);
-
-            findBtn.addEventListener('click', function () {
-                findExistingFilaments(channelIndex, linkSelect, findBtn);
-            });
-
-            linkRow.appendChild(findBtn);
-            linkRow.appendChild(linkSelect);
-
-            syncBtn.addEventListener('click', function () {
-                var filamentId = linkSelect.value || null;
-                syncToSpoolman(channelIndex, nameInput, densityInput, syncStatus, syncBtn, filamentId);
-            });
-
-            spoolmanFooter.appendChild(nameRow);
-            spoolmanFooter.appendChild(densityRow);
-            spoolmanFooter.appendChild(linkRow);
-            spoolmanFooter.appendChild(syncStatus);
+            spoolmanFooter.appendChild(syncBox);
             card.appendChild(spoolmanFooter);
         } else if (!spoolmanUrl && hasData && tag && tag.filament) {
             // Onboarding: no Spoolman configured yet
@@ -392,6 +419,7 @@ var SpoolsPage = (function () {
     }
 
     function syncToSpoolman(channel, nameInput, densityInput, statusEl, btn, filamentId) {
+        var originalBtnText = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Syncing\u2026';
         statusEl.textContent = '';
@@ -419,55 +447,67 @@ var SpoolsPage = (function () {
             })
             .then(function (data) {
                 btn.disabled = false;
-                btn.textContent = 'Sync \u2197';
+                btn.textContent = originalBtnText;
                 statusEl.textContent = data.created_filament ? 'Created \u2713' : 'Updated \u2713';
                 statusEl.className = 'spoolman-sync-status spoolman-sync-ok';
-                // Refresh the card to update the sync badge
+                // Invalidate Spoolman cache for this channel and refresh cards
+                delete _spoolmanCache[channel];
                 fetchChannels();
             })
             .catch(function (err) {
                 btn.disabled = false;
-                btn.textContent = 'Sync \u2197';
+                btn.textContent = originalBtnText;
                 statusEl.textContent = err.message;
                 statusEl.className = 'spoolman-sync-status spoolman-sync-err';
             });
     }
 
-    function findExistingFilaments(channel, linkSelect, btn) {
-        btn.disabled = true;
-        btn.textContent = 'Searching\u2026';
-        fetch('/spools/api/spoolman-candidates?channel=' + channel)
-            .then(function (resp) { return resp.json(); })
-            .then(function (data) {
-                btn.disabled = false;
-                btn.textContent = '\u21c4 Find existing';
-                // Remove all non-default options
-                while (linkSelect.options.length > 1) linkSelect.remove(1);
-                var candidates = data.candidates || [];
-                if (candidates.length === 0) {
-                    var noMatch = document.createElement('option');
-                    noMatch.disabled = true;
-                    noMatch.textContent = '(no matches in Spoolman)';
-                    linkSelect.appendChild(noMatch);
-                } else {
-                    candidates.forEach(function (c) {
-                        var opt = document.createElement('option');
-                        opt.value = c.id;
-                        var parts = [c.vendor_name, c.material, c.name].filter(Boolean);
-                        var label = parts.join(' \u00b7 ');
-                        if (c.color_hex) label += ' #' + c.color_hex;
-                        if (c.external_id) label += ' [linked]';
-                        label += ' [ID:' + c.id + ']';
-                        opt.textContent = label;
-                        linkSelect.appendChild(opt);
-                    });
-                }
-            })
-            .catch(function (err) {
-                btn.disabled = false;
-                btn.textContent = '\u21c4 Find existing';
-                console.error('Candidates fetch failed:', err);
-            });
+    function refreshSpoolmanCache(channels) {
+        if (_spoolmanFetchPending) return;
+        var toFetch = [];
+        for (var i = 0; i < channels.length; i++) {
+            var ch = channels[i];
+            var ss = ch.spoolman_sync;
+            if (!ss || !ss.filament_id) continue;
+            var cached = _spoolmanCache[ch.channel];
+            if (cached && cached.filament_id === ss.filament_id) continue;  // cache hit
+            toFetch.push(ch.channel);
+        }
+        if (toFetch.length === 0) return;
+        _spoolmanFetchPending = true;
+        var remaining = toFetch.length;
+        var needRerender = false;
+        toFetch.forEach(function (channelIdx) {
+            fetch('/spools/api/spoolman-filament?channel=' + channelIdx)
+                .then(function (r) {
+                    if (r.status === 404) {
+                        delete _spoolmanCache[channelIdx];
+                        needRerender = true;
+                        return null;
+                    }
+                    return r.ok ? r.json() : null;
+                })
+                .then(function (data) {
+                    if (data) {
+                        _spoolmanCache[channelIdx] = data;
+                        needRerender = true;
+                    }
+                    remaining--;
+                    if (remaining === 0) {
+                        _spoolmanFetchPending = false;
+                        if (needRerender) fetchChannels();
+                    }
+                })
+                .catch(function () {
+                    _spoolmanCache[channelIdx] = { error: true };
+                    needRerender = true;
+                    remaining--;
+                    if (remaining === 0) {
+                        _spoolmanFetchPending = false;
+                        if (needRerender) fetchChannels();
+                    }
+                });
+        });
     }
 
     function startSSE() {
@@ -484,13 +524,34 @@ var SpoolsPage = (function () {
         };
     }
 
+    function fetchSpoolmanStatus() {
+        fetch('/spools/api/spoolman-status')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                var dot = document.getElementById('spoolman-status-dot');
+                var text = document.getElementById('spoolman-status-text');
+                if (!dot || !text) return;
+                if (!data || !data.configured) {
+                    dot.style.display = 'none';
+                    text.style.display = 'none';
+                } else {
+                    dot.style.display = '';
+                    text.style.display = '';
+                    dot.className = 'status-dot ' + (data.ok ? 'connected' : 'disconnected');
+                }
+            })
+            .catch(function () { /* ignore */ });
+    }
+
     function mount(container) {
         var section = document.createElement('section');
         section.id = 'channels';
         section.className = 'channels-grid';
         container.appendChild(section);
+        fetchSpoolmanStatus();
         fetchChannels();
         startSSE();
+        scanAll();  // Trigger a full RFID scan on page open
     }
 
     function unmount() {
@@ -516,6 +577,8 @@ var SpoolsPage = (function () {
                 for (var i = 0; i < channels.length; i++) {
                     container.appendChild(renderChannel(channels[i], config));
                 }
+                refreshSpoolmanCache(channels);
+                fetchSpoolmanStatus();
             })
             .catch(function (err) {
                 App.setConnectionStatus(false);

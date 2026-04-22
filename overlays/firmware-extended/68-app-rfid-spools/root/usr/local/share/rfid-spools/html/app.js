@@ -14,7 +14,7 @@ var App = (function () {
         var dot = document.getElementById('connection-status');
         var text = document.getElementById('connection-text');
         if (dot) dot.className = 'status-dot ' + (connected ? 'connected' : 'disconnected');
-        if (text) text.textContent = connected ? 'Connected' : 'Disconnected';
+        if (text) text.textContent = connected ? 'RFID: Connected' : 'RFID: Disconnected';
     }
 
     function loadConfig() {

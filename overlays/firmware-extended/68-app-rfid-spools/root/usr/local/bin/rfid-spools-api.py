@@ -129,6 +129,12 @@ class SyncStateStore:
                 del self._state[str(channel)]
                 self._save()
 
+    def clear(self, channel):
+        with self._lock:
+            if str(channel) in self._state:
+                del self._state[str(channel)]
+                self._save()
+
     def get_all(self):
         with self._lock:
             return dict(self._state)
@@ -688,6 +694,15 @@ class RequestHandler(BaseHTTPRequestHandler):
         elif self.path == "/api/config":
             self._send_json(200, load_config())
 
+        elif self.path == "/api/spoolman-status":
+            config = load_config()
+            spoolman_url = config.get('spoolman_url', '').rstrip('/')
+            if not spoolman_url:
+                self._send_json(200, {"configured": False})
+                return
+            ok = probe_spoolman(spoolman_url)
+            self._send_json(200, {"configured": True, "ok": ok})
+
         elif self.path.startswith("/api/spoolman-ping"):
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
@@ -791,6 +806,51 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"candidates": result})
             except Exception:
                 logging.exception("Spoolman candidates error")
+                self._send_json(502, {"error": "failed to query spoolman"})
+
+        elif self.path.startswith("/api/spoolman-filament"):
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+            channel_str = params.get('channel', [None])[0]
+            if channel_str is None:
+                self._send_json(400, {"error": "missing channel parameter"})
+                return
+            try:
+                channel = int(channel_str)
+            except (ValueError, TypeError):
+                self._send_json(400, {"error": "invalid channel"})
+                return
+
+            config = load_config()
+            spoolman_url = config.get('spoolman_url', '').rstrip('/')
+            if not spoolman_url:
+                self._send_json(400, {"error": "spoolman_url not configured"})
+                return
+
+            sync = sync_state.get(channel)
+            if not sync or not sync.get('filament_id'):
+                self._send_json(404, {"error": "channel not synced"})
+                return
+
+            try:
+                filament = spoolman_api_request(
+                    spoolman_url, 'GET',
+                    '/api/v1/filament/{}'.format(sync['filament_id'])
+                )
+                self._send_json(200, {
+                    'name':        filament.get('name', ''),
+                    'density':     filament.get('density', 1.24),
+                    'material':    filament.get('material', ''),
+                    'filament_id': sync['filament_id'],
+                })
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    # Filament was deleted from Spoolman — clear stale local sync state
+                    sync_state.clear(channel)
+                self._send_json(e.code if e.code in (404, 400) else 502,
+                                {"error": "Spoolman: " + str(e.reason)})
+            except Exception:
+                logging.exception("Spoolman filament fetch error")
                 self._send_json(502, {"error": "failed to query spoolman"})
 
         elif self.path == "/api/events":
