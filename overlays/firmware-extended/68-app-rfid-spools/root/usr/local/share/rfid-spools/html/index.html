@@ -12,16 +12,20 @@
     <div id="status-bar" class="status-bar">
         <span id="connection-status" class="status-dot disconnected"></span>
         <span id="connection-text">Connecting...</span>
-        <button id="scan-btn" class="scan-btn" onclick="scanAll()">Scan All</button>
+        <button id="refresh-btn" class="header-btn" onclick="SpoolsPage.fetchChannels()">Refresh</button>
+        <button id="scan-btn" class="header-btn" onclick="scanAll()">Scan All</button>
     </div>
 </header>
 
-<main>
-    <section id="channels" class="channels-grid">
-        <!-- Channel cards rendered by JS -->
-    </section>
-</main>
+<div id="app-shell">
+    <nav id="sidebar" class="sidebar"></nav>
+    <main id="content" class="content"></main>
+</div>
 
+<script src="utils.js"></script>
+<script src="pages/spools.js"></script>
+<script src="pages/config.js"></script>
+<script src="router.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

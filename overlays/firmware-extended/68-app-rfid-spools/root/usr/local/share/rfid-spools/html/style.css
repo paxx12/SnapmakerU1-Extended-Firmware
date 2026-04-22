@@ -21,6 +21,68 @@ body {
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#app-shell {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+
+.sidebar {
+    width: 160px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 0;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+}
+
+.nav-item.active {
+    background: var(--card-border);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.nav-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.nav-label {
+    line-height: 1;
+}
+
+/* ── Content area ───────────────────────────────────────────────────────── */
+
+.content {
+    flex: 1;
+    overflow-y: auto;
 }
 
 header {
@@ -60,8 +122,8 @@ header h1 {
     background: var(--accent);
 }
 
-.scan-btn {
-    margin-left: 0.75rem;
+.header-btn {
+    margin-left: 0.5rem;
     padding: 0.25rem 0.75rem;
     border: 1px solid var(--card-border);
     border-radius: 4px;
@@ -72,11 +134,11 @@ header h1 {
     transition: background 0.15s;
 }
 
-.scan-btn:hover:not(:disabled) {
+.header-btn:hover:not(:disabled) {
     background: var(--card-border);
 }
 
-.scan-btn:disabled {
+.header-btn:disabled {
     opacity: 0.5;
     cursor: default;
 }
@@ -105,9 +167,21 @@ header h1 {
     border-bottom: 1px solid var(--card-border);
 }
 
+.channel-label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
 .channel-label {
     font-weight: 600;
     font-size: 0.95rem;
+}
+
+.channel-note {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
 }
 
 .tag-type-badge {
@@ -166,3 +240,483 @@ header h1 {
     font-size: 0.8rem;
     color: var(--text-dim);
 }
+
+/* ── Config page ────────────────────────────────────────────────────────── */
+
+.config-page {
+    padding: 1.5rem;
+    max-width: 860px;
+}
+
+.config-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+}
+
+.config-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.config-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.config-slot-row {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.config-slot-row:last-child {
+    border-bottom: none;
+}
+
+.config-slot-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.config-slot-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.config-field-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.config-input,
+.config-textarea {
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
+    width: 100%;
+    resize: vertical;
+    transition: border-color 0.15s;
+}
+
+.config-input:focus,
+.config-textarea:focus {
+    outline: none;
+    border-color: #4a6fa5;
+}
+
+.config-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.config-save-btn {
+    padding: 0.4rem 1.2rem;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: var(--card-border);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.config-save-btn:hover:not(:disabled) {
+    background: #1a3a6a;
+}
+
+.config-save-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.config-save-status {
+    font-size: 0.8rem;
+}
+
+.config-save-ok {
+    color: var(--success);
+}
+
+.config-save-err {
+    color: var(--accent);
+}
+
+/* ── Tag Field Mappings ──────────────────────────────────────────────────── */
+.mapping-block {
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.03);
+}
+
+.mapping-processor-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+}
+
+.mapping-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.mapping-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.mapping-select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+    flex: 1;
+    min-width: 130px;
+}
+
+.mapping-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.mapping-arrow {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.mapping-remove-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.mapping-remove-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.mapping-add-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px dashed var(--card-border);
+    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin-top: 0.25rem;
+}
+
+.mapping-add-btn:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+}
+
+/* ── Spoolman config section ─────────────────────────────────────────────── */
+.config-spoolman-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.config-spoolman-btn-row {
+    margin-top: 0.4rem;
+}
+.config-extra-fields-title {
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+.config-extra-fields-table {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.config-extra-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.2rem 0;
+}
+.config-extra-field-cb {
+    flex-shrink: 0;
+}
+.config-extra-field-label {
+    flex: 1;
+    font-size: 0.88rem;
+}
+.config-extra-field-key {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    padding: 0.05rem 0.3rem;
+}
+.config-extra-field-status {
+    font-size: 0.78rem;
+    margin-left: auto;
+    min-width: 1.4rem;
+    text-align: center;
+    color: var(--text-dim);
+}
+.config-extra-field-status-ok {
+    color: #4caf50;
+}
+.config-extra-field-status-missing {
+    color: #f44336;
+}
+.config-spoolman-syncall-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+.config-checkbox-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    cursor: pointer;
+    user-select: none;
+}
+.config-hint {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+    font-style: italic;
+}
+.config-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+}
+.config-btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.spoolman-status-badge {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+.spoolman-status-checking { color: var(--text-dim); }
+.spoolman-status-ok       { color: #4caf50; }
+.spoolman-status-err      { color: #f44336; }
+
+.spoolman-candidates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.4rem;
+}
+.spoolman-candidate-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    text-align: left;
+}
+.spoolman-candidate-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ── Spoolman card footer ────────────────────────────────────────────────── */
+.channel-spoolman-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border);
+}
+.spoolman-name-row {
+    padding: 0.4rem 0.75rem 0.25rem;
+    display: flex;
+}
+.spoolman-name-row .spoolman-name-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.spoolman-name-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+.spoolman-name-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+.spoolman-density-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.75rem 0.3rem;
+    flex-wrap: nowrap;
+}
+.spoolman-density-label {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.spoolman-density-input {
+    width: 4.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.4rem;
+    text-align: right;
+}
+.spoolman-density-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+.spoolman-density-unit {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    flex: 1;
+}
+.spoolman-sync-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+}
+.spoolman-sync-btn:hover    { opacity: 0.85; }
+.spoolman-sync-btn:disabled { opacity: 0.5; cursor: default; }
+.spoolman-sync-status {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 0.75rem;
+    white-space: normal;
+    word-break: break-word;
+    padding: 0.2rem 0.75rem 0.3rem;
+    margin-top: 0.15rem;
+    min-height: 1.2em;
+}
+.spoolman-sync-ok  { color: #4caf50; }
+.spoolman-sync-err { color: #f44336; }
+
+/* ── Spoolman link-to-existing row ──────────────────────────────────────── */
+.spoolman-link-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.75rem 0.5rem;
+    flex-wrap: wrap;
+}
+.spoolman-find-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+}
+.spoolman-find-btn:hover    { border-color: var(--accent); color: var(--accent); }
+.spoolman-find-btn:disabled { opacity: 0.5; cursor: default; }
+.spoolman-link-select {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+}
+.spoolman-link-select:focus { border-color: var(--accent); outline: none; }
+
+/* ── Spoolman sync state badge ───────────────────────────────────────────── */
+.spoolman-sync-badge-row {
+    padding: 0.4rem 0.75rem 0;
+}
+.spoolman-sync-badge {
+    display: inline-block;
+    background: rgba(76, 175, 80, 0.12);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    border-radius: 4px;
+    color: #4caf50;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.spoolman-sync-badge:hover { background: rgba(76, 175, 80, 0.22); text-decoration: underline; }
+
+/* ── Spoolman onboarding footer ──────────────────────────────────────────── */
+.channel-spoolman-onboard {
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+}
+.spoolman-onboard-link {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-decoration: none;
+    opacity: 0.7;
+}
+.spoolman-onboard-link:hover { color: var(--accent); opacity: 1; text-decoration: underline; }

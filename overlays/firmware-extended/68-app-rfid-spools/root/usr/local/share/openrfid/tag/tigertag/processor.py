@@ -68,21 +68,26 @@ class TigerTagProcessor(MifareUltralightTagProcessor):
 
             timestamp_raw = struct.unpack_from('>I', user_data, Constants.OFF_TIMESTAMP)[0]
 
-            # Emoji (4 bytes UTF-8) and Custom Message (28 bytes UTF-8) from OFF_METADATA
-            OFF_EMOJI = Constants.OFF_METADATA       # 48
-            OFF_MESSAGE = Constants.OFF_METADATA + 4 # 52
+            # Metadata: 4-byte emoji + 28-byte custom message, both UTF-8, stored at OFF_METADATA.
+            # Read as a single 32-byte null-terminated string; the emoji (if present) is naturally
+            # included as the leading character(s). This handles both proper emoji-prefixed tags
+            # and tags that store plain text starting at OFF_METADATA.
             emoji = ""
             message = ""
-            if len(user_data) >= Constants.OFF_METADATA + 4:
+            if len(user_data) >= Constants.OFF_METADATA + 32:
+                raw_meta = user_data[Constants.OFF_METADATA:Constants.OFF_METADATA + 32]
                 try:
-                    emoji = user_data[OFF_EMOJI:OFF_EMOJI + 4].rstrip(b'\x00').decode('utf-8', errors='replace')
+                    full_text = raw_meta.rstrip(b'\x00').decode('utf-8', errors='replace').strip()
                 except Exception:
-                    emoji = ""
-            if len(user_data) >= OFF_MESSAGE + 28:
-                try:
-                    message = user_data[OFF_MESSAGE:OFF_MESSAGE + 28].rstrip(b'\x00').decode('utf-8', errors='replace')
-                except Exception:
-                    message = ""
+                    full_text = ""
+                if full_text:
+                    # If the string starts with a non-ASCII emoji character, split it off
+                    first_char = full_text[0] if full_text else ''
+                    if first_char and ord(first_char) > 0x007F:
+                        emoji = first_char
+                        message = full_text[1:].strip()
+                    else:
+                        message = full_text
 
             material_label = self.registry.material_ids.get(material_id, f"Unknown({material_id})")
             material_type = self.registry.material_type_ids.get(material_id, material_label)
@@ -115,8 +120,7 @@ class TigerTagProcessor(MifareUltralightTagProcessor):
             self.logger.debug("  Dry: %d °C for %d hours", dry_temp, dry_time)
             self.logger.debug("  Bed Temp: %d-%d °C", bed_temp_min, bed_temp_max)
             self.logger.debug("  TD: raw=%d → %.1f mm", td_raw, td_mm)
-            self.logger.debug("  Emoji: %r", emoji)
-            self.logger.debug("  Message: %r", message)
+            self.logger.debug("  Emoji: %r, Message: %r", emoji, message)
             self.logger.debug("  Timestamp: %d (%s)", timestamp_raw, manufacturing_date)
 
             return GenericFilament(
