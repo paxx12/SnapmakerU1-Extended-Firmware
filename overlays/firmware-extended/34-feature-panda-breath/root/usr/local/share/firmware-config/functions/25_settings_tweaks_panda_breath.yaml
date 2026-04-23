@@ -17,8 +17,12 @@ settings:
               - bash
               - -xc
               - |
-                ln -sf /usr/local/share/firmware-config/tweaks/klipper/panda_breath.py /home/lava/klipper/klippy/extras/panda_breath.py &&
-                cp -n /usr/local/share/firmware-config/tweaks/klipper/panda_breath.cfg /oem/printer_data/config/extended/klipper/panda_breath.cfg &&
+                mkdir -p /oem/printer_data/config/extended/klipper &&
+                if [ ! -e /oem/printer_data/config/extended/klipper/panda_breath.cfg ]; then
+                  cp /usr/local/share/firmware-config/tweaks/klipper/panda_breath.cfg /oem/printer_data/config/extended/klipper/panda_breath.cfg;
+                fi &&
+                chown lava:lava /oem/printer_data/config/extended/klipper/panda_breath.cfg &&
+                /etc/init.d/S59panda-breath start &&
                 echo "Panda Breath enabled. Restarting Klipper..." &&
                 /etc/init.d/S60klipper restart
           disabled:
@@ -27,8 +31,8 @@ settings:
               - bash
               - -xc
               - |
-                rm -vf /home/lava/klipper/klippy/extras/panda_breath.py &&
                 rm -vf /oem/printer_data/config/extended/klipper/panda_breath.cfg &&
+                /etc/init.d/S59panda-breath stop &&
                 echo "Panda Breath disabled. Restarting Klipper..." &&
                 /etc/init.d/S60klipper restart
         default: disabled

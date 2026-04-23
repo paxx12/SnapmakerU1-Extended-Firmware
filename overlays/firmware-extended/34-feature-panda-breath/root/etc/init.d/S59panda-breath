@@ -1,14 +1,100 @@
 #!/bin/sh
 
 PANDA_BREATH_MODULE="/usr/local/share/firmware-config/tweaks/klipper/panda_breath.py"
+PANDA_BREATH_TEMPLATE="/usr/local/share/firmware-config/tweaks/klipper/panda_breath.cfg"
+PANDA_BREATH_HEATER="/usr/local/share/firmware-config/tweaks/klipper/panda_breath_heater.cfg"
 KLIPPER_EXTRAS_LINK="/home/lava/klipper/klippy/extras/panda_breath.py"
+CFG="/oem/printer_data/config/extended/klipper/panda_breath.cfg"
+CFG_HEATER="/oem/printer_data/config/extended/klipper/panda_breath_heater.cfg"
+CFG_DIR="/oem/printer_data/config/extended/klipper"
+
+append_template_section() {
+    SECTION_NAME="$1"
+    awk -v section="$SECTION_NAME" '
+        $0 == "[" section "]" {
+            in_section = 1
+        }
+        /^\[/ && in_section && $0 != "[" section "]" {
+            exit
+        }
+        in_section {
+            print
+        }
+    ' "$PANDA_BREATH_TEMPLATE" >> "$CFG"
+}
+
+ensure_user_config() {
+    mkdir -p "$CFG_DIR"
+
+    if [ -L "$CFG" ]; then
+        echo "Replacing Panda Breath config symlink with user-owned copy..."
+        rm -f "$CFG"
+    fi
+
+    if [ ! -f "$CFG" ]; then
+        echo "Installing Panda Breath user config..."
+        cp "$PANDA_BREATH_TEMPLATE" "$CFG"
+    fi
+
+    if grep -q '^\[heater_generic panda_breath\]' "$CFG" || \
+       grep -q '^\[verify_heater panda_breath\]' "$CFG"; then
+        echo "Removing legacy Panda Breath heater sections from user config..."
+        TMP_CFG="${CFG}.tmp.$$"
+        awk '
+            BEGIN { skip = 0 }
+            /^\[heater_generic panda_breath\]$/ { skip = 1; next }
+            /^\[verify_heater panda_breath\]$/ { skip = 1; next }
+            /^\[/ { skip = 0 }
+            !skip { print }
+        ' "$CFG" > "$TMP_CFG" && mv "$TMP_CFG" "$CFG"
+    fi
+
+    if ! grep -q '^\[gcode_macro M141\]' "$CFG"; then
+        echo "Restoring missing Panda Breath M141 macro..."
+        printf '\n' >> "$CFG"
+        append_template_section "gcode_macro M141"
+    fi
+
+    if ! grep -q '^\[gcode_macro M191\]' "$CFG"; then
+        echo "Restoring missing Panda Breath M191 macro..."
+        printf '\n' >> "$CFG"
+        append_template_section "gcode_macro M191"
+    fi
+
+    chown lava:lava "$CFG"
+    chmod 0644 "$CFG"
+}
+
+ensure_module_link() {
+    mkdir -p "$(dirname "$KLIPPER_EXTRAS_LINK")"
+
+    if [ ! -f "$PANDA_BREATH_MODULE" ]; then
+        echo "Panda Breath module template is missing; removing stale Klipper links."
+        rm -f "$KLIPPER_EXTRAS_LINK" "$CFG_HEATER"
+        return 1
+    fi
+
+    echo "Ensuring Panda Breath module symlink..."
+    ln -sf "$PANDA_BREATH_MODULE" "$KLIPPER_EXTRAS_LINK"
+}
+
+cleanup_disabled_state() {
+    rm -f "$CFG_HEATER" "$KLIPPER_EXTRAS_LINK"
+}
 
 start() {
-    # If the panda_breath config exists, ensure the klipper module symlink is present.
-    # This prevents "Section 'panda_breath' is not a valid config section" after firmware upgrades.
-    if [ -f /oem/printer_data/config/extended/klipper/panda_breath.cfg ]; then
-        echo "Ensuring Panda Breath module symlink..."
-        ln -sf "$PANDA_BREATH_MODULE" "$KLIPPER_EXTRAS_LINK" || true
+    if [ ! -f "$CFG" ] && [ ! -L "$CFG" ]; then
+        cleanup_disabled_state
+        return 0
+    fi
+
+    ensure_user_config
+
+    if ensure_module_link; then
+        echo "Ensuring Panda Breath heater config symlink..."
+        ln -sf "$PANDA_BREATH_HEATER" "$CFG_HEATER"
+    else
+        echo "Skipping Panda Breath heater config until module link is ready."
     fi
 }
 
@@ -17,6 +103,7 @@ case "$1" in
         start
         ;;
     stop)
+        cleanup_disabled_state
         ;;
     restart|reload)
         start
