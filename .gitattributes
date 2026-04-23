@@ -1,0 +1,10 @@
+# Force LF line endings for all files that end up on the printer rootfs.
+# Anything under overlays/**/root/ is copied verbatim into the squashfs image,
+# so CRLF would break shell shebangs (#!/bin/sh\r) and Python interpreters.
+overlays/**/root/** text eol=lf
+overlays/**/scripts/** text eol=lf
+overlays/**/pre-scripts/** text eol=lf
+overlays/**/patches/** text eol=lf
+scripts/** text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
