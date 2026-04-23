@@ -14,7 +14,7 @@
 # Side effect: contents of tmp/ are NOT visible from the host. To inspect:
 #   ./dev-local.sh bash   # then explore tmp/ inside the container
 # To wipe build state:
-#   docker volume rm snapmaker-u1-tmp
+#   ./dev-local.sh clean-tmp
 #
 # Native Linux Docker users should prefer ./dev.sh.
 
@@ -35,6 +35,16 @@ ENV_FLAGS="-e GIT_VERSION -e CI -e PASSWORD"
 
 TMP_VOLUME="snapmaker-u1-tmp"
 mkdir -p tmp
+
+# `./dev-local.sh clean-tmp` — wipe the named tmp volume. This is needed when
+# the host path of the workspace changes (e.g. switching between ./dev.sh and
+# ./dev-local.sh, or moving the repo), because cached CMake build trees
+# embed absolute paths and refuse to be reused from a different mount point.
+if [[ "${1:-}" == "clean-tmp" ]]; then
+    docker volume rm "$TMP_VOLUME" 2>/dev/null || true
+    echo "[+] Removed Docker volume: $TMP_VOLUME"
+    exit 0
+fi
 
 exec docker run --rm $DOCKER_OPTS $TTY_FLAG $ENV_FLAGS --cap-add=SYS_ADMIN \
     -w "$PWD" \
