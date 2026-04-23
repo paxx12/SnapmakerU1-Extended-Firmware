@@ -60,9 +60,7 @@ var ConfigShared = (function () {
             sel.appendChild(o);
         });
         return sel;
-    }
-
-    function checkSpoolmanStatus(url, badge) {
+    }    function checkSpoolmanStatus(url, badge) {
         badge.textContent = '\u2026';
         badge.className = 'spoolman-status-badge spoolman-status-checking';
         fetch('/spools/api/spoolman-ping?url=' + encodeURIComponent(url))
@@ -103,11 +101,9 @@ var ConfigShared = (function () {
                     var wrap = input.parentElement;
                     var existing = wrap.querySelector('.spoolman-candidates');
                     if (existing) wrap.removeChild(existing);
-                    var list = document.createElement('div');
-                    list.className = 'spoolman-candidates';
+                    var list = Templates.clone('spoolman-candidate-list');
                     candidates.forEach(function (c) {
-                        var btn = document.createElement('button');
-                        btn.className = 'spoolman-candidate-btn';
+                        var btn = Templates.clone('spoolman-candidate-btn');
                         btn.textContent = c;
                         btn.addEventListener('click', function () {
                             input.value = c;
@@ -162,26 +158,16 @@ var ConfigShared = (function () {
     }
 
     function buildPageShell(title) {
-        var page = document.createElement('div');
-        page.className = 'config-page';
-        var heading = document.createElement('h2');
-        heading.className = 'config-heading';
-        heading.textContent = title;
-        page.appendChild(heading);
+        var page = Templates.clone('config-page-shell');
+        Templates.setText(page, '[data-id="heading"]', title);
         return page;
     }
 
     function buildSaveFooter(onSave) {
-        var footer = document.createElement('div');
-        footer.className = 'config-footer';
-        var saveBtn = document.createElement('button');
-        saveBtn.className = 'config-save-btn';
-        saveBtn.textContent = 'Save';
-        var statusEl = document.createElement('span');
-        statusEl.className = 'config-save-status';
+        var footer = Templates.clone('config-save-footer');
+        var saveBtn = Templates.$(footer, '[data-id="save-btn"]');
+        var statusEl = Templates.$(footer, '[data-id="status"]');
         saveBtn.addEventListener('click', function () { onSave(saveBtn, statusEl); });
-        footer.appendChild(saveBtn);
-        footer.appendChild(statusEl);
         return footer;
     }
 

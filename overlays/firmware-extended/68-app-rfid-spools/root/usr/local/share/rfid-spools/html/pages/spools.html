@@ -1,0 +1,170 @@
+<!--
+  Templates for the Spools page.
+
+  Hooks (data-id):
+
+  channel-card:
+    - header             : header bar (label-group + tag-type-badge slot)
+    - label-group        : container for slot name + optional note
+    - name               : slot display name
+    - note               : optional slot note (set display:none when absent)
+    - tag-type-badge     : badge appended to header when a tag type is known
+    - body               : main content area (empty state OR field-grid)
+    - footers            : container into which edit/spoolman footers are appended
+
+  channel-empty:
+    - root <div>         : "No spool detected" placeholder
+
+  field-row (label + value pair appended to .field-grid):
+    - label              : <span class="field-label">
+    - value              : <span class="field-value">
+
+  channel-edit-footer:
+    - edit-btn           : opens the TigerTag editor modal
+
+  spoolman-sync-box:
+    - title              : "Spoolman sync" title
+    - badge-slot         : header badge replaced with link when synced
+    - body               : body slot replaced with loading/error/form variants
+
+  spoolman-sync-body-loading / -error / -form variants are inserted into body.
+
+  spoolman-onboard-footer:
+    - link               : "Connect Spoolman to sync →" anchor
+
+  tag-edit-modal (mounted once at body level):
+    - dialog             : modal dialog
+    - title              : <h2>
+    - close              : ✕ button
+    - body               : form content slot
+
+  tag-edit-content (inserted into modal body each open):
+    - format-note        : informational paragraph
+    - grid               : field grid (label + control rows added here)
+    - actions            : action row
+    - cancel             : Cancel button
+    - write              : Write button
+    - status             : status message slot
+
+  tag-edit-row (label + control pair appended to grid):
+    - label              : <span class="field-label">
+    - value              : <span class="field-value"> (control appended here)
+-->
+
+<template id="channel-card">
+    <div class="channel-card">
+        <div class="channel-header" data-id="header">
+            <div class="channel-label-group" data-id="label-group">
+                <span class="channel-label" data-id="name"></span>
+                <span class="channel-note" data-id="note" hidden></span>
+            </div>
+        </div>
+        <div class="channel-body" data-id="body"></div>
+        <div data-id="footers"></div>
+    </div>
+</template>
+
+<template id="channel-tag-type-badge">
+    <span class="tag-type-badge"></span>
+</template>
+
+<template id="channel-empty">
+    <div class="channel-empty">No spool detected</div>
+</template>
+
+<template id="channel-field-grid">
+    <div class="field-grid"></div>
+</template>
+
+<template id="channel-field-row">
+    <span class="field-label" data-id="label"></span>
+    <span class="field-value" data-id="value"></span>
+</template>
+
+<template id="channel-edit-footer">
+    <div class="channel-edit-footer">
+        <button class="channel-edit-btn" data-id="edit-btn" type="button">✎ Edit</button>
+    </div>
+</template>
+
+<template id="channel-spoolman-footer">
+    <div class="channel-spoolman-footer">
+        <div class="spoolman-sync-box">
+            <div class="spoolman-sync-box-header">
+                <span class="spoolman-sync-box-title">Spoolman sync</span>
+                <span data-id="badge-slot"></span>
+            </div>
+            <div data-id="body"></div>
+        </div>
+    </div>
+</template>
+
+<template id="spoolman-sync-badge">
+    <a class="spoolman-sync-badge" target="_blank" rel="noopener noreferrer"></a>
+</template>
+
+<template id="spoolman-sync-body-loading">
+    <div class="spoolman-sync-body-loading">
+        <span class="spoolman-spinner"></span>
+        <span class="spoolman-sync-body-loading-text">Loading…</span>
+    </div>
+</template>
+
+<template id="spoolman-sync-body-error">
+    <div class="spoolman-sync-body-error">⚠ Spoolman unreachable</div>
+</template>
+
+<template id="spoolman-sync-body-form">
+    <div>
+        <div class="spoolman-sync-field-row">
+            <span class="spoolman-sync-label">Name</span>
+            <input type="text" class="spoolman-name-input" data-id="name-input" placeholder="Filament name">
+        </div>
+        <div class="spoolman-sync-field-row">
+            <span class="spoolman-sync-label">Density</span>
+            <input type="number" class="spoolman-density-input" data-id="density-input" step="0.01" min="0.1" max="3.0">
+            <span class="spoolman-density-unit">g/cm³</span>
+        </div>
+        <div class="spoolman-sync-indent-row">
+            <button class="spoolman-sync-btn" data-id="sync-btn" type="button"></button>
+        </div>
+        <div class="spoolman-sync-status" data-id="status"></div>
+    </div>
+</template>
+
+<template id="channel-spoolman-onboard">
+    <div class="channel-spoolman-footer channel-spoolman-onboard">
+        <a href="#config" class="spoolman-onboard-link" data-id="link">Connect Spoolman to sync →</a>
+    </div>
+</template>
+
+<template id="tag-edit-modal">
+    <div id="tag-edit-modal" class="tag-edit-overlay" style="display:none">
+        <div class="tag-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-edit-title">
+            <div class="tag-edit-header">
+                <h2 id="tag-edit-title" class="tag-edit-title" data-id="title">Edit tag</h2>
+                <button type="button" class="tag-edit-close" data-id="close" aria-label="Close">&times;</button>
+            </div>
+            <div class="tag-edit-body" data-id="body"></div>
+        </div>
+    </div>
+</template>
+
+<template id="tag-edit-content">
+    <div>
+        <p class="tag-edit-format-note" data-id="format-note">
+            Writes a TigerTag (NTAG215) payload. Existing tag content will be overwritten.
+        </p>
+        <div class="field-grid channel-edit-grid" data-id="grid"></div>
+        <div class="channel-edit-actions" data-id="actions">
+            <button type="button" class="channel-edit-cancel" data-id="cancel">Cancel</button>
+            <button type="button" class="channel-edit-write" data-id="write">✎ Write TigerTag</button>
+            <span class="channel-edit-status" data-id="status"></span>
+        </div>
+    </div>
+</template>
+
+<template id="tag-edit-row">
+    <span class="field-label" data-id="label"></span>
+    <span class="field-value" data-id="value"></span>
+</template>

@@ -1,6 +1,8 @@
 'use strict';
 
 // ── Slot config page ─────────────────────────────────────────────────────────
+// Markup lives in pages/config-slots.html (template id "config-slots-row").
+// The outer page shell and save footer are still provided by ConfigShared.
 
 var SlotConfigPage = (function () {
 
@@ -37,46 +39,21 @@ var SlotConfigPage = (function () {
     function unmount() {}
 
     function buildSlotRow(index, slotNames, slotNotes) {
-        var defaultNames = ConfigShared.DEFAULT_NAMES;
-        var row = document.createElement('div');
-        row.className = 'config-slot-row';
+        var defaultName = ConfigShared.DEFAULT_NAMES[index];
+        var row = Templates.clone('config-slots-row');
         row.dataset.slot = index;
 
-        var slotLabel = document.createElement('div');
-        slotLabel.className = 'config-slot-label';
-        slotLabel.textContent = defaultNames[index];
-        row.appendChild(slotLabel);
+        Templates.setText(row, '[data-id="slot-label"]', defaultName);
 
-        var fields = document.createElement('div');
-        fields.className = 'config-slot-fields';
-
-        var nameLabel = document.createElement('label');
-        nameLabel.className = 'config-field-label';
-        nameLabel.textContent = 'Custom name';
-        var nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.className = 'config-input';
-        nameInput.placeholder = defaultNames[index];
+        var nameInput = Templates.$(row, '[data-id="name-input"]');
+        nameInput.placeholder = defaultName;
         nameInput.value = slotNames[index] || slotNames[String(index)] || '';
-        nameInput.dataset.configKey = 'slot_names';
         nameInput.dataset.slot = index;
-        nameLabel.appendChild(nameInput);
-        fields.appendChild(nameLabel);
 
-        var noteLabel = document.createElement('label');
-        noteLabel.className = 'config-field-label';
-        noteLabel.textContent = 'Note';
-        var noteInput = document.createElement('textarea');
-        noteInput.className = 'config-textarea';
-        noteInput.placeholder = 'e.g. backup spool, low remaining\u2026';
-        noteInput.rows = 2;
+        var noteInput = Templates.$(row, '[data-id="note-input"]');
         noteInput.value = slotNotes[index] || slotNotes[String(index)] || '';
-        noteInput.dataset.configKey = 'slot_notes';
         noteInput.dataset.slot = index;
-        noteLabel.appendChild(noteInput);
-        fields.appendChild(noteLabel);
 
-        row.appendChild(fields);
         return row;
     }
 

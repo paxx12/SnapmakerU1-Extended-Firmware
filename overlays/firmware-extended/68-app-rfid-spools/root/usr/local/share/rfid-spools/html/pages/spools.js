@@ -103,31 +103,22 @@ var SpoolsPage = (function () {
 
         var f = resolveFields(ch, config);
 
-        var card = document.createElement('div');
-        card.className = 'channel-card';
+        var card = Templates.clone('channel-card');
         card.setAttribute('data-channel', String(ch.channel));
 
-        // Header
-        var header = document.createElement('div');
-        header.className = 'channel-header';
+        var header = Templates.$(card, '[data-id="header"]');
+        var body = Templates.$(card, '[data-id="body"]');
+        var footers = Templates.$(card, '[data-id="footers"]');
 
-        var label = document.createElement('div');
-        label.className = 'channel-label-group';
-
-        var nameEl = document.createElement('span');
-        nameEl.className = 'channel-label';
-        nameEl.textContent = slotNames[ch.channel] || slotNames[String(ch.channel)] || defaultNames[ch.channel] || ('Slot ' + (ch.channel + 1));
-        label.appendChild(nameEl);
+        Templates.setText(card, '[data-id="name"]',
+            slotNames[ch.channel] || slotNames[String(ch.channel)] || defaultNames[ch.channel] || ('Slot ' + (ch.channel + 1)));
 
         var note = slotNotes[ch.channel] || slotNotes[String(ch.channel)] || '';
+        var noteEl = Templates.$(card, '[data-id="note"]');
         if (note && note.trim()) {
-            var noteEl = document.createElement('span');
-            noteEl.className = 'channel-note';
             noteEl.textContent = note.trim();
-            label.appendChild(noteEl);
+            noteEl.hidden = false;
         }
-
-        header.appendChild(label);
 
         // Tag type badge
         var tagTypeName = null;
@@ -142,25 +133,16 @@ var SpoolsPage = (function () {
             else if (mk.CARD_UID.length === 7) tagTypeName = 'TigerTag';
         }
         if (tagTypeName) {
-            var badge = document.createElement('span');
-            badge.className = 'tag-type-badge';
+            var badge = Templates.clone('channel-tag-type-badge');
             badge.textContent = tagTypeName;
             header.appendChild(badge);
         }
 
-        card.appendChild(header);
-
         // Body
-        var body = document.createElement('div');
-        body.className = 'channel-body';
-
         var hasData = isMk(mk.VENDOR) || isMk(mk.MAIN_TYPE) || (tag && tag.filament);
 
         if (!hasData) {
-            var empty = document.createElement('div');
-            empty.className = 'channel-empty';
-            empty.textContent = 'No spool detected';
-            body.appendChild(empty);
+            body.appendChild(Templates.clone('channel-empty'));
         } else {
             var fields = [];
 
@@ -260,23 +242,17 @@ var SpoolsPage = (function () {
             }
 
             // Render field grid
-            var grid = document.createElement('div');
-            grid.className = 'field-grid';
+            var grid = Templates.clone('channel-field-grid');
             for (var i = 0; i < fields.length; i++) {
-                var fl = document.createElement('span');
-                fl.className = 'field-label';
-                fl.textContent = fields[i].label;
-                var fv = document.createElement('span');
-                fv.className = 'field-value';
+                var row = Templates.cloneFragment('channel-field-row');
+                Templates.setText(row, '[data-id="label"]', fields[i].label);
+                var fv = Templates.$(row, '[data-id="value"]');
                 if (fields[i].raw) fv.innerHTML = fields[i].value;
                 else fv.textContent = fields[i].value;
-                grid.appendChild(fl);
-                grid.appendChild(fv);
+                grid.appendChild(row);
             }
             body.appendChild(grid);
         }
-
-        card.appendChild(body);
 
         // ── Inline edit / write footer (writable NTAG215 tags only) ─────────
         // Detect writability by UID length: 7 bytes = NTAG215/Ultralight (writable),
@@ -291,14 +267,8 @@ var SpoolsPage = (function () {
         }
         var isWritable = uidByteLen === 7;
         if (isWritable) {
-            var editFooter = document.createElement('div');
-            editFooter.className = 'channel-edit-footer';
-
-            var editBtn = document.createElement('button');
-            editBtn.className = 'channel-edit-btn';
-            editBtn.type = 'button';
-            editBtn.textContent = '\u270e Edit';
-            editFooter.appendChild(editBtn);
+            var editFooter = Templates.clone('channel-edit-footer');
+            var editBtn = Templates.$(editFooter, '[data-id="edit-btn"]');
 
             editBtn.addEventListener('click', function () {
                 ensureRegistry().then(function (reg) {
@@ -308,148 +278,72 @@ var SpoolsPage = (function () {
                 });
             });
 
-            card.appendChild(editFooter);
+            footers.appendChild(editFooter);
         }
 
         // Spoolman sync footer (shown when spoolman_url is configured and tag present)
         var spoolmanUrl = config && config.spoolman_url;
         if (spoolmanUrl && hasData && tag && tag.filament) {
-            var spoolmanFooter = document.createElement('div');
-            spoolmanFooter.className = 'channel-spoolman-footer';
+            var spoolmanFooter = Templates.clone('channel-spoolman-footer');
+            var badgeSlot = Templates.$(spoolmanFooter, '[data-id="badge-slot"]');
+            var bodySlot = Templates.$(spoolmanFooter, '[data-id="body"]');
 
             var syncState = ch.spoolman_sync;
             var channelIndex = ch.channel;
 
-            // Cache state — resolved once, used throughout
             var isLinked = !!(syncState && syncState.filament_id);
             var cached = isLinked ? _spoolmanCache[channelIndex] : null;
             var cacheValid = !!(cached && cached.filament_id === syncState.filament_id);
 
-            // ── Sync box ────────────────────────────────────────────────────
-            var syncBox = document.createElement('div');
-            syncBox.className = 'spoolman-sync-box';
-
-            // Header row: title + badge (when cached) or spinner (while loading)
-            var boxHeader = document.createElement('div');
-            boxHeader.className = 'spoolman-sync-box-header';
-            var boxTitle = document.createElement('span');
-            boxTitle.className = 'spoolman-sync-box-title';
-            boxTitle.textContent = 'Spoolman sync';
-            boxHeader.appendChild(boxTitle);
             if (isLinked && cacheValid) {
-                var badge = document.createElement('a');
-                badge.className = 'spoolman-sync-badge';
-                badge.href = spoolmanUrl.replace(/\/$/, '') + '/filament/show/' + syncState.filament_id;
-                badge.target = '_blank';
-                badge.rel = 'noopener noreferrer';
+                var syncBadge = Templates.clone('spoolman-sync-badge');
+                syncBadge.href = spoolmanUrl.replace(/\/$/, '') + '/filament/show/' + syncState.filament_id;
                 var badgeParts = ['Synced \u2713 \u00b7 Filament #' + syncState.filament_id];
                 if (syncState.spool_id) badgeParts.push('Spool #' + syncState.spool_id);
-                badge.textContent = badgeParts.join(' \u00b7 ');
-                boxHeader.appendChild(badge);
+                syncBadge.textContent = badgeParts.join(' \u00b7 ');
+                badgeSlot.replaceWith(syncBadge);
             }
-            syncBox.appendChild(boxHeader);
 
-            // Compute body state
             var cacheError = isLinked && !!(cached && cached.error === true);
             var isLoading = isLinked && !cacheValid && !cacheError;
 
             if (isLoading) {
-                // Loading body: spinner while Spoolman data is being fetched
-                var loadingBody = document.createElement('div');
-                loadingBody.className = 'spoolman-sync-body-loading';
-                var bodySpinner = document.createElement('span');
-                bodySpinner.className = 'spoolman-spinner';
-                loadingBody.appendChild(bodySpinner);
-                var loadingText = document.createElement('span');
-                loadingText.className = 'spoolman-sync-body-loading-text';
-                loadingText.textContent = 'Loading…';
-                loadingBody.appendChild(loadingText);
-                syncBox.appendChild(loadingBody);
+                bodySlot.appendChild(Templates.clone('spoolman-sync-body-loading'));
             } else if (cacheError) {
-                // Error body: Spoolman unreachable
-                var errorBody = document.createElement('div');
-                errorBody.className = 'spoolman-sync-body-error';
-                errorBody.textContent = '\u26a0 Spoolman unreachable';
-                syncBox.appendChild(errorBody);
+                bodySlot.appendChild(Templates.clone('spoolman-sync-body-error'));
             } else {
-                // Normal body: name/density fields + sync button
-                // Name field row
-                var nameRow = document.createElement('div');
-                nameRow.className = 'spoolman-sync-field-row';
-                var nameLabel = document.createElement('span');
-                nameLabel.className = 'spoolman-sync-label';
-                nameLabel.textContent = 'Name';
-                var nameInput = document.createElement('input');
-                nameInput.type = 'text';
-                nameInput.className = 'spoolman-name-input';
-                nameInput.placeholder = 'Filament name';
-                // Priority: cached Spoolman name > TigerTag message > empty
+                var form = Templates.clone('spoolman-sync-body-form');
+                var nameInput = Templates.$(form, '[data-id="name-input"]');
+                var densityInput = Templates.$(form, '[data-id="density-input"]');
+                var syncBtn = Templates.$(form, '[data-id="sync-btn"]');
+                var syncStatus = Templates.$(form, '[data-id="status"]');
+
                 if (cacheValid && cached.name) {
                     nameInput.value = cached.name;
                 } else if (f.message) {
                     nameInput.value = f.message;
                 }
-                nameRow.appendChild(nameLabel);
-                nameRow.appendChild(nameInput);
-                syncBox.appendChild(nameRow);
-
-                // Density field row
-                var densityRow = document.createElement('div');
-                densityRow.className = 'spoolman-sync-field-row';
-                var densityLabel = document.createElement('span');
-                densityLabel.className = 'spoolman-sync-label';
-                densityLabel.textContent = 'Density';
-                var densityInput = document.createElement('input');
-                densityInput.type = 'number';
-                densityInput.className = 'spoolman-density-input';
-                densityInput.step = '0.01';
-                densityInput.min = '0.1';
-                densityInput.max = '3.0';
                 densityInput.value = (cacheValid && cached.density) ? cached.density : defaultDensity(f.type);
-                var densityUnit = document.createElement('span');
-                densityUnit.className = 'spoolman-density-unit';
-                densityUnit.textContent = 'g/cm\u00b3';
-                densityRow.appendChild(densityLabel);
-                densityRow.appendChild(densityInput);
-                densityRow.appendChild(densityUnit);
-                syncBox.appendChild(densityRow);
-
-                // Action row (indented to align with inputs)
-                var linkedFilamentId = cacheValid ? cached.filament_id : null;
-                var syncBtn = document.createElement('button');
-                syncBtn.className = 'spoolman-sync-btn';
                 syncBtn.textContent = isLinked ? 'Sync \u2197' : 'Import to Spoolman \u2197';
-                var syncBtnRow = document.createElement('div');
-                syncBtnRow.className = 'spoolman-sync-indent-row';
-                syncBtnRow.appendChild(syncBtn);
-                syncBox.appendChild(syncBtnRow);
 
-                // Status line
-                var syncStatus = document.createElement('div');
-                syncStatus.className = 'spoolman-sync-status';
-                syncBox.appendChild(syncStatus);
-
+                var linkedFilamentId = cacheValid ? cached.filament_id : null;
                 syncBtn.addEventListener('click', function () {
                     syncToSpoolman(channelIndex, nameInput, densityInput, syncStatus, syncBtn, linkedFilamentId);
                 });
+
+                bodySlot.appendChild(form);
             }
 
-            spoolmanFooter.appendChild(syncBox);
-            card.appendChild(spoolmanFooter);
+            footers.appendChild(spoolmanFooter);
         } else if (!spoolmanUrl && hasData && tag && tag.filament) {
             // Onboarding: no Spoolman configured yet
-            var onboardFooter = document.createElement('div');
-            onboardFooter.className = 'channel-spoolman-footer channel-spoolman-onboard';
-            var onboardLink = document.createElement('a');
-            onboardLink.href = '#config';
-            onboardLink.className = 'spoolman-onboard-link';
-            onboardLink.textContent = 'Connect Spoolman to sync \u2192';
+            var onboardFooter = Templates.clone('channel-spoolman-onboard');
+            var onboardLink = Templates.$(onboardFooter, '[data-id="link"]');
             onboardLink.addEventListener('click', function (e) {
                 e.preventDefault();
                 App.navigate('config');
             });
-            onboardFooter.appendChild(onboardLink);
-            card.appendChild(onboardFooter);
+            footers.appendChild(onboardFooter);
         }
 
         return card;
@@ -522,14 +416,11 @@ var SpoolsPage = (function () {
     }
 
     function _addRow(grid, labelText, control) {
-        var lab = document.createElement('span');
-        lab.className = 'field-label';
-        lab.textContent = labelText;
-        grid.appendChild(lab);
-        var wrap = document.createElement('span');
-        wrap.className = 'field-value';
+        var row = Templates.cloneFragment('tag-edit-row');
+        Templates.setText(row, '[data-id="label"]', labelText);
+        var wrap = Templates.$(row, '[data-id="value"]');
         wrap.appendChild(control);
-        grid.appendChild(wrap);
+        grid.appendChild(row);
         return control;
     }
 
@@ -569,34 +460,9 @@ var SpoolsPage = (function () {
     function _ensureEditModal() {
         var existing = document.getElementById('tag-edit-modal');
         if (existing) return existing;
-        var overlay = document.createElement('div');
-        overlay.id = 'tag-edit-modal';
-        overlay.className = 'tag-edit-overlay';
-        overlay.style.display = 'none';
-        var dialog = document.createElement('div');
-        dialog.className = 'tag-edit-dialog';
-        dialog.setAttribute('role', 'dialog');
-        dialog.setAttribute('aria-modal', 'true');
-        dialog.setAttribute('aria-labelledby', 'tag-edit-title');
-        var header = document.createElement('div');
-        header.className = 'tag-edit-header';
-        var title = document.createElement('h2');
-        title.id = 'tag-edit-title';
-        title.className = 'tag-edit-title';
-        title.textContent = 'Edit tag';
-        var closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'tag-edit-close';
-        closeBtn.setAttribute('aria-label', 'Close');
-        closeBtn.innerHTML = '&times;';
-        header.appendChild(title);
-        header.appendChild(closeBtn);
-        var body = document.createElement('div');
-        body.className = 'tag-edit-body';
-        dialog.appendChild(header);
-        dialog.appendChild(body);
-        overlay.appendChild(dialog);
+        var overlay = Templates.clone('tag-edit-modal');
         document.body.appendChild(overlay);
+        var closeBtn = Templates.$(overlay, '[data-id="close"]');
         // Close on overlay click (but not when clicking inside the dialog).
         overlay.addEventListener('click', function (ev) {
             if (ev.target === overlay) _closeEditModal();
@@ -614,9 +480,9 @@ var SpoolsPage = (function () {
     function _openEditModal(channel, titleText) {
         var overlay = _ensureEditModal();
         overlay.dataset.channel = String(channel);
-        var title = overlay.querySelector('#tag-edit-title');
+        var title = Templates.$(overlay, '[data-id="title"]');
         if (title && titleText) title.textContent = titleText;
-        var body = overlay.querySelector('.tag-edit-body');
+        var body = Templates.$(overlay, '[data-id="body"]');
         if (body) body.innerHTML = '';
         overlay.style.display = 'flex';
         document.body.classList.add('tag-edit-open');
@@ -643,14 +509,9 @@ var SpoolsPage = (function () {
             'Write TigerTag — channel ' + (ch.channel + 1)
         );
 
-        // Make the on-tag format explicit so the user knows what they are writing.
-        var formatNote = document.createElement('p');
-        formatNote.className = 'tag-edit-format-note';
-        formatNote.textContent = 'Writes a TigerTag (NTAG215) payload. Existing tag content will be overwritten.';
-        body.appendChild(formatNote);
-
-        var grid = document.createElement('div');
-        grid.className = 'field-grid channel-edit-grid';
+        var content = Templates.clone('tag-edit-content');
+        var grid = Templates.$(content, '[data-id="grid"]');
+        body.appendChild(content);
 
         // Material (select)
         var matInput = _selectFromRegistry(registry.materials || [], f.type || '', 'Select material…');
@@ -793,29 +654,10 @@ var SpoolsPage = (function () {
         msgInput.value = (split.emoji ? split.emoji + ' ' : '') + split.message;
         _addRow(grid, 'Message', msgInput);
 
-        body.appendChild(grid);
-
-        // Action row
-        var actions = document.createElement('div');
-        actions.className = 'channel-edit-actions';
-
-        var cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'channel-edit-cancel';
-        cancelBtn.textContent = 'Cancel';
-
-        var writeBtn = document.createElement('button');
-        writeBtn.type = 'button';
-        writeBtn.className = 'channel-edit-write';
-        writeBtn.textContent = '✎ Write TigerTag';
-
-        var status = document.createElement('span');
-        status.className = 'channel-edit-status';
-
-        actions.appendChild(cancelBtn);
-        actions.appendChild(writeBtn);
-        actions.appendChild(status);
-        body.appendChild(actions);
+        // Action row (template provides cancel/write/status)
+        var cancelBtn = Templates.$(content, '[data-id="cancel"]');
+        var writeBtn = Templates.$(content, '[data-id="write"]');
+        var status = Templates.$(content, '[data-id="status"]');
 
         cancelBtn.addEventListener('click', function () {
             exitEditMode(ch);

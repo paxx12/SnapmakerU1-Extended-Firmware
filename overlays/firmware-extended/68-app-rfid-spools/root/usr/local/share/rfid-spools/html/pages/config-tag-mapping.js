@@ -1,6 +1,8 @@
 'use strict';
 
-// ── Tag mapping config page ───────────────────────────────────────────────────
+// ── Tag mapping config page ──────────────────────────────────────────────────
+// Markup lives in pages/config-tag-mapping.html
+// (templates "config-mapping-block" + "config-mapping-row").
 
 var TagMappingConfigPage = (function () {
 
@@ -30,45 +32,30 @@ var TagMappingConfigPage = (function () {
     function buildMappingBlock(mappingRows) {
         var srcFields = ConfigShared.SOURCE_FIELDS;
 
-        var block = document.createElement('div');
-        block.className = 'mapping-block';
-
-        var table = document.createElement('div');
-        table.className = 'mapping-table';
-        block.appendChild(table);
+        var block = Templates.clone('config-mapping-block');
+        var table = Templates.$(block, '[data-id="table"]');
+        var addBtn = Templates.$(block, '[data-id="add-row"]');
 
         function addRow(toVal, fromVal) {
-            var row = document.createElement('div');
-            row.className = 'mapping-row';
+            var row = Templates.clone('config-mapping-row');
+            var toSlot = Templates.$(row, '[data-id="to-slot"]');
+            var fromSlot = Templates.$(row, '[data-id="from-slot"]');
 
-            var toSel = ConfigShared.buildSelect(ConfigShared.GENERIC_FIELDS, toVal, 'mapping-to');
-            var arrow = document.createElement('span');
-            arrow.className = 'mapping-arrow';
-            arrow.textContent = '\u2190';
-            var fromSel = ConfigShared.buildSelect(srcFields, fromVal, 'mapping-from');
+            toSlot.replaceWith(ConfigShared.buildSelect(ConfigShared.GENERIC_FIELDS, toVal, 'mapping-to'));
+            fromSlot.replaceWith(ConfigShared.buildSelect(srcFields, fromVal, 'mapping-from'));
 
-            var removeBtn = document.createElement('button');
-            removeBtn.className = 'mapping-remove-btn';
-            removeBtn.textContent = '\u00d7';
-            removeBtn.title = 'Remove row';
-            removeBtn.addEventListener('click', function () { table.removeChild(row); });
+            Templates.on(row, '[data-id="remove"]', 'click', function () {
+                table.removeChild(row);
+            });
 
-            row.appendChild(toSel);
-            row.appendChild(arrow);
-            row.appendChild(fromSel);
-            row.appendChild(removeBtn);
             table.appendChild(row);
         }
 
         mappingRows.forEach(function (r) { addRow(r.to, r.from); });
 
-        var addBtn = document.createElement('button');
-        addBtn.className = 'mapping-add-btn';
-        addBtn.textContent = '+ Add row';
         addBtn.addEventListener('click', function () {
             addRow(ConfigShared.GENERIC_FIELDS[0].value, srcFields[0].value);
         });
-        block.appendChild(addBtn);
 
         return block;
     }

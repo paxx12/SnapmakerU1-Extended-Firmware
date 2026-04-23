@@ -1,6 +1,8 @@
 'use strict';
 
 // ── Spoolman config page ─────────────────────────────────────────────────────
+// Markup lives in pages/config-spoolman.html
+// (templates "config-spoolman-section" + "config-spoolman-extra-row").
 
 var SpoolmanConfigPage = (function () {
 
@@ -18,60 +20,26 @@ var SpoolmanConfigPage = (function () {
         var config = App.getConfig();
         var page = ConfigShared.buildPageShell('Spoolman');
 
-        var section = document.createElement('div');
-        section.className = 'config-section';
+        var section = Templates.clone('config-spoolman-section');
+        var input = Templates.$(section, '[data-id="url-input"]');
+        var badge = Templates.$(section, '[data-id="status-badge"]');
+        var findBtn = Templates.$(section, '[data-id="find-btn"]');
+        var table = Templates.$(section, '[data-id="extra-fields"]');
+        var regBtn = Templates.$(section, '[data-id="register-btn"]');
+        var regStatus = Templates.$(section, '[data-id="register-status"]');
 
-        // URL row
-        var urlRow = document.createElement('div');
-        urlRow.className = 'config-slot-row';
-        var label = document.createElement('label');
-        label.className = 'config-field-label';
-        label.textContent = 'Server URL';
-
-        var inputWrap = document.createElement('div');
-        inputWrap.className = 'config-spoolman-input-wrap';
-
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'spoolman-url-input';
-        input.className = 'config-input';
-        input.placeholder = 'http://spoolman.local:7912';
         input.value = (config && config.spoolman_url) || '';
-
-        var badge = document.createElement('span');
-        badge.className = 'spoolman-status-badge';
-
         input.addEventListener('change', function () {
             var url = input.value.trim();
             if (url) ConfigShared.checkSpoolmanStatus(url, badge);
             else { badge.textContent = ''; badge.className = 'spoolman-status-badge'; }
         });
 
-        inputWrap.appendChild(input);
-        inputWrap.appendChild(badge);
-        label.appendChild(inputWrap);
-        urlRow.appendChild(label);
-        section.appendChild(urlRow);
+        findBtn.addEventListener('click', function () {
+            ConfigShared.findSpoolman(input, badge);
+        });
 
-        var btnRow = document.createElement('div');
-        btnRow.className = 'config-spoolman-btn-row';
-        var findBtn = document.createElement('button');
-        findBtn.className = 'config-btn-secondary';
-        findBtn.textContent = 'Find Spoolman';
-        findBtn.addEventListener('click', function () { ConfigShared.findSpoolman(input, badge); });
-        btnRow.appendChild(findBtn);
-        section.appendChild(btnRow);
-
-        // Extra fields table
         var extraFields = (config && config.spoolman_extra_fields) || {};
-
-        var extraTitle = document.createElement('div');
-        extraTitle.className = 'config-extra-fields-title';
-        extraTitle.textContent = 'Extra fields to sync (requires custom fields in Spoolman)';
-        section.appendChild(extraTitle);
-
-        var table = document.createElement('div');
-        table.className = 'config-extra-fields-table';
 
         function refreshFieldStatus() {
             fetch('/spools/api/spoolman-extra-fields-status')
@@ -81,7 +49,7 @@ var SpoolmanConfigPage = (function () {
                     EXTRA_FIELDS.forEach(function (f) {
                         var row = table.querySelector('[data-extra-field-row="' + f.key + '"]');
                         if (!row) return;
-                        var sb = row.querySelector('.config-extra-field-status');
+                        var sb = Templates.$(row, '[data-id="status"]');
                         if (!sb) return;
                         if (data.fields[f.key] === true) {
                             sb.textContent = '\u2713';
@@ -96,44 +64,19 @@ var SpoolmanConfigPage = (function () {
         }
 
         EXTRA_FIELDS.forEach(function (f) {
-            var row = document.createElement('label');
-            row.className = 'config-extra-field-row';
+            var row = Templates.clone('config-spoolman-extra-row');
             row.dataset.extraFieldRow = f.key;
 
-            var cb = document.createElement('input');
-            cb.type = 'checkbox';
+            var cb = Templates.$(row, '[data-id="checkbox"]');
             cb.dataset.extraKey = f.key;
-            cb.className = 'config-extra-field-cb';
             cb.checked = !!(extraFields[f.key]);
 
-            var labelText = document.createElement('span');
-            labelText.className = 'config-extra-field-label';
-            labelText.textContent = f.label;
+            Templates.setText(row, '[data-id="label"]', f.label);
+            Templates.setText(row, '[data-id="key"]', f.key);
 
-            var keyBadge = document.createElement('code');
-            keyBadge.className = 'config-extra-field-key';
-            keyBadge.textContent = f.key;
-
-            var statusBadge = document.createElement('span');
-            statusBadge.className = 'config-extra-field-status';
-            statusBadge.textContent = '\u2026';
-
-            row.appendChild(cb);
-            row.appendChild(labelText);
-            row.appendChild(keyBadge);
-            row.appendChild(statusBadge);
             table.appendChild(row);
         });
-        section.appendChild(table);
 
-        // Register fields button
-        var regRow = document.createElement('div');
-        regRow.className = 'config-spoolman-syncall-row';
-        var regBtn = document.createElement('button');
-        regBtn.className = 'config-btn-secondary';
-        regBtn.textContent = 'Register fields in Spoolman';
-        var regStatus = document.createElement('span');
-        regStatus.className = 'spoolman-status-badge';
         regBtn.addEventListener('click', function () {
             regBtn.disabled = true;
             regStatus.textContent = 'Registering\u2026';
@@ -164,9 +107,6 @@ var SpoolmanConfigPage = (function () {
                     regStatus.className = 'spoolman-status-badge spoolman-status-err';
                 });
         });
-        regRow.appendChild(regBtn);
-        regRow.appendChild(regStatus);
-        section.appendChild(regRow);
 
         page.appendChild(section);
 

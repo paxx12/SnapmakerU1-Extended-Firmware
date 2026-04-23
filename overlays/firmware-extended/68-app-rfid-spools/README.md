@@ -117,19 +117,34 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
   [style.css](root/usr/local/share/rfid-spools/html/style.css),
   [app.js](root/usr/local/share/rfid-spools/html/app.js),
   [router.js](root/usr/local/share/rfid-spools/html/router.js),
-  [utils.js](root/usr/local/share/rfid-spools/html/utils.js)
+  [utils.js](root/usr/local/share/rfid-spools/html/utils.js),
+  [templates.js](root/usr/local/share/rfid-spools/html/templates.js)
+- Each page is a clean **template + script** pair under `pages/`:
+  the `.html` file holds `<template id="…">` blocks (with `data-id="…"`
+  hooks for per-instance text/attributes), and the `.js` file clones
+  them via `Templates.clone(id)` / `Templates.cloneFragment(id)` and
+  resolves hooks with `Templates.$(root, '[data-id="…"]')`. Templates
+  are preloaded once on app start by `Templates.loadAll([...])` in
+  [app.js](root/usr/local/share/rfid-spools/html/app.js). Form
+  controls (`<select>`, `<input>`) are still constructed in JS — only
+  structural HTML lives in templates.
 - Pages:
-  - [pages/spools.js](root/usr/local/share/rfid-spools/html/pages/spools.js)
+  - [pages/spools.html](root/usr/local/share/rfid-spools/html/pages/spools.html)
+    + [pages/spools.js](root/usr/local/share/rfid-spools/html/pages/spools.js)
     — channel cards, Spoolman sync footer, "Edit" button opens the TigerTag
     editor modal (centered, close on Esc / backdrop). The editor pre-fills
     every field from the cached scan data; values not present in the
     registry surface as `(custom)` options. Diameter pre-fill uses bare
     numbers (`"1.75"`); unit defaults to `"g"`. Color picker, temps/weight
     numeric inputs, emoji + 28-char message input. Write → `POST /api/write`.
-  - [pages/config-shared.js](root/usr/local/share/rfid-spools/html/pages/config-shared.js)
-  - [pages/config-slots.js](root/usr/local/share/rfid-spools/html/pages/config-slots.js)
-  - [pages/config-tag-mapping.js](root/usr/local/share/rfid-spools/html/pages/config-tag-mapping.js)
-  - [pages/config-spoolman.js](root/usr/local/share/rfid-spools/html/pages/config-spoolman.js)
+  - [pages/config-shared.html](root/usr/local/share/rfid-spools/html/pages/config-shared.html)
+    + [pages/config-shared.js](root/usr/local/share/rfid-spools/html/pages/config-shared.js)
+  - [pages/config-slots.html](root/usr/local/share/rfid-spools/html/pages/config-slots.html)
+    + [pages/config-slots.js](root/usr/local/share/rfid-spools/html/pages/config-slots.js)
+  - [pages/config-tag-mapping.html](root/usr/local/share/rfid-spools/html/pages/config-tag-mapping.html)
+    + [pages/config-tag-mapping.js](root/usr/local/share/rfid-spools/html/pages/config-tag-mapping.js)
+  - [pages/config-spoolman.html](root/usr/local/share/rfid-spools/html/pages/config-spoolman.html)
+    + [pages/config-spoolman.js](root/usr/local/share/rfid-spools/html/pages/config-spoolman.js)
 
 ### Init / nginx
 
