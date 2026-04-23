@@ -51,10 +51,20 @@ ssh $SSH_OPTS "$HOST" '
   tar -C / -xzf /tmp/rfid-push.tar.gz
   rm -f /tmp/rfid-push.tar.gz
   chmod -R a+rX /usr/local/share/rfid-spools/html/
-  chmod 755 /etc/init.d/S99rfid-spools /etc/init.d/S99openrfid /usr/local/bin/rfid-spools-api.py
+  chmod 755 /etc/init.d/S99rfid-spools /etc/init.d/S99openrfid \
+    /usr/local/bin/rfid-spools-api.py /usr/local/bin/openrfid.py
   # Clear Python bytecode caches for any modified openrfid files so Python reloads them
   rm -f /usr/local/share/openrfid/filament/__pycache__/generic.cpython-*.pyc
   rm -f /usr/local/share/openrfid/tag/tigertag/__pycache__/processor.cpython-*.pyc
+  rm -f /usr/local/share/openrfid/tag/tigertag/__pycache__/constants.cpython-*.pyc
+  rm -f /usr/local/share/openrfid/extensions/__pycache__/*.pyc
+  rm -f /usr/local/bin/__pycache__/rfid-spools-api.cpython-*.pyc
+  rm -f /usr/local/bin/__pycache__/openrfid.cpython-*.pyc
+  # Belt-and-braces: nuke every __pycache__ under the openrfid tree to make
+  # sure no stale bytecode shadows our overlay (.pyc with a higher mtime than
+  # the .py would still be loaded by some Python builds).
+  find /usr/local/share/openrfid -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+  find /usr/local/bin -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
   /etc/init.d/S99rfid-spools restart
   /etc/init.d/S99openrfid restart
   nginx -s reload

@@ -25,6 +25,15 @@ MOONRAKER_URL = "http://localhost"
 MAX_CHANNELS = 4
 MAX_BODY_SIZE = 64 * 1024  # 64KB max request body
 
+# TigerTag encoder constants — mirror OpenRFID tag/tigertag/constants.py.
+# See: https://github.com/suchmememanyskill/openrfid
+OPENRFID_TIGERTAG_DB_DIR = "/usr/local/share/openrfid/tag/tigertag/database"
+TIGERTAG_TAG_ID = 0xBC0FCB97  # newer of the two valid tag IDs
+TIGERTAG_EPOCH_OFFSET = 946684800  # seconds between unix epoch and 2000-01-01
+TIGERTAG_USER_DATA_LEN = 96  # bytes of user data starting at NTAG page 4
+TIGERTAG_NTAG_PAGE_OFFSET = 4
+TIGERTAG_NTAG_BYTE_OFFSET = TIGERTAG_NTAG_PAGE_OFFSET * 4  # 16
+
 
 class EventBus:
     """Broadcast tag events to SSE listeners."""
@@ -594,6 +603,355 @@ def sync_to_spoolman(base_url, fields, name, extra_fields=None, override_filamen
     }
 
 
+# ── TigerTag write support ──────────────────────────────────────────────────
+#
+# Encodes a 96-byte TigerTag user-data block (NTAG215 pages 4..27) and submits
+# it to the OpenRFID NTAG write loopback (127.0.0.1:8740) installed by the
+# in-process extension at extensions/ntag_write.py.
+# Field offsets and types come from OpenRFID `tag/tigertag/constants.py`.
+
+# Loaded lazily by load_tigertag_registry(); each is a dict {label_lower: id}
+# plus a back-pointer "_raw" with the original list for the UI.
+_tigertag_registry_cache = None
+_tigertag_registry_lock = threading.Lock()
+
+
+def _load_db_file(name):
+    """Load one TigerTag database JSON file as a list of records, or [] on failure."""
+    path = os.path.join(OPENRFID_TIGERTAG_DB_DIR, name)
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except (OSError, json.JSONDecodeError) as e:
+        logging.warning("TigerTag DB %s load failed: %s", name, e)
+        return []
+
+
+def _build_label_index(records, label_key="label"):
+    """Build {label_lower: id} index over a list of {id, label, ...} records.
+    Falls back to the `name` key if `label` is missing (TigerTag's id_brand.json
+    uses `name` instead of `label`)."""
+    out = {}
+    for r in records:
+        if not isinstance(r, dict):
+            continue
+        rid = r.get("id")
+        lab = r.get(label_key)
+        if not isinstance(lab, str):
+            lab = r.get("name")
+        if rid is None or not isinstance(lab, str):
+            continue
+        out[lab.strip().lower()] = int(rid)
+    return out
+
+
+def _normalize_records(records):
+    """Return records with a guaranteed `label` field (TigerTag's id_brand.json
+    uses `name` instead of `label`; the frontend selectors expect `label`)."""
+    out = []
+    for r in records:
+        if not isinstance(r, dict):
+            continue
+        if "label" not in r and isinstance(r.get("name"), str):
+            r = dict(r)
+            r["label"] = r["name"]
+        out.append(r)
+    return out
+
+
+def load_tigertag_registry():
+    """Lazy-load TigerTag database files into a registry of records + lookup indexes."""
+    global _tigertag_registry_cache
+    with _tigertag_registry_lock:
+        if _tigertag_registry_cache is not None:
+            return _tigertag_registry_cache
+
+        materials = _normalize_records(_load_db_file("id_material.json"))
+        brands = _normalize_records(_load_db_file("id_brand.json"))
+        aspects = _normalize_records(_load_db_file("id_aspect.json"))
+        diameters = _normalize_records(_load_db_file("id_diameter.json"))
+        units = _normalize_records(_load_db_file("id_measure_unit.json"))
+        types = _normalize_records(_load_db_file("id_type.json"))
+
+        _tigertag_registry_cache = {
+            "materials": materials,
+            "brands": brands,
+            "aspects": aspects,
+            "diameters": diameters,
+            "units": units,
+            "types": types,
+            # internal lookup tables (label.lower() → id)
+            "_idx_material": _build_label_index(materials),
+            "_idx_brand": _build_label_index(brands),
+            "_idx_aspect": _build_label_index(aspects),
+            "_idx_diameter": _build_label_index(diameters),
+            "_idx_unit": _build_label_index(units),
+            "_idx_type": _build_label_index(types),
+        }
+        return _tigertag_registry_cache
+
+
+def _resolve_id(registry, kind, value, default=0):
+    """Resolve a label, numeric id, or None into the registry id (or default)."""
+    if value is None or value == "":
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        s = value.strip()
+        if s.isdigit():
+            return int(s)
+        idx = registry.get("_idx_" + kind, {})
+        return idx.get(s.lower(), default)
+    return default
+
+
+def _utf8_emoji_bytes(text):
+    """Return the first emoji (one codepoint) from text as up to 4 UTF-8 bytes,
+    right-padded with zeros. Returns 4 zero bytes if no emoji is found."""
+    if not text:
+        return b'\x00\x00\x00\x00'
+    for ch in str(text):
+        cp = ord(ch)
+        # crude "is this an emoji-ish codepoint?" filter: anything outside ASCII
+        if cp > 0x7F:
+            enc = ch.encode("utf-8")[:4]
+            return enc + b'\x00' * (4 - len(enc))
+    return b'\x00\x00\x00\x00'
+
+
+def _utf8_message_bytes(text, max_bytes=28):
+    """Encode text to UTF-8, dropping the leading emoji (if any), truncated to
+    max_bytes without splitting a codepoint, right-padded with zeros."""
+    if not text:
+        return b'\x00' * max_bytes
+    s = str(text)
+    # Skip a single leading non-ASCII codepoint (emoji)
+    if s and ord(s[0]) > 0x7F:
+        s = s[1:].lstrip()
+    enc = s.encode("utf-8")
+    # Truncate without splitting a UTF-8 codepoint
+    if len(enc) > max_bytes:
+        end = max_bytes
+        while end > 0 and (enc[end] & 0xC0) == 0x80:
+            end -= 1
+        enc = enc[:end]
+    return enc + b'\x00' * (max_bytes - len(enc))
+
+
+def _hex_to_rgba(value, default=(0, 0, 0, 0xFF)):
+    """Parse '#RRGGBB' / 'RRGGBB' / 'RRGGBBAA' to (R,G,B,A); default on failure."""
+    if isinstance(value, (list, tuple)) and len(value) >= 3:
+        r, g, b = int(value[0]) & 0xFF, int(value[1]) & 0xFF, int(value[2]) & 0xFF
+        a = int(value[3]) & 0xFF if len(value) >= 4 else 0xFF
+        return (r, g, b, a)
+    if not isinstance(value, str):
+        return default
+    s = value.strip().lstrip('#')
+    if len(s) == 6:
+        try:
+            return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16), 0xFF)
+        except ValueError:
+            return default
+    if len(s) == 8:
+        try:
+            return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16), int(s[6:8], 16))
+        except ValueError:
+            return default
+    return default
+
+
+def encode_tigertag(spec):
+    """Encode a TigerTag spec dict into a 96-byte user-data block.
+
+    Layout follows the upstream OpenRFID parser (NOT the official TigerTag spec
+    — see Constants in openrfid/tag/tigertag/constants.py). All multi-byte
+    fields are big-endian.
+
+    Spec fields (all optional unless noted):
+      material:    str label or numeric id   (default 0)
+      brand:       str label or numeric id   (default 0)
+      aspect_1:    str label or numeric id   (default 0)
+      aspect_2:    str label or numeric id   (default 0)
+      type:        str label or numeric id   (default 0)
+      diameter:    str label or numeric id   (e.g. "1.75mm"; default 0)
+      product_id:  int 0..0xFFFFFFFF         (default 0)
+      color:       "#RRGGBB" or [r,g,b,a]    (default opaque black)
+      weight_g:    int 0..16777215           (3-byte BE)
+      unit:        str label or numeric id   (default 0)
+      temp_min_c:  int 0..65535              (2 bytes)
+      temp_max_c:  int 0..65535              (2 bytes)
+      dry_temp_c:  int 0..255
+      dry_time_h:  int 0..255
+      bed_temp_min_c: int 0..255
+      bed_temp_max_c: int 0..255
+      td_mm:       float 0..6553.5           (encoded as round(mm * 10))
+      td:          int 0..65535              (legacy raw, ignored if td_mm)
+      manufacturing_date: ISO date/datetime str or epoch number
+      emoji:       str (1 emoji char)        — first codepoint of metadata
+      message:     str up to ~28 UTF-8 bytes — packed contiguously
+    """
+    registry = load_tigertag_registry()
+    if not isinstance(spec, dict):
+        spec = {}
+
+    buf = bytearray(TIGERTAG_USER_DATA_LEN)
+
+    # OFF_TAG_ID = 0 (>I, 4 bytes)
+    buf[0:4] = TIGERTAG_TAG_ID.to_bytes(4, 'big')
+    # OFF_PRODUCT_ID = 4 (>I, 4 bytes)
+    pid = int(spec.get('product_id', 0)) & 0xFFFFFFFF
+    buf[4:8] = pid.to_bytes(4, 'big')
+    # OFF_MATERIAL_ID = 8 (>H, 2 bytes)
+    mid = _resolve_id(registry, 'material', spec.get('material'))
+    buf[8:10] = (mid & 0xFFFF).to_bytes(2, 'big')
+    # OFF_ASPECT1_ID = 10 (>B), OFF_ASPECT2_ID = 11 (>B)
+    buf[10] = _resolve_id(registry, 'aspect', spec.get('aspect_1')) & 0xFF
+    buf[11] = _resolve_id(registry, 'aspect', spec.get('aspect_2')) & 0xFF
+    # OFF_TYPE_ID = 12 (>B)
+    buf[12] = _resolve_id(registry, 'type', spec.get('type')) & 0xFF
+    # OFF_DIAMETER_ID = 13 (>B)
+    buf[13] = _resolve_id(registry, 'diameter', spec.get('diameter')) & 0xFF
+    # OFF_BRAND_ID = 14 (>H, 2 bytes)
+    bid = _resolve_id(registry, 'brand', spec.get('brand'))
+    buf[14:16] = (bid & 0xFFFF).to_bytes(2, 'big')
+    # OFF_COLOR_RGBA = 16 (4 bytes R,G,B,A)
+    r, g, b, a = _hex_to_rgba(spec.get('color'))
+    buf[16] = r
+    buf[17] = g
+    buf[18] = b
+    buf[19] = a
+    # OFF_WEIGHT = 20 (3 bytes BE)
+    weight = max(0, min(int(spec.get('weight_g', 0) or 0), 0xFFFFFF))
+    buf[20] = (weight >> 16) & 0xFF
+    buf[21] = (weight >> 8) & 0xFF
+    buf[22] = weight & 0xFF
+    # OFF_UNIT_ID = 23 (>B)
+    buf[23] = _resolve_id(registry, 'unit', spec.get('unit')) & 0xFF
+    # OFF_TEMP_MIN = 24 (>H), OFF_TEMP_MAX = 26 (>H)
+    tmin = max(0, min(int(spec.get('temp_min_c', 0) or 0), 0xFFFF))
+    tmax = max(0, min(int(spec.get('temp_max_c', 0) or 0), 0xFFFF))
+    buf[24:26] = tmin.to_bytes(2, 'big')
+    buf[26:28] = tmax.to_bytes(2, 'big')
+    # OFF_DRY_TEMP = 28, OFF_DRY_TIME = 29, OFF_BED_TEMP_MIN = 30, OFF_BED_TEMP_MAX = 31
+    buf[28] = max(0, min(int(spec.get('dry_temp_c', 0) or 0), 0xFF))
+    buf[29] = max(0, min(int(spec.get('dry_time_h', 0) or 0), 0xFF))
+    buf[30] = max(0, min(int(spec.get('bed_temp_min_c', 0) or 0), 0xFF))
+    buf[31] = max(0, min(int(spec.get('bed_temp_max_c', 0) or 0), 0xFF))
+    # OFF_TIMESTAMP = 32 (>I) — seconds since 2000-01-01. Honour an explicit
+    # `manufacturing_date` from the spec (ISO `YYYY-MM-DD` or full datetime),
+    # otherwise stamp the current time.
+    mfg_raw = spec.get('manufacturing_date')
+    ts = None
+    if isinstance(mfg_raw, (int, float)):
+        ts = int(mfg_raw)
+    elif isinstance(mfg_raw, str) and mfg_raw.strip():
+        s = mfg_raw.strip()
+        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d'):
+            try:
+                ts = int(time.mktime(time.strptime(s[:len(fmt) + 4], fmt))) - TIGERTAG_EPOCH_OFFSET
+                break
+            except (ValueError, OverflowError):
+                ts = None
+    if ts is None:
+        ts = int(time.time()) - TIGERTAG_EPOCH_OFFSET
+    ts = max(0, min(ts, 0xFFFFFFFF))
+    buf[32:36] = ts.to_bytes(4, 'big')
+    # bytes 36..43 are reserved/unknown — leave zero
+    # OFF_TD = 44 (>H, uint16) — value is tenths of a millimetre, so the raw
+    # field is mm * 10. Accept either `td_mm` (preferred, mm float) or `td`
+    # (legacy raw value) in the spec.
+    if 'td_mm' in spec and spec.get('td_mm') is not None:
+        try:
+            td = int(round(float(spec.get('td_mm') or 0) * 10))
+        except (TypeError, ValueError):
+            td = 0
+    else:
+        td = int(spec.get('td', 0) or 0)
+    td = max(0, min(td, 0xFFFF))
+    buf[44:46] = td.to_bytes(2, 'big')
+    # bytes 46..47 are reserved — leave zero
+    # OFF_METADATA = 48 (32-byte UTF-8 field: optional emoji codepoint + message)
+    # The reader decodes bytes 48..80 as a single null-terminated UTF-8 string and
+    # peels off a leading non-ASCII codepoint as the emoji. We must therefore pack
+    # emoji + message contiguously starting at byte 48 — writing zero-padding for
+    # an absent emoji would surface as control characters in the message.
+    emoji_text = spec.get('emoji')
+    message_text = spec.get('message') or ''
+    emoji_str = ''
+    if emoji_text:
+        for ch in str(emoji_text):
+            if ord(ch) > 0x7F:
+                emoji_str = ch
+                break
+    combined = (emoji_str + str(message_text)).encode('utf-8')
+    if len(combined) > 32:
+        end = 32
+        while end > 0 and (combined[end] & 0xC0) == 0x80:
+            end -= 1
+        combined = combined[:end]
+    buf[48:48 + len(combined)] = combined
+    # OFF_SIGNATURE = 80 (16 bytes) — write zeros; OpenRFID parser accepts.
+    # bytes 80..95 already zero from bytearray init
+    return bytes(buf)
+
+
+# OpenRFID NTAG write extension endpoint (loopback HTTP server inside the
+# OpenRFID daemon — see overlays/.../68-app-rfid-spools/root/usr/local/share/
+# openrfid/extensions/ntag_write.py). Submitting writes through this endpoint
+# avoids stopping the OpenRFID service or contending for the SPI bus.
+OPENRFID_WRITE_URL = "http://127.0.0.1:8740/write"
+
+
+def write_ntag215_payload(channel, payload, timeout=20.0):
+    """Submit a write to the OpenRFID daemon and return a normalized status dict.
+
+    Returns one of:
+      {"state": "success", "details": <openrfid result>}
+      {"state": "error",   "message": <reason>, "details": <openrfid result>}
+    """
+    import base64
+
+    if not isinstance(payload, (bytes, bytearray)):
+        raise TypeError("payload must be bytes")
+    if len(payload) % 4 != 0:
+        raise ValueError("payload length must be a multiple of 4")
+
+    body = json.dumps({
+        "slot":       int(channel),
+        "data_b64":   base64.b64encode(bytes(payload)).decode("ascii"),
+        "start_page": 4,
+        "timeout":    max(1.0, timeout - 2.0),
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        OPENRFID_WRITE_URL, data=body, method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        # The HTTP server returns 500 on application errors with a JSON body.
+        try:
+            data = json.loads(e.read())
+        except Exception:
+            return {"state": "error", "message": f"http {e.code}: {e.reason}"}
+    except urllib.error.URLError as e:
+        return {"state": "error", "message": f"openrfid not reachable: {e.reason}"}
+    except Exception as e:
+        return {"state": "error", "message": f"openrfid request failed: {e}"}
+
+    if data.get("ok"):
+        return {"state": "success", "details": data}
+    return {
+        "state": "error",
+        "message": data.get("error", "unknown error"),
+        "details": data,
+    }
+
+
 class RequestHandler(BaseHTTPRequestHandler):
     """HTTP request handler for the RFID Spools API."""
 
@@ -819,6 +1177,23 @@ class RequestHandler(BaseHTTPRequestHandler):
                 logging.exception("Spoolman filament fetch error")
                 self._send_json(502, {"error": "failed to query spoolman"})
 
+        elif self.path == "/api/tigertag/registry":
+            # Return the TigerTag database (materials, brands, aspects, diameters,
+            # units, types) for populating the inline edit form.
+            try:
+                reg = load_tigertag_registry()
+                self._send_json(200, {
+                    "materials":  reg.get("materials", []),
+                    "brands":     reg.get("brands", []),
+                    "aspects":    reg.get("aspects", []),
+                    "diameters":  reg.get("diameters", []),
+                    "units":      reg.get("units", []),
+                    "types":      reg.get("types", []),
+                })
+            except Exception:
+                logging.exception("tigertag registry load failed")
+                self._send_json(500, {"error": "failed to load tigertag registry"})
+
         elif self.path == "/api/events":
             # Server-Sent Events stream
             q = event_bus.subscribe()
@@ -928,6 +1303,59 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._send_json(500, {"status": "partial", "failed_channels": errors})
             else:
                 self._send_json(200, {"status": "ok", "channels": channels})
+
+        elif self.path == "/api/tigertag/encode-preview":
+            # Encode a TigerTag spec and return the resulting 96-byte block as
+            # hex + base64 so the UI can show a preview before committing a write.
+            body = self._read_body()
+            try:
+                spec = json.loads(body) if body else {}
+                if not isinstance(spec, dict):
+                    raise ValueError("spec must be a JSON object")
+            except (json.JSONDecodeError, ValueError) as e:
+                self._send_json(400, {"error": "invalid json: " + str(e)})
+                return
+            try:
+                payload = encode_tigertag(spec)
+            except Exception as e:
+                logging.exception("tigertag encode failed")
+                self._send_json(500, {"error": "encode failed: " + str(e)})
+                return
+            import base64
+            self._send_json(200, {
+                "bytes_len": len(payload),
+                "hex":       payload.hex(),
+                "base64":    base64.b64encode(payload).decode("ascii"),
+            })
+
+        elif self.path == "/api/write":
+            # Body: {"channel": int, "spec": {...tigertag spec...}}
+            # Encode the spec to 96 bytes, submit via the in-process OpenRFID
+            # write endpoint, return the final result.
+            body = self._read_body()
+            try:
+                req_data = json.loads(body) if body else {}
+                channel = int(req_data.get("channel"))
+                spec = req_data.get("spec", {})
+                if not isinstance(spec, dict):
+                    raise ValueError("spec must be an object")
+            except (json.JSONDecodeError, ValueError, TypeError) as e:
+                self._send_json(400, {"error": "invalid request: " + str(e)})
+                return
+            if channel < 0 or channel >= MAX_CHANNELS:
+                self._send_json(400, {"error": "channel out of range"})
+                return
+            try:
+                payload = encode_tigertag(spec)
+                logging.info("Writing TigerTag to channel %d (%d bytes)", channel, len(payload))
+                result = write_ntag215_payload(channel, payload)
+            except Exception as e:
+                logging.exception("write failed")
+                self._send_json(500, {"state": "error", "message": str(e)})
+                return
+
+            status = 200 if result.get("state") == "success" else 502
+            self._send_json(status, result)
 
         elif self.path.startswith("/api/spoolman-sync"):
             parsed = urllib.parse.urlparse(self.path)

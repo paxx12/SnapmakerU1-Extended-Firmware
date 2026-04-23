@@ -761,3 +761,153 @@ header h1 {
     opacity: 0.7;
 }
 .spoolman-onboard-link:hover { color: var(--accent); opacity: 1; text-decoration: underline; }
+
+/* ── Inline TigerTag edit / write footer ─────────────────────────────────── */
+.channel-edit-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+}
+.channel-edit-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.channel-edit-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.channel-edit-body { padding-top: 0.5rem; }
+.channel-edit-grid { gap: 0.4rem 0.6rem; }
+.channel-edit-input {
+    width: 100%;
+    padding: 0.2rem 0.4rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+}
+.channel-edit-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.channel-edit-color {
+    width: 2.5rem;
+    height: 1.5rem;
+    padding: 0;
+    cursor: pointer;
+}
+.channel-edit-emoji { width: 3rem; text-align: center; }
+.channel-edit-actions {
+    margin-top: 0.75rem;
+    padding: 0 0.75rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.channel-edit-cancel,
+.channel-edit-write {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    transition: all 0.15s;
+}
+.channel-edit-cancel:hover { border-color: var(--text-dim); }
+.channel-edit-write {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.channel-edit-write:hover { filter: brightness(1.1); }
+.channel-edit-write:disabled,
+.channel-edit-cancel:disabled { opacity: 0.6; cursor: wait; }
+.channel-edit-status {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+.channel-edit-ok { color: #4caf50; }
+.channel-edit-err { color: #f44336; }
+
+/* ── TigerTag edit modal ─────────────────────────────────────────────────── */
+.tag-edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+body.tag-edit-open { overflow: hidden; }
+.tag-edit-dialog {
+    background: var(--card-bg, var(--bg));
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    width: min(640px, 100%);
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.tag-edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-header-bg, transparent);
+}
+.tag-edit-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+.tag-edit-close {
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.25rem;
+}
+.tag-edit-close:hover { color: var(--accent); }
+.tag-edit-body {
+    padding: 0.75rem 1rem 0.5rem;
+    overflow: auto;
+}
+.tag-edit-format-note {
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid var(--accent, #4a9eff);
+    background: rgba(74, 158, 255, 0.08);
+    color: var(--text-dim, inherit);
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+/* Inside the modal, give the action row some breathing room and align right. */
+.tag-edit-body .channel-edit-actions {
+    margin-top: 1rem;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--border);
+}
+
+
+
