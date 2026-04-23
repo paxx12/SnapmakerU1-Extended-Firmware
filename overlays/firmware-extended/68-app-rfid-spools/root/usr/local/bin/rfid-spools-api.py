@@ -1206,13 +1206,24 @@ class RequestHandler(BaseHTTPRequestHandler):
                 # Send a keepalive comment immediately so the browser connects
                 self.wfile.write(b': ok\n\n')
                 self.wfile.flush()
+                last_ping = time.monotonic()
                 while True:
                     time.sleep(0.2)
                     msgs = q[:]
                     del q[:]
                     for m in msgs:
                         self.wfile.write(m.encode())
-                    self.wfile.flush()
+                    if msgs:
+                        self.wfile.flush()
+                        last_ping = time.monotonic()
+                        continue
+                    # Periodic keepalive comment so nginx (and any other
+                    # proxy in front of us) does not close an idle SSE
+                    # connection at its read-timeout.
+                    if time.monotonic() - last_ping >= 15.0:
+                        self.wfile.write(b': ping\n\n')
+                        self.wfile.flush()
+                        last_ping = time.monotonic()
             except (OSError, BrokenPipeError, ConnectionResetError):
                 pass
             finally:
