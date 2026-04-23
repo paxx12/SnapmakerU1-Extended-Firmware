@@ -1,0 +1,30 @@
+#!/bin/sh
+
+PANDA_BREATH_MODULE="/usr/local/share/firmware-config/tweaks/klipper/panda_breath.py"
+KLIPPER_EXTRAS_LINK="/home/lava/klipper/klippy/extras/panda_breath.py"
+
+start() {
+    # If the panda_breath config exists, ensure the klipper module symlink is present.
+    # This prevents "Section 'panda_breath' is not a valid config section" after firmware upgrades.
+    if [ -f /oem/printer_data/config/extended/klipper/panda_breath.cfg ]; then
+        echo "Ensuring Panda Breath module symlink..."
+        ln -sf "$PANDA_BREATH_MODULE" "$KLIPPER_EXTRAS_LINK" || true
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        ;;
+    restart|reload)
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0
