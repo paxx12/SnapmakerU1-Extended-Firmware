@@ -47,10 +47,12 @@ scp $SSH_OPTS "$ARCHIVE" "$HOST:/tmp/rfid-push.tar.gz"
 echo ">> Deploying on $HOST..."
 ssh $SSH_OPTS "$HOST" '
   set -e
-  rm -rf /usr/local/share/rfid-spools/html /usr/local/bin/rfid-spools-api.py
+  rm -rf /usr/local/share/rfid-spools/html \
+    /usr/local/bin/rfid-spools-api.py \
+    /usr/local/lib/rfid_spools
   tar -C / -xzf /tmp/rfid-push.tar.gz
   rm -f /tmp/rfid-push.tar.gz
-  chmod -R a+rX /usr/local/share/rfid-spools/html/
+  chmod -R a+rX /usr/local/share/rfid-spools/html/ /usr/local/lib/rfid_spools/
   chmod 755 /etc/init.d/S99rfid-spools /etc/init.d/S99openrfid \
     /usr/local/bin/rfid-spools-api.py /usr/local/bin/openrfid.py
   # Clear Python bytecode caches for any modified openrfid files so Python reloads them
@@ -65,6 +67,7 @@ ssh $SSH_OPTS "$HOST" '
   # the .py would still be loaded by some Python builds).
   find /usr/local/share/openrfid -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
   find /usr/local/bin -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+  find /usr/local/lib/rfid_spools -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
   /etc/init.d/S99rfid-spools restart
   /etc/init.d/S99openrfid restart
   nginx -s reload

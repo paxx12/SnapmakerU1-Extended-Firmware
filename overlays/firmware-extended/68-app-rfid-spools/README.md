@@ -47,17 +47,29 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
 
 ### Backend — [root/usr/local/bin/rfid-spools-api.py](root/usr/local/bin/rfid-spools-api.py)
 
-- `ChannelStore` — in-memory state for the 4 channels
-- `ConfigManager` — load/save `rfid-spools.json`
-- `EventBus` — SSE broadcaster
-- Spoolman proxy (status, ping, auto-discover, candidates, filament lookup,
-  sync, sync-all, extra-fields registration for TigerTag UID)
-- `TigerTagEncoder` — mirrors OpenRFID's `tag/tigertag/constants.py`
-  field layout; `tag_id = 0xBC0FCB97`, signature zeroed, timestamp =
-  `int(time.time()) − 946684800`
-- Reverse-lookup helpers for material / brand / aspect / diameter / unit
-  using the bundled OpenRFID JSON registry under
-  `/usr/local/share/openrfid/tag/tigertag/database/`
+The entry-point script is a tiny shim. The implementation lives in the
+`rfid_spools` package under
+[root/usr/local/lib/rfid_spools/](root/usr/local/lib/rfid_spools/):
+
+| Module           | Responsibility                                                    |
+| ---------------- | ----------------------------------------------------------------- |
+| `constants.py`   | Filesystem paths, HTTP limits, TigerTag layout, material density  |
+| `state.py`       | `EventBus` (SSE), `ChannelStore`, `SyncStateStore`                |
+| `runtime.py`     | Process-wide singletons of the three stores above                 |
+| `config.py`      | Load/save `rfid-spools.json`                                      |
+| `moonraker.py`   | Moonraker calls (filament_detect, gcode, spoolman url)            |
+| `discovery.py`   | Spoolman HTTP probing + LAN /24 sweep on port 7912                |
+| `formatting.py`  | ARGB → hex, datetime → Spoolman ISO format                        |
+| `spoolman.py`    | REST client and the `vendor → filament → spool` upsert pipeline   |
+| `tigertag.py`    | TigerTag DB loader, 96-byte payload encoder, OpenRFID write       |
+| `handler.py`     | `BaseHTTPRequestHandler` — routes only, all logic delegated       |
+| `server.py`      | `argparse`, logging, `ThreadingHTTPServer.serve_forever`          |
+
+The TigerTag encoder mirrors OpenRFID's `tag/tigertag/constants.py` field
+layout: `tag_id = 0xBC0FCB97`, signature zeroed, timestamp =
+`int(time.time()) − 946684800`. Reverse-lookup for material / brand /
+aspect / diameter / unit reuses the bundled OpenRFID JSON registry under
+`/usr/local/share/openrfid/tag/tigertag/database/`.
 
 #### Endpoints
 
