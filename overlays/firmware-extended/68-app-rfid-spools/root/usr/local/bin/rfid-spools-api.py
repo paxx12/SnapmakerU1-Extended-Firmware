@@ -12,11 +12,13 @@ import json
 import logging
 import logging.handlers
 import os
+import socket
 import threading
 import time
 import urllib.parse
 import urllib.request
 import urllib.error
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 
 LOG_FILE = "/oem/printer_data/logs/rfid-spools.log"
@@ -256,6 +258,76 @@ def query_moonraker_spoolman_url():
         return spoolman.get('server', '') or ''
     except Exception:
         return ''
+
+
+def _local_ipv4_for_default_route():
+    """Return this host's primary outbound IPv4 address.
+
+    Uses the connect()-on-UDP trick: no traffic is sent, but the kernel
+    chooses the source address it would use to reach the public IP, which
+    is the address bound to the default-route interface.
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 1))
+            return s.getsockname()[0]
+        finally:
+            s.close()
+    except Exception:
+        return None
+
+
+def _probe_tcp(ip, port, timeout):
+    """Return True if a TCP connection to (ip, port) succeeds within timeout."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect((ip, port))
+        return True
+    except Exception:
+        return False
+    finally:
+        try:
+            s.close()
+        except Exception:
+            pass
+
+
+def lan_sweep_for_spoolman(port=7912, connect_timeout=0.3, max_workers=32):
+    """Scan the local /24 for hosts answering on `port`, then HTTP-probe each
+    candidate to confirm it is a real Spoolman instance.
+
+    Returns a list of base URLs (e.g. "http://192.168.2.30:7912") ordered by
+    response order. Returns [] if the host has no usable IPv4 address or no
+    Spoolman is found.
+    """
+    local_ip = _local_ipv4_for_default_route()
+    if not local_ip:
+        return []
+    parts = local_ip.split('.')
+    if len(parts) != 4:
+        return []
+    prefix = '.'.join(parts[:3]) + '.'
+
+    targets = [prefix + str(i) for i in range(1, 255) if (prefix + str(i)) != local_ip]
+
+    open_hosts = []
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_probe_tcp, ip, port, connect_timeout): ip for ip in targets}
+        for fut in as_completed(futures):
+            try:
+                if fut.result():
+                    open_hosts.append(futures[fut])
+            except Exception:
+                pass
+
+    found = []
+    for ip in open_hosts:
+        url = "http://{}:{}".format(ip, port)
+        if probe_spoolman(url):
+            found.append(url)
+    return found
 
 
 def argb_to_color_hex(val):
@@ -1000,12 +1072,19 @@ class RequestHandler(BaseHTTPRequestHandler):
             for probe_url in [
                 "http://localhost:7912",
                 "http://127.0.0.1:7912",
-                "http://spoolman.local:7912",
             ]:
                 if probe_url not in seen:
                     seen.add(probe_url)
                     if probe_spoolman(probe_url):
                         candidates.append(probe_url)
+
+            # LAN sweep — the Snapmaker rootfs has no mDNS resolver, so
+            # `spoolman.local` cannot work. Scan the local /24 on port 7912
+            # and confirm any TCP-open host actually serves Spoolman's API.
+            for url in lan_sweep_for_spoolman():
+                if url not in seen:
+                    seen.add(url)
+                    candidates.append(url)
 
             self._send_json(200, {"candidates": candidates})
 
