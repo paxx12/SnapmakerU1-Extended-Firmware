@@ -29,12 +29,13 @@ var SpoolsPage = (function () {
         return DENSITY_DEFAULTS[key] || 1.24;
     }
 
-    function resolveFields(ch, config) {
+    function resolveFields(ch, _config) {
         var mk = ch.moonraker || {};
         var tag = ch.tag || null;
         var filament = (tag && tag.filament) ? tag.filament : null;
 
-        // Determine processor key
+        // Determine processor key (kept for legacy callers — still consumed
+        // by the tag-type badge logic in renderChannel).
         var processorKey = 'generic';
         if (filament && filament.source_processor) {
             var proc = filament.source_processor;
@@ -44,50 +45,34 @@ var SpoolsPage = (function () {
             if (mk.CARD_UID.length === 4) processorKey = 'snapmaker';
         }
 
-        var tagMappings = config && Array.isArray(config.tag_mappings) ? config.tag_mappings : null;
-
-        // If mappings are configured, resolve each display field from the mapping
-        // Otherwise fall through to the defaults below
-        function mapped(toKey, defaultFn) {
-            if (!tagMappings) return defaultFn();
-            var rule = null;
-            for (var i = 0; i < tagMappings.length; i++) {
-                if (tagMappings[i].to === toKey) { rule = tagMappings[i]; break; }
-            }
-            if (!rule) return defaultFn();
-            var src = rule.from;
-            // Resolve from filament object if field exists there, otherwise from Moonraker mk
-            if (filament && filament[src] !== undefined) return filament[src];
-            if (mk[src] !== undefined) return mk[src];
-            return defaultFn();
+        function fromFilamentOr(field, mkField, fallback) {
+            if (filament && filament[field] !== undefined && filament[field] !== null) return filament[field];
+            if (mkField !== undefined && isMk(mk[mkField])) return mk[mkField];
+            return fallback === undefined ? null : fallback;
         }
 
+        var msg = (filament && typeof filament.message === 'string') ? filament.message.trim() : '';
+
         return {
-            manufacturer:       mapped('manufacturer',       function () { return filament ? filament.manufacturer : (isMk(mk.VENDOR) ? mk.VENDOR : null); }),
-            type:               mapped('type',               function () { return filament ? filament.type : (isMk(mk.MAIN_TYPE) ? mk.MAIN_TYPE : null); }),
-            modifiers:          mapped('modifiers',          function () { return filament ? filament.modifiers : (isMk(mk.SUB_TYPE) ? [mk.SUB_TYPE] : []); }),
-            colors:             mapped('color',              function () { return filament ? filament.colors : null; }),
+            manufacturer:       fromFilamentOr('manufacturer', 'VENDOR'),
+            type:               fromFilamentOr('type', 'MAIN_TYPE'),
+            modifiers:          filament ? filament.modifiers : (isMk(mk.SUB_TYPE) ? [mk.SUB_TYPE] : []),
+            colors:             filament ? filament.colors : null,
             rgb1:               mk.RGB_1,
-            hotend_min_temp_c:  mapped('hotend_min_temp',    function () { return filament ? filament.hotend_min_temp_c : mk.HOTEND_MIN_TEMP; }),
-            hotend_max_temp_c:  mapped('hotend_max_temp',    function () { return filament ? filament.hotend_max_temp_c : mk.HOTEND_MAX_TEMP; }),
-            bed_temp_c:         mapped('bed_temp_max',       function () { return filament ? filament.bed_temp_c : mk.BED_TEMP; }),
-            bed_temp_min_c:     mapped('bed_temp_min',       function () { return filament ? filament.bed_temp_min_c : null; }),
-            bed_temp_max_c:     mapped('bed_temp_max',       function () { return filament ? filament.bed_temp_max_c : null; }),
+            hotend_min_temp_c:  fromFilamentOr('hotend_min_temp_c', 'HOTEND_MIN_TEMP'),
+            hotend_max_temp_c:  fromFilamentOr('hotend_max_temp_c', 'HOTEND_MAX_TEMP'),
+            bed_temp_c:         fromFilamentOr('bed_temp_c', 'BED_TEMP'),
+            bed_temp_min_c:     filament ? filament.bed_temp_min_c : null,
+            bed_temp_max_c:     filament ? filament.bed_temp_max_c : null,
             first_layer_temp:   mk.FIRST_LAYER_TEMP,
             other_layer_temp:   mk.OTHER_LAYER_TEMP,
-            diameter_mm:        mapped('diameter_mm',        function () { return filament ? filament.diameter_mm : mk.DIAMETER; }),
-            weight_grams:       mapped('weight_grams',       function () { return filament ? filament.weight_grams : mk.WEIGHT; }),
-            drying_temp_c:      mapped('drying_temp',        function () { return filament ? filament.drying_temp_c : mk.DRYING_TEMP; }),
-            drying_time_hours:  mapped('drying_time',        function () { return filament ? filament.drying_time_hours : mk.DRYING_TIME; }),
-            manufacturing_date: mapped('manufacturing_date', function () {
-                return (filament && filament.manufacturing_date) ? filament.manufacturing_date : mk.MF_DATE;
-            }),
-            td:                 mapped('td',                 function () { return filament ? filament.td : null; }),
-            message:            mapped('message',            function () {
-                if (!filament) return null;
-                var m = (filament.message || '').trim();
-                return m || null;
-            }),
+            diameter_mm:        fromFilamentOr('diameter_mm', 'DIAMETER'),
+            weight_grams:       fromFilamentOr('weight_grams', 'WEIGHT'),
+            drying_temp_c:      fromFilamentOr('drying_temp_c', 'DRYING_TEMP'),
+            drying_time_hours:  fromFilamentOr('drying_time_hours', 'DRYING_TIME'),
+            manufacturing_date: (filament && filament.manufacturing_date) ? filament.manufacturing_date : mk.MF_DATE,
+            td:                 filament ? filament.td : null,
+            message:            msg || null,
             uid:                (tag && tag.scan && tag.scan.uid) ? tag.scan.uid : mk.CARD_UID,
             processorKey:       processorKey,
         };

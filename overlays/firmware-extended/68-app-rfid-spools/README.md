@@ -146,8 +146,6 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
     + [pages/config-shared.js](root/usr/local/share/rfid-spools/html/pages/config-shared.js)
   - [pages/config-slots.html](root/usr/local/share/rfid-spools/html/pages/config-slots.html)
     + [pages/config-slots.js](root/usr/local/share/rfid-spools/html/pages/config-slots.js)
-  - [pages/config-tag-mapping.html](root/usr/local/share/rfid-spools/html/pages/config-tag-mapping.html)
-    + [pages/config-tag-mapping.js](root/usr/local/share/rfid-spools/html/pages/config-tag-mapping.js)
   - [pages/config-spoolman.html](root/usr/local/share/rfid-spools/html/pages/config-spoolman.html)
     + [pages/config-spoolman.js](root/usr/local/share/rfid-spools/html/pages/config-spoolman.js)
 

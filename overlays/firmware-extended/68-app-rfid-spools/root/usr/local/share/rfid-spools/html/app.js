@@ -31,7 +31,6 @@ var App = (function () {
                 'pages/config-shared.html',
                 'pages/config-slots.html',
                 'pages/config-spoolman.html',
-                'pages/config-tag-mapping.html',
                 'pages/spools.html'
             ])
         ]).then(function () {

@@ -25,16 +25,10 @@ var Router = (function () {
             icon: '🗂️',
             module: function () { return SlotConfigPage; },
             headerButtons: []
-        },
-        'config-mapping': {
-            label: 'Tag mapping',
-            icon: '🏷️',
-            module: function () { return TagMappingConfigPage; },
-            headerButtons: []
         }
     };
 
-    var pageOrder = ['spools', 'config-spoolman', 'config-slots', 'config-mapping'];
+    var pageOrder = ['spools', 'config-spoolman', 'config-slots'];
 
     function navigate(pageKey) {
         if (currentPage === pageKey) return;

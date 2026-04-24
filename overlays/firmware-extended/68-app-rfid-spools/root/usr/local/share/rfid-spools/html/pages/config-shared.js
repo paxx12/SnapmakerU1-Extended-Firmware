@@ -11,42 +11,6 @@ var ConfigShared = (function () {
         'Slot 4 (Bottom-Right)'
     ];
 
-    var GENERIC_FIELDS = [
-        { value: 'manufacturer',       label: 'Manufacturer' },
-        { value: 'type',               label: 'Material Type' },
-        { value: 'modifiers',          label: 'Modifiers / Subtype' },
-        { value: 'color',              label: 'Color' },
-        { value: 'hotend_min_temp',    label: 'Nozzle Min Temp' },
-        { value: 'hotend_max_temp',    label: 'Nozzle Max Temp' },
-        { value: 'bed_temp_min',       label: 'Bed Temp Min' },
-        { value: 'bed_temp_max',       label: 'Bed Temp Max' },
-        { value: 'diameter_mm',        label: 'Diameter (mm)' },
-        { value: 'weight_grams',       label: 'Weight (g)' },
-        { value: 'drying_temp',        label: 'Drying Temp' },
-        { value: 'drying_time',        label: 'Drying Time (h)' },
-        { value: 'manufacturing_date', label: 'Mfg Date' },
-        { value: 'td',                 label: 'TD (HueForge)' },
-        { value: 'message',            label: 'Custom Message' },
-    ];
-
-    var SOURCE_FIELDS = [
-        { value: 'manufacturer',       label: 'manufacturer' },
-        { value: 'type',               label: 'type' },
-        { value: 'modifiers',          label: 'modifiers' },
-        { value: 'colors',             label: 'colors' },
-        { value: 'hotend_min_temp_c',  label: 'hotend_min_temp_c' },
-        { value: 'hotend_max_temp_c',  label: 'hotend_max_temp_c' },
-        { value: 'bed_temp_max_c',     label: 'bed_temp_max_c' },
-        { value: 'bed_temp_c',         label: 'bed_temp_c' },
-        { value: 'diameter_mm',        label: 'diameter_mm' },
-        { value: 'weight_grams',       label: 'weight_grams' },
-        { value: 'drying_temp_c',      label: 'drying_temp_c' },
-        { value: 'drying_time_hours',  label: 'drying_time_hours' },
-        { value: 'manufacturing_date', label: 'manufacturing_date' },
-        { value: 'td',                 label: 'td' },
-        { value: 'message',            label: 'message' },
-    ];
-
     function buildSelect(options, selectedValue, className) {
         var sel = document.createElement('select');
         sel.className = 'mapping-select ' + className;
@@ -171,8 +135,6 @@ var ConfigShared = (function () {
 
     return {
         DEFAULT_NAMES: DEFAULT_NAMES,
-        GENERIC_FIELDS: GENERIC_FIELDS,
-        SOURCE_FIELDS: SOURCE_FIELDS,
         buildSelect: buildSelect,
         checkSpoolmanStatus: checkSpoolmanStatus,
         findSpoolman: findSpoolman,

@@ -165,7 +165,7 @@ MATERIAL_DENSITY = {
 _DEFAULT_DENSITY = 1.24  # PLA-like safe fallback
 
 # Default config — pre-populates the UI with sensible field mappings per tag type.
-# Saved config overlays these; if tag_mappings is absent from disk, defaults are used.
+# Saved config overlays these.
 DEFAULT_CONFIG = {
     "slot_names": {},
     "slot_notes": {},
@@ -179,24 +179,6 @@ DEFAULT_CONFIG = {
         "mfg_date": False,
         "modifiers": False,
     },
-    "tag_mappings": [
-        {"to": "manufacturer",       "from": "manufacturer"},
-        {"to": "type",               "from": "type"},
-        {"to": "modifiers",          "from": "modifiers"},
-        {"to": "color",              "from": "colors"},
-        {"to": "hotend_min_temp",    "from": "hotend_min_temp_c"},
-        {"to": "hotend_max_temp",    "from": "hotend_max_temp_c"},
-        # Upstream OpenRFID exposes the bed-temp min as `bed_temp_c` and the max as `bed_temp_max_c`.
-        {"to": "bed_temp_min",       "from": "bed_temp_c"},
-        {"to": "bed_temp_max",       "from": "bed_temp_max_c"},
-        {"to": "diameter_mm",        "from": "diameter_mm"},
-        {"to": "weight_grams",       "from": "weight_grams"},
-        {"to": "drying_temp",        "from": "drying_temp_c"},
-        {"to": "drying_time",        "from": "drying_time_hours"},
-        {"to": "manufacturing_date", "from": "manufacturing_date"},
-        {"to": "td",                 "from": "td"},
-        {"to": "message",            "from": "message"},
-    ],
 }
 
 
@@ -212,22 +194,8 @@ def load_config():
 
     config = dict(DEFAULT_CONFIG)
     config.update(saved)
-    # tag_mappings is a flat list; migrate old per-processor dict format if needed
-    if "tag_mappings" not in saved:
-        config["tag_mappings"] = list(DEFAULT_CONFIG["tag_mappings"])
-    elif isinstance(saved.get("tag_mappings"), dict):
-        # Migrate: use the 'generic' block if present, otherwise reset to defaults
-        config["tag_mappings"] = saved["tag_mappings"].get("generic", list(DEFAULT_CONFIG["tag_mappings"]))
-    # Migrate stale bed-temp mappings to the upstream OpenRFID shape:
-    #   bed_temp_min ← bed_temp_c     (was bed_temp_min_c, no longer emitted)
-    #   bed_temp_max ← bed_temp_max_c (was bed_temp_c, which is now the min)
-    for m in config.get("tag_mappings", []):
-        if not isinstance(m, dict):
-            continue
-        if m.get("to") == "bed_temp_min" and m.get("from") == "bed_temp_min_c":
-            m["from"] = "bed_temp_c"
-        elif m.get("to") == "bed_temp_max" and m.get("from") == "bed_temp_c":
-            m["from"] = "bed_temp_max_c"
+    # Drop legacy tag_mappings key that older builds persisted.
+    config.pop("tag_mappings", None)
     return config
 
 
@@ -373,21 +341,18 @@ def spoolman_api_request(base_url, method, path, body=None):
 
 
 def resolve_display_fields(tag_event, config):
-    """Apply tag_mappings config to resolve display fields from a raw tag event."""
+    """Resolve display fields from a raw tag event.
+
+    Tag fields map directly onto display fields; the only smoothing applied
+    here is the bed-temp cascade for tags that carry only a single bed
+    temperature (e.g. Snapmaker), so the UI never shows an empty min or max
+    column when the other side is populated.
+    """
     filament = tag_event.get('filament') or {}
 
-    mappings = {}
-    for rule in config.get('tag_mappings', []):
-        to_key = rule.get('to')
-        from_key = rule.get('from')
-        if to_key and from_key:
-            mappings[to_key] = from_key
-
-    def get_mapped(display_key):
-        from_key = mappings.get(display_key)
-        if from_key:
-            return filament.get(from_key)
-        return None
+    def fget(key):
+        v = filament.get(key)
+        return v if v not in ('',) else None
 
     # UID: prefer scan.uid (TigerTag / generic RFID), fall back to CARD_UID (Snapmaker)
     uid_raw = (tag_event.get('scan') or {}).get('uid')
@@ -396,7 +361,6 @@ def resolve_display_fields(tag_event, config):
     elif uid_raw:
         uid = str(uid_raw)
     else:
-        # Snapmaker tags store UID as CARD_UID in the filament dict
         card_uid = filament.get('CARD_UID') or filament.get('card_uid')
         if isinstance(card_uid, (list, tuple)) and card_uid:
             uid = ''.join('{:02X}'.format(b & 0xFF) for b in card_uid)
@@ -405,33 +369,33 @@ def resolve_display_fields(tag_event, config):
         else:
             uid = None
 
-    # Bed temps: Snapmaker tags carry only a single value (`bed_temp_c`),
-    # which our default mappings route to `bed_temp_min`. To avoid an empty
-    # max column for those tags, mirror whichever side is set onto the other.
-    bed_min = get_mapped('bed_temp_min')
-    bed_max = get_mapped('bed_temp_max')
+    # Bed temps: upstream OpenRFID exposes the min as `bed_temp_c` and the
+    # max as `bed_temp_max_c`. For tags carrying only a single value, mirror
+    # whichever side is set onto the other so the UI is never half-empty.
+    bed_min = fget('bed_temp_c')
+    bed_max = fget('bed_temp_max_c')
     if bed_min in (None, '') and bed_max not in (None, ''):
         bed_min = bed_max
     elif bed_max in (None, '') and bed_min not in (None, ''):
         bed_max = bed_min
 
     return {
-        'manufacturer':      get_mapped('manufacturer'),
-        'type':              get_mapped('type'),
-        'modifiers':         get_mapped('modifiers'),
-        'colors':            get_mapped('color'),
-        'hotend_min_temp_c': get_mapped('hotend_min_temp'),
-        'hotend_max_temp_c': get_mapped('hotend_max_temp'),
-        'bed_temp_min_c':    bed_min,
-        'bed_temp_max_c':    bed_max,
-        'diameter_mm':       get_mapped('diameter_mm'),
-        'weight_grams':      get_mapped('weight_grams'),
-        'drying_temp_c':     get_mapped('drying_temp'),
-        'drying_time_hours': get_mapped('drying_time'),
-        'manufacturing_date': get_mapped('manufacturing_date'),
-        'td':                get_mapped('td'),
-        'message':           get_mapped('message'),
-        'uid':               uid,
+        'manufacturer':       fget('manufacturer'),
+        'type':               fget('type'),
+        'modifiers':          fget('modifiers'),
+        'colors':             fget('colors'),
+        'hotend_min_temp_c':  fget('hotend_min_temp_c'),
+        'hotend_max_temp_c':  fget('hotend_max_temp_c'),
+        'bed_temp_min_c':     bed_min,
+        'bed_temp_max_c':     bed_max,
+        'diameter_mm':        fget('diameter_mm'),
+        'weight_grams':       fget('weight_grams'),
+        'drying_temp_c':      fget('drying_temp_c'),
+        'drying_time_hours':  fget('drying_time_hours'),
+        'manufacturing_date': fget('manufacturing_date'),
+        'td':                 fget('td'),
+        'message':            fget('message'),
+        'uid':                uid,
     }
 
 
