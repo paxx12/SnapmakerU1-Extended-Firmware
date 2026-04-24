@@ -89,11 +89,12 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
   — webhook exporter: `tag_read` / `tag_parse_error` / `tag_not_present` →
   `POST /api/tag-event`
 - [tag/tigertag/processor.py](root/usr/local/share/openrfid/tag/tigertag/processor.py)
-  — adds emoji/message/TD/bed_temp_min/bed_temp_max
+  — mirror of upstream OpenRFID's TigerTag parser (reads `bed_temp_min`,
+  `bed_temp_max`, and the 28-byte custom message)
 - [tag/tigertag/constants.py](root/usr/local/share/openrfid/tag/tigertag/constants.py)
-  — keeps constants in sync for the encoder
+  — mirror of upstream constants (incl. `OFF_MESSAGE` / `MESSAGE_LENGTH`)
 - [filament/generic.py](root/usr/local/share/openrfid/filament/generic.py)
-  — extended generic filament fields
+  — mirror of upstream `GenericFilament` (adds `bed_temp_max_c` and `message`)
 
 ### Write path
 
@@ -136,7 +137,7 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
     every field from the cached scan data; values not present in the
     registry surface as `(custom)` options. Diameter pre-fill uses bare
     numbers (`"1.75"`); unit defaults to `"g"`. Color picker, temps/weight
-    numeric inputs, emoji + 28-char message input. Write → `POST /api/write`.
+    numeric inputs, 28-byte UTF-8 message input. Write → `POST /api/write`.
   - [pages/config-shared.html](root/usr/local/share/rfid-spools/html/pages/config-shared.html)
     + [pages/config-shared.js](root/usr/local/share/rfid-spools/html/pages/config-shared.js)
   - [pages/config-slots.html](root/usr/local/share/rfid-spools/html/pages/config-slots.html)

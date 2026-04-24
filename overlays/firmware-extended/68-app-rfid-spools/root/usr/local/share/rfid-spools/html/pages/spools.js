@@ -85,9 +85,8 @@ var SpoolsPage = (function () {
             td:                 mapped('td',                 function () { return filament ? filament.td : null; }),
             message:            mapped('message',            function () {
                 if (!filament) return null;
-                var e = (filament.emoji || '').trim();
                 var m = (filament.message || '').trim();
-                return e && m ? e + ' ' + m : (m || e || null);
+                return m || null;
             }),
             uid:                (tag && tag.scan && tag.scan.uid) ? tag.scan.uid : mk.CARD_UID,
             processorKey:       processorKey,
@@ -185,10 +184,15 @@ var SpoolsPage = (function () {
                 });
             }
 
-            // Bed temps
+            // Bed temps. Some tags (Snapmaker, OpenSpool, Qidi) only carry a
+            // single bed-temp value while TigerTag has a min/max pair. Fall
+            // back across all three slots so a single value still renders.
             var bedMin = f.bed_temp_min_c;
             var bedMax = f.bed_temp_max_c;
             var bedTemp = f.bed_temp_c;
+            if (!(bedTemp > 0)) bedTemp = bedMin || bedMax || null;
+            if (!(bedMin > 0)) bedMin = bedTemp;
+            if (!(bedMax > 0)) bedMax = bedTemp;
             if (bedMin && bedMax && bedMin > 0 && bedMax > 0 && bedMin !== bedMax) {
                 fields.push({
                     label: 'Bed',
@@ -198,7 +202,7 @@ var SpoolsPage = (function () {
             } else if (bedTemp && bedTemp > 0) {
                 fields.push({
                     label: 'Bed',
-                    value: '<span class="temp-range">' + escapeHtml(bedTemp) + ' °C</span>',
+                    value: '<span class="temp-range">' + escapeHtml(Math.round(bedTemp)) + ' °C</span>',
                     raw: true
                 });
             }
@@ -443,20 +447,6 @@ var SpoolsPage = (function () {
         return '#cccccc';
     }
 
-    function _splitMessageForEdit(combined) {
-        if (!combined) return { emoji: '', message: '' };
-        var s = String(combined);
-        var first = s.charCodeAt(0);
-        // surrogate pair?
-        if (first >= 0xD800 && first <= 0xDBFF && s.length > 1) {
-            return { emoji: s.slice(0, 2), message: s.slice(2).replace(/^\s+/, '') };
-        }
-        if (first > 0x7F) {
-            return { emoji: s.slice(0, 1), message: s.slice(1).replace(/^\s+/, '') };
-        }
-        return { emoji: '', message: s };
-    }
-
     function _ensureEditModal() {
         var existing = document.getElementById('tag-edit-modal');
         if (existing) return existing;
@@ -640,18 +630,14 @@ var SpoolsPage = (function () {
         tdInput.value = (f.td !== undefined && f.td !== null) ? f.td : 0;
         _addRow(grid, 'TD (mm)', tdInput);
 
-        // Message (the emoji prefix is handled by the encoder; we don't expose
-        // a separate emoji editor because the on-tag layout is a single 32-byte
-        // field where any leading non-ASCII codepoint is treated as the emoji).
-        var split = _splitMessageForEdit(f.message);
+        // Message. Upstream OpenRFID exposes the full 32-byte metadata region
+        // as a single UTF-8 string — there is no separate emoji slot.
         var msgInput = document.createElement('input');
         msgInput.type = 'text';
         msgInput.className = 'channel-edit-input channel-edit-message';
         msgInput.maxLength = 28;
         msgInput.placeholder = 'Message (≤28 bytes UTF-8)';
-        // If the previous tag had an emoji prefix, preserve it as part of the message
-        // so the user can edit/keep it without a dedicated picker.
-        msgInput.value = (split.emoji ? split.emoji + ' ' : '') + split.message;
+        msgInput.value = (typeof f.message === 'string') ? f.message : '';
         _addRow(grid, 'Message', msgInput);
 
         // Action row (template provides cancel/write/status)

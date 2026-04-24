@@ -186,8 +186,9 @@ DEFAULT_CONFIG = {
         {"to": "color",              "from": "colors"},
         {"to": "hotend_min_temp",    "from": "hotend_min_temp_c"},
         {"to": "hotend_max_temp",    "from": "hotend_max_temp_c"},
-        {"to": "bed_temp_min",       "from": "bed_temp_min_c"},
-        {"to": "bed_temp_max",       "from": "bed_temp_c"},
+        # Upstream OpenRFID exposes the bed-temp min as `bed_temp_c` and the max as `bed_temp_max_c`.
+        {"to": "bed_temp_min",       "from": "bed_temp_c"},
+        {"to": "bed_temp_max",       "from": "bed_temp_max_c"},
         {"to": "diameter_mm",        "from": "diameter_mm"},
         {"to": "weight_grams",       "from": "weight_grams"},
         {"to": "drying_temp",        "from": "drying_temp_c"},
@@ -217,10 +218,16 @@ def load_config():
     elif isinstance(saved.get("tag_mappings"), dict):
         # Migrate: use the 'generic' block if present, otherwise reset to defaults
         config["tag_mappings"] = saved["tag_mappings"].get("generic", list(DEFAULT_CONFIG["tag_mappings"]))
-    # Fix: bed_temp_max was mistakenly mapped from bed_temp_max_c; correct to bed_temp_c
+    # Migrate stale bed-temp mappings to the upstream OpenRFID shape:
+    #   bed_temp_min ← bed_temp_c     (was bed_temp_min_c, no longer emitted)
+    #   bed_temp_max ← bed_temp_max_c (was bed_temp_c, which is now the min)
     for m in config.get("tag_mappings", []):
-        if isinstance(m, dict) and m.get("to") == "bed_temp_max" and m.get("from") == "bed_temp_max_c":
+        if not isinstance(m, dict):
+            continue
+        if m.get("to") == "bed_temp_min" and m.get("from") == "bed_temp_min_c":
             m["from"] = "bed_temp_c"
+        elif m.get("to") == "bed_temp_max" and m.get("from") == "bed_temp_c":
+            m["from"] = "bed_temp_max_c"
     return config
 
 
@@ -398,6 +405,16 @@ def resolve_display_fields(tag_event, config):
         else:
             uid = None
 
+    # Bed temps: Snapmaker tags carry only a single value (`bed_temp_c`),
+    # which our default mappings route to `bed_temp_min`. To avoid an empty
+    # max column for those tags, mirror whichever side is set onto the other.
+    bed_min = get_mapped('bed_temp_min')
+    bed_max = get_mapped('bed_temp_max')
+    if bed_min in (None, '') and bed_max not in (None, ''):
+        bed_min = bed_max
+    elif bed_max in (None, '') and bed_min not in (None, ''):
+        bed_max = bed_min
+
     return {
         'manufacturer':      get_mapped('manufacturer'),
         'type':              get_mapped('type'),
@@ -405,8 +422,8 @@ def resolve_display_fields(tag_event, config):
         'colors':            get_mapped('color'),
         'hotend_min_temp_c': get_mapped('hotend_min_temp'),
         'hotend_max_temp_c': get_mapped('hotend_max_temp'),
-        'bed_temp_min_c':    get_mapped('bed_temp_min'),
-        'bed_temp_max_c':    get_mapped('bed_temp_max'),
+        'bed_temp_min_c':    bed_min,
+        'bed_temp_max_c':    bed_max,
         'diameter_mm':       get_mapped('diameter_mm'),
         'weight_grams':      get_mapped('weight_grams'),
         'drying_temp_c':     get_mapped('drying_temp'),
@@ -707,30 +724,12 @@ def _resolve_id(registry, kind, value, default=0):
     return default
 
 
-def _utf8_emoji_bytes(text):
-    """Return the first emoji (one codepoint) from text as up to 4 UTF-8 bytes,
-    right-padded with zeros. Returns 4 zero bytes if no emoji is found."""
-    if not text:
-        return b'\x00\x00\x00\x00'
-    for ch in str(text):
-        cp = ord(ch)
-        # crude "is this an emoji-ish codepoint?" filter: anything outside ASCII
-        if cp > 0x7F:
-            enc = ch.encode("utf-8")[:4]
-            return enc + b'\x00' * (4 - len(enc))
-    return b'\x00\x00\x00\x00'
-
-
 def _utf8_message_bytes(text, max_bytes=28):
-    """Encode text to UTF-8, dropping the leading emoji (if any), truncated to
-    max_bytes without splitting a codepoint, right-padded with zeros."""
+    """Encode text to UTF-8, truncated to max_bytes without splitting a
+    codepoint, right-padded with zeros."""
     if not text:
         return b'\x00' * max_bytes
-    s = str(text)
-    # Skip a single leading non-ASCII codepoint (emoji)
-    if s and ord(s[0]) > 0x7F:
-        s = s[1:].lstrip()
-    enc = s.encode("utf-8")
+    enc = str(text).encode("utf-8")
     # Truncate without splitting a UTF-8 codepoint
     if len(enc) > max_bytes:
         end = max_bytes
@@ -789,8 +788,7 @@ def encode_tigertag(spec):
       td_mm:       float 0..6553.5           (encoded as round(mm * 10))
       td:          int 0..65535              (legacy raw, ignored if td_mm)
       manufacturing_date: ISO date/datetime str or epoch number
-      emoji:       str (1 emoji char)        — first codepoint of metadata
-      message:     str up to ~28 UTF-8 bytes — packed contiguously
+      message:     str up to 28 UTF-8 bytes — written at OFF_METADATA
     """
     registry = load_tigertag_registry()
     if not isinstance(spec, dict):
@@ -872,26 +870,10 @@ def encode_tigertag(spec):
     td = max(0, min(td, 0xFFFF))
     buf[44:46] = td.to_bytes(2, 'big')
     # bytes 46..47 are reserved — leave zero
-    # OFF_METADATA = 48 (32-byte UTF-8 field: optional emoji codepoint + message)
-    # The reader decodes bytes 48..80 as a single null-terminated UTF-8 string and
-    # peels off a leading non-ASCII codepoint as the emoji. We must therefore pack
-    # emoji + message contiguously starting at byte 48 — writing zero-padding for
-    # an absent emoji would surface as control characters in the message.
-    emoji_text = spec.get('emoji')
-    message_text = spec.get('message') or ''
-    emoji_str = ''
-    if emoji_text:
-        for ch in str(emoji_text):
-            if ord(ch) > 0x7F:
-                emoji_str = ch
-                break
-    combined = (emoji_str + str(message_text)).encode('utf-8')
-    if len(combined) > 32:
-        end = 32
-        while end > 0 and (combined[end] & 0xC0) == 0x80:
-            end -= 1
-        combined = combined[:end]
-    buf[48:48 + len(combined)] = combined
+    # OFF_METADATA = 48 (32 bytes total). Upstream OpenRFID reads the message
+    # as a 28-byte UTF-8 string starting at byte 48 (the trailing 4 bytes are
+    # reserved). Legacy tags use the same layout.
+    buf[48:48 + 28] = _utf8_message_bytes(spec.get('message'), max_bytes=28)
     # OFF_SIGNATURE = 80 (16 bytes) — write zeros; OpenRFID parser accepts.
     # bytes 80..95 already zero from bytearray init
     return bytes(buf)

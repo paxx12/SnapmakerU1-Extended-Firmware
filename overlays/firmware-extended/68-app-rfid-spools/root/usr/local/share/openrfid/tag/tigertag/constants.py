@@ -22,6 +22,14 @@ OFF_BED_TEMP_MAX = 31
 OFF_TIMESTAMP = 32
 OFF_TD = 44
 OFF_METADATA = 48
+# The 32-byte metadata region holds an optional emoji glyph followed by a
+# UTF-8 custom message. The emoji encoding is not well-defined across writers
+# (and most writers omit it), so the parser exposes the message starting at
+# OFF_METADATA and lets the application strip any decorative prefix. The
+# spec caps the message at 28 bytes; the trailing 4 bytes of the metadata
+# region are reserved.
+OFF_MESSAGE = OFF_METADATA
+MESSAGE_LENGTH = 28
 OFF_SIGNATURE = 80
 
 MIN_DATA_LENGTH = 96

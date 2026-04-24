@@ -36,7 +36,6 @@ var ConfigShared = (function () {
         { value: 'colors',             label: 'colors' },
         { value: 'hotend_min_temp_c',  label: 'hotend_min_temp_c' },
         { value: 'hotend_max_temp_c',  label: 'hotend_max_temp_c' },
-        { value: 'bed_temp_min_c',     label: 'bed_temp_min_c' },
         { value: 'bed_temp_max_c',     label: 'bed_temp_max_c' },
         { value: 'bed_temp_c',         label: 'bed_temp_c' },
         { value: 'diameter_mm',        label: 'diameter_mm' },
@@ -45,7 +44,6 @@ var ConfigShared = (function () {
         { value: 'drying_time_hours',  label: 'drying_time_hours' },
         { value: 'manufacturing_date', label: 'manufacturing_date' },
         { value: 'td',                 label: 'td' },
-        { value: 'emoji',              label: 'emoji' },
         { value: 'message',            label: 'message' },
     ];
 
