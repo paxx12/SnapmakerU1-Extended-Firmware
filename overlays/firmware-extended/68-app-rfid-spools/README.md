@@ -68,7 +68,7 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
 | GET    | `/api/config`                              | persisted configuration                          |
 | PUT    | `/api/config`                              | update + persist configuration                   |
 | GET    | `/api/events`                              | SSE stream of channel updates                    |
-| POST   | `/api/tag-event`                           | OpenRFID webhook sink (`tag_read`, `tag_parse_error`, `tag_not_present`) |
+| POST   | `/api/tag-event`                           | OpenRFID webhook sink. `tag_read` populates the slot, `tag_parse_error` keeps the slot marked as **unrecognized/blank** (UID retained, no filament) so the UI can offer to write it, `tag_not_present` clears the slot |
 | POST   | `/api/scan`                                | trigger manual scan                              |
 | GET    | `/api/spoolman-status`                     | Spoolman reachability + counts                   |
 | GET    | `/api/spoolman-ping`                       | probe a candidate URL                            |
@@ -82,6 +82,7 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
 | GET    | `/api/tigertag/registry`                   | registry from bundled OpenRFID JSON              |
 | POST   | `/api/tigertag/encode-preview`             | 96-byte hex dump (no write)                      |
 | POST   | `/api/write`                               | encode TigerTag spec → forward to loopback :8740 |
+| POST   | `/api/clear`                               | erase NTAG215 user pages (96 zero bytes) via loopback :8740 |
 
 ### OpenRFID overrides
 
@@ -138,6 +139,9 @@ writes TigerTag payloads to NTAG215 tags via the printer's FM175XX readers.
     registry surface as `(custom)` options. Diameter pre-fill uses bare
     numbers (`"1.75"`); unit defaults to `"g"`. Color picker, temps/weight
     numeric inputs, 28-byte UTF-8 message input. Write → `POST /api/write`.
+    Blank or unrecognized writable tags (NTAG215 with no parsable filament
+    payload) render as a "Blank" card with the UID and a **Write TigerTag…**
+    button that opens the editor pre-filled with sensible defaults.
   - [pages/config-shared.html](root/usr/local/share/rfid-spools/html/pages/config-shared.html)
     + [pages/config-shared.js](root/usr/local/share/rfid-spools/html/pages/config-shared.js)
   - [pages/config-slots.html](root/usr/local/share/rfid-spools/html/pages/config-slots.html)

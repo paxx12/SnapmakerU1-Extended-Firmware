@@ -121,12 +121,15 @@ var SpoolsPage = (function () {
 
         // Tag type badge
         var tagTypeName = null;
+        var isUnrecognized = !!(tag && tag.unrecognized && !tag.filament);
         if (tag && tag.filament && tag.filament.source_processor) {
             var proc = tag.filament.source_processor;
             if (proc === 'tigertag_tag_processor') tagTypeName = 'TigerTag';
             else if (proc === 'snapmaker_tag_processor') tagTypeName = 'Snapmaker';
             else if (proc === 'openspool_tag_processor') tagTypeName = 'OpenSpool';
             else tagTypeName = proc.replace(/_tag_processor$/, '');
+        } else if (isUnrecognized) {
+            tagTypeName = 'Blank';
         } else if (mk.CARD_UID && Array.isArray(mk.CARD_UID)) {
             if (mk.CARD_UID.length === 4) tagTypeName = 'Snapmaker';
             else if (mk.CARD_UID.length === 7) tagTypeName = 'TigerTag';
@@ -140,7 +143,13 @@ var SpoolsPage = (function () {
         // Body
         var hasData = isMk(mk.VENDOR) || isMk(mk.MAIN_TYPE) || (tag && tag.filament);
 
-        if (!hasData) {
+        if (!hasData && isUnrecognized) {
+            var unrec = Templates.clone('channel-unrecognized');
+            var uidEl = Templates.$(unrec, '[data-id="uid"]');
+            var rawUid = (tag.scan && tag.scan.uid) || '';
+            uidEl.textContent = Array.isArray(rawUid) ? formatUid(rawUid) : String(rawUid);
+            body.appendChild(unrec);
+        } else if (!hasData) {
             body.appendChild(Templates.clone('channel-empty'));
         } else {
             var fields = [];
@@ -273,10 +282,13 @@ var SpoolsPage = (function () {
         if (isWritable) {
             var editFooter = Templates.clone('channel-edit-footer');
             var editBtn = Templates.$(editFooter, '[data-id="edit-btn"]');
+            if (isUnrecognized) {
+                editBtn.textContent = '✎ Write TigerTag\u2026';
+            }
 
             editBtn.addEventListener('click', function () {
                 ensureRegistry().then(function (reg) {
-                    enterEditMode(card, ch, config, f, reg);
+                    enterEditMode(card, ch, config, f, reg, isUnrecognized);
                 }).catch(function (err) {
                     alert('Failed to load TigerTag registry: ' + err.message);
                 });
@@ -428,6 +440,32 @@ var SpoolsPage = (function () {
         return control;
     }
 
+    // Prepend a "None" option to a registry-backed <select> and force-select
+    // it. Used for blank/unrecognized tags where Material/Brand should start
+    // unset rather than auto-picking the first sorted registry entry.
+    function _prependNoneOption(sel) {
+        if (!sel) return;
+        var none = document.createElement('option');
+        none.value = '';
+        none.textContent = 'None';
+        sel.insertBefore(none, sel.firstChild);
+        // Clear any existing selected attribute on other options.
+        for (var i = 0; i < sel.options.length; i++) {
+            sel.options[i].selected = (i === 0);
+        }
+        sel.value = '';
+    }
+
+    // Resolve a numeric input default. For an already-written tag we honour
+    // the on-tag value verbatim (including a deliberate 0); only fall back to
+    // `defaultVal` when the field is missing entirely. For a blank tag the
+    // default is always 0 so the user is forced to pick a real value.
+    function _numericFieldDefault(value, isBlank, defaultVal) {
+        if (isBlank) return 0;
+        if (value === undefined || value === null || value === '') return defaultVal;
+        return value;
+    }
+
     function _firstColorHexFromFields(f) {
         var src = f.colors;
         if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'number') {
@@ -491,8 +529,12 @@ var SpoolsPage = (function () {
         }
     }
 
-    function enterEditMode(card, ch, config, f, registry) {
+    function enterEditMode(card, ch, config, f, registry, isBlank) {
         _editingChannels[String(ch.channel)] = true;
+
+        // For blank/unrecognized tags we want the editor to open mostly empty
+        // (no inferred temps or dates), only pre-filling the few fields the
+        // user always wants pinned: diameter 1.75 mm, weight 1000 g, unit g.
 
         var body = _openEditModal(
             ch.channel,
@@ -503,12 +545,17 @@ var SpoolsPage = (function () {
         var grid = Templates.$(content, '[data-id="grid"]');
         body.appendChild(content);
 
-        // Material (select)
+        // Material (select). REQUIRED — the OpenRFID TigerTag parser rejects
+        // unknown materials with `ValueError: Invalid filament type: Unknown(0)`,
+        // which causes a successful byte-level write to still surface as a
+        // parse error / unrecognized tag.
         var matInput = _selectFromRegistry(registry.materials || [], f.type || '', 'Select material…');
-        _addRow(grid, 'Material', matInput);
+        if (isBlank) _prependNoneOption(matInput);
+        _addRow(grid, 'Material *', matInput);
 
         // Brand (select)
         var brandInput = _selectFromRegistry(registry.brands || [], f.manufacturer || '', 'Select brand…');
+        if (isBlank) _prependNoneOption(brandInput);
         _addRow(grid, 'Brand', brandInput);
 
         // Type (select). This is the TigerTag product type ("Filament" / "Resin"),
@@ -539,9 +586,16 @@ var SpoolsPage = (function () {
         _addRow(grid, 'Aspect 2', aspect2);
 
         // Diameter (select). Registry labels are bare numbers ("1.75", "2.85").
-        var diaCurrent = (f.diameter_mm !== undefined && f.diameter_mm !== null && f.diameter_mm !== '')
-            ? String(f.diameter_mm)
-            : '';
+        // For a blank tag we always pin 1.75 mm regardless of any 0/empty value
+        // that resolveFields may have produced.
+        var diaCurrent;
+        if (isBlank) {
+            diaCurrent = '1.75';
+        } else if (f.diameter_mm !== undefined && f.diameter_mm !== null && f.diameter_mm !== '') {
+            diaCurrent = String(f.diameter_mm);
+        } else {
+            diaCurrent = '';
+        }
         var diameterInput = _selectFromRegistry(registry.diameters || [], diaCurrent, 'Diameter…');
         _addRow(grid, 'Diameter', diameterInput);
 
@@ -564,28 +618,30 @@ var SpoolsPage = (function () {
         var unitInput = _selectFromRegistry(registry.units || [], f.unit || 'g', 'Unit…');
         _addRow(grid, 'Unit', unitInput);
 
-        // Nozzle min / max (number, side-by-side via wrapper)
+        // Nozzle min / max (number, side-by-side via wrapper). Distinguish a
+        // missing value (undefined/null) from a deliberate 0 — `f.x || 190`
+        // would clobber a previously-written 0.
         var nozMin = document.createElement('input');
         nozMin.type = 'number'; nozMin.className = 'channel-edit-input channel-edit-num';
         nozMin.min = 0; nozMin.max = 65535;
-        nozMin.value = f.hotend_min_temp_c || 190;
+        nozMin.value = _numericFieldDefault(f.hotend_min_temp_c, isBlank, 190);
         _addRow(grid, 'Nozzle min (°C)', nozMin);
         var nozMax = document.createElement('input');
         nozMax.type = 'number'; nozMax.className = 'channel-edit-input channel-edit-num';
         nozMax.min = 0; nozMax.max = 65535;
-        nozMax.value = f.hotend_max_temp_c || 220;
+        nozMax.value = _numericFieldDefault(f.hotend_max_temp_c, isBlank, 220);
         _addRow(grid, 'Nozzle max (°C)', nozMax);
 
         // Bed min / max
         var bedMin = document.createElement('input');
         bedMin.type = 'number'; bedMin.className = 'channel-edit-input channel-edit-num';
         bedMin.min = 0; bedMin.max = 255;
-        bedMin.value = f.bed_temp_min_c || 50;
+        bedMin.value = _numericFieldDefault(f.bed_temp_min_c, isBlank, 50);
         _addRow(grid, 'Bed min (°C)', bedMin);
         var bedMax = document.createElement('input');
         bedMax.type = 'number'; bedMax.className = 'channel-edit-input channel-edit-num';
         bedMax.min = 0; bedMax.max = 255;
-        bedMax.value = f.bed_temp_max_c || 60;
+        bedMax.value = _numericFieldDefault(f.bed_temp_max_c, isBlank, 60);
         _addRow(grid, 'Bed max (°C)', bedMax);
 
         // Drying temp / time
@@ -636,20 +692,41 @@ var SpoolsPage = (function () {
         msgInput.type = 'text';
         msgInput.className = 'channel-edit-input channel-edit-message';
         msgInput.maxLength = 28;
-        msgInput.placeholder = 'Message (≤28 bytes UTF-8)';
+        msgInput.placeholder = 'i.e. name, max 28 characters';
         msgInput.value = (typeof f.message === 'string') ? f.message : '';
         _addRow(grid, 'Message', msgInput);
 
         // Action row (template provides cancel/write/status)
         var cancelBtn = Templates.$(content, '[data-id="cancel"]');
         var writeBtn = Templates.$(content, '[data-id="write"]');
+        var clearBtn = Templates.$(content, '[data-id="clear"]');
         var status = Templates.$(content, '[data-id="status"]');
+
+        // Clear-tag button: only meaningful when something is already on the
+        // tag. Hidden for blank/unrecognized tags.
+        if (clearBtn && !isBlank) {
+            clearBtn.hidden = false;
+            clearBtn.addEventListener('click', function () {
+                if (!confirm('Erase all data on this tag? This will write 96 zero bytes to the NTAG215 user pages and cannot be undone.')) {
+                    return;
+                }
+                clearTag(ch.channel, clearBtn, writeBtn, cancelBtn, status);
+            });
+        }
 
         cancelBtn.addEventListener('click', function () {
             exitEditMode(ch);
         });
 
         writeBtn.addEventListener('click', function () {
+            // Validate required fields. Material is the only field the parser
+            // strictly requires — see comment on the Material row above.
+            if (!matInput.value) {
+                status.textContent = '✗ Material is required (the tag would write but stay unrecognized)';
+                status.className = 'channel-edit-status channel-edit-err';
+                matInput.focus();
+                return;
+            }
             var spec = {
                 material:        matInput.value || '',
                 brand:           brandInput.value || '',
@@ -721,6 +798,55 @@ var SpoolsPage = (function () {
                 cancelBtn.disabled = false;
                 writeBtn.textContent = origText;
                 statusEl.textContent = '✗ ' + err.message;
+                statusEl.className = 'channel-edit-status channel-edit-err';
+            });
+    }
+
+    // Erase the user-data area of an NTAG215 by submitting an all-zero spec
+    // payload through the existing /api/clear endpoint.
+    function clearTag(channel, clearBtn, writeBtn, cancelBtn, statusEl) {
+        clearBtn.disabled = true;
+        writeBtn.disabled = true;
+        cancelBtn.disabled = true;
+        var origText = clearBtn.textContent;
+        clearBtn.textContent = 'Clearing\u2026';
+        statusEl.textContent = '';
+        statusEl.className = 'channel-edit-status';
+
+        fetch('/spools/api/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: channel })
+        })
+            .then(function (resp) {
+                return resp.json().then(function (body) {
+                    return { ok: resp.ok, status: resp.status, body: body };
+                });
+            })
+            .then(function (res) {
+                clearBtn.disabled = false;
+                writeBtn.disabled = false;
+                cancelBtn.disabled = false;
+                clearBtn.textContent = origText;
+                var b = res.body || {};
+                if (res.ok && b.state === 'success') {
+                    statusEl.textContent = '\u2713 Cleared';
+                    statusEl.className = 'channel-edit-status channel-edit-ok';
+                    setTimeout(function () {
+                        _closeEditModal();
+                    }, 800);
+                } else {
+                    var msg = b.message || b.error || ('HTTP ' + res.status);
+                    statusEl.textContent = '\u2717 ' + msg;
+                    statusEl.className = 'channel-edit-status channel-edit-err';
+                }
+            })
+            .catch(function (err) {
+                clearBtn.disabled = false;
+                writeBtn.disabled = false;
+                cancelBtn.disabled = false;
+                clearBtn.textContent = origText;
+                statusEl.textContent = '\u2717 ' + err.message;
                 statusEl.className = 'channel-edit-status channel-edit-err';
             });
     }

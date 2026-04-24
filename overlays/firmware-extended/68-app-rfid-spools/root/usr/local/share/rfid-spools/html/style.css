@@ -215,6 +215,22 @@ header h1 {
     font-style: italic;
 }
 
+.channel-unrecognized {
+    text-align: center;
+    padding: 1.5rem 1rem;
+}
+
+.channel-unrecognized-title {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.channel-unrecognized-sub {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
 .field-grid {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -824,6 +840,18 @@ header h1 {
     color: var(--text);
     transition: all 0.15s;
 }
+.channel-edit-clear {
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: transparent;
+    color: #f44336;
+    transition: all 0.15s;
+}
+.channel-edit-clear:hover { background: #f44336; color: #fff; }
+.channel-edit-clear:disabled { opacity: 0.6; cursor: wait; }
 .channel-edit-cancel:hover { border-color: var(--text-dim); }
 .channel-edit-write {
     background: var(--accent);

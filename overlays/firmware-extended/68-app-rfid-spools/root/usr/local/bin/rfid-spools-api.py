@@ -1244,9 +1244,22 @@ class RequestHandler(BaseHTTPRequestHandler):
                 return
 
             event = data.get("event", "tag_read")
-            if event in ("tag_not_present", "tag_parse_error"):
+            if event == "tag_not_present":
                 store.update(channel, {"event": event, "tag": None})
                 event_bus.publish("tag-removed", {"channel": channel})
+            elif event == "tag_parse_error":
+                # Tag is physically present (UID known) but no processor parsed it.
+                # Keep the slot populated with the same shape as tag_read so the
+                # UI can offer to initialize/write a blank or unrecognized tag.
+                store.update(channel, {
+                    "event": event,
+                    "channel": channel,
+                    "reader": data.get("reader") or {},
+                    "scan": data.get("scan") or {},
+                    "filament": None,
+                    "unrecognized": True,
+                })
+                event_bus.publish("tag-event", {"channel": channel})
             else:
                 store.update(channel, data)
                 event_bus.publish("tag-event", {"channel": channel})
@@ -1350,7 +1363,33 @@ class RequestHandler(BaseHTTPRequestHandler):
             status = 200 if result.get("state") == "success" else 502
             self._send_json(status, result)
 
-        elif self.path.startswith("/api/spoolman-sync"):
+        elif self.path == "/api/clear":
+            # Body: {"channel": int}
+            # Erase the user-data area of an NTAG215 (96 bytes starting at
+            # page 4) by writing zeros via the same loopback write endpoint.
+            body = self._read_body()
+            try:
+                req_data = json.loads(body) if body else {}
+                channel = int(req_data.get("channel"))
+            except (json.JSONDecodeError, ValueError, TypeError) as e:
+                self._send_json(400, {"error": "invalid request: " + str(e)})
+                return
+            if channel < 0 or channel >= MAX_CHANNELS:
+                self._send_json(400, {"error": "channel out of range"})
+                return
+            try:
+                payload = bytes(96)
+                logging.info("Clearing tag on channel %d (%d zero bytes)", channel, len(payload))
+                result = write_ntag215_payload(channel, payload)
+            except Exception as e:
+                logging.exception("clear failed")
+                self._send_json(500, {"state": "error", "message": str(e)})
+                return
+
+            status = 200 if result.get("state") == "success" else 502
+            self._send_json(status, result)
+
+        elif self.path.startswith("/api/spoolman-sync") and not self.path.startswith("/api/spoolman-sync-all"):
             parsed = urllib.parse.urlparse(self.path)
             params = urllib.parse.parse_qs(parsed.query)
             channel_str = params.get('channel', [None])[0]

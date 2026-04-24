@@ -72,6 +72,13 @@
     <div class="channel-empty">No spool detected</div>
 </template>
 
+<template id="channel-unrecognized">
+    <div class="channel-unrecognized">
+        <div class="channel-unrecognized-title">Blank or unrecognized tag detected</div>
+        <div class="channel-unrecognized-sub">UID <span class="uid-value" data-id="uid"></span> · ready to write</div>
+    </div>
+</template>
+
 <template id="channel-field-grid">
     <div class="field-grid"></div>
 </template>
@@ -154,9 +161,11 @@
     <div>
         <p class="tag-edit-format-note" data-id="format-note">
             Writes a TigerTag (NTAG215) payload. Existing tag content will be overwritten.
+            Fields marked <strong>*</strong> are required for the tag to be recognized.
         </p>
         <div class="field-grid channel-edit-grid" data-id="grid"></div>
         <div class="channel-edit-actions" data-id="actions">
+            <button type="button" class="channel-edit-clear" data-id="clear" hidden>🗑 Clear tag</button>
             <button type="button" class="channel-edit-cancel" data-id="cancel">Cancel</button>
             <button type="button" class="channel-edit-write" data-id="write">✎ Write TigerTag</button>
             <span class="channel-edit-status" data-id="status"></span>
