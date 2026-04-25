@@ -853,11 +853,20 @@ body.tag-edit-open { overflow: hidden; }
 
 /* ── Spoolman info box ─────────────────────────────────────────────────── */
 .spoolman-info {
-    margin: 1.5rem 0 0.5rem;
-    padding: 1rem 1.25rem;
+    /* Width matches the channels grid above (same max-width + centered)
+       so the box lines up with the card layout. The 1.5rem horizontal
+       padding mirrors the grid's outer padding so the card itself sits
+       flush with the channel cards' edges. */
+    max-width: 1400px;
+    margin: 0 auto 1.5rem;
+    padding: 0 1.5rem;
+    box-sizing: border-box;
+}
+.spoolman-info-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 8px;
+    padding: 1rem 1.25rem;
 }
 .spoolman-info-header {
     display: flex;
