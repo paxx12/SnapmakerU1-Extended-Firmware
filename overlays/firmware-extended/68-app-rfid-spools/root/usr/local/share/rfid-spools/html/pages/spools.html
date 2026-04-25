@@ -177,3 +177,109 @@
     <span class="field-label" data-id="label"></span>
     <span class="field-value" data-id="value"></span>
 </template>
+
+<!--
+  Blank-tag action group: shown in place of the single "Write TigerTag…"
+  button when the channel holds a writable but unrecognized NTAG215. Lets
+  the user write defaults, pick an existing Spoolman spool, or enter a
+  spool ID directly.
+
+  Hooks: write-blank, from-spoolman, by-id
+-->
+<template id="channel-blank-actions">
+    <div class="channel-edit-footer channel-blank-actions">
+        <button type="button" class="channel-edit-btn" data-id="write-blank">✎ Write TigerTag…</button>
+        <button type="button" class="channel-edit-btn channel-edit-btn-secondary" data-id="from-spoolman">📦 From Spoolman…</button>
+        <button type="button" class="channel-edit-btn channel-edit-btn-secondary" data-id="by-id">🔢 By spool ID…</button>
+    </div>
+</template>
+
+<!--
+  Spoolman info box rendered below the channel grid. Shows live counts
+  (spools / filaments / vendors), the configured URL, and a refresh button.
+  Hidden until /api/spoolman-status reports configured=true.
+
+  Hooks: url, count-spools, count-filaments, count-vendors, status-text, refresh
+-->
+<template id="spoolman-info-box">
+    <section class="spoolman-info" hidden>
+        <div class="spoolman-info-header">
+            <h2 class="spoolman-info-title">Spoolman</h2>
+            <a class="spoolman-info-url" data-id="url" target="_blank" rel="noopener noreferrer"></a>
+            <span class="spoolman-info-status" data-id="status-text"></span>
+            <button type="button" class="spoolman-info-refresh" data-id="refresh" title="Refresh counts"><span class="spin-glyph">⟳</span></button>
+        </div>
+        <div class="spoolman-info-stats">
+            <div class="spoolman-stat">
+                <div class="spoolman-stat-value" data-id="count-spools">—</div>
+                <div class="spoolman-stat-label">Spools</div>
+            </div>
+            <div class="spoolman-stat">
+                <div class="spoolman-stat-value" data-id="count-filaments">—</div>
+                <div class="spoolman-stat-label">Filaments</div>
+            </div>
+            <div class="spoolman-stat">
+                <div class="spoolman-stat-value" data-id="count-vendors">—</div>
+                <div class="spoolman-stat-label">Vendors</div>
+            </div>
+        </div>
+    </section>
+</template>
+
+<!--
+  Spool picker modal: opened from the blank-tag "From Spoolman…" button.
+  The full spool list is fetched once via /api/spoolman-spools (cached
+  60 s server-side) and filtered client-side as the user types in the
+  search box. Picking a row opens the existing TigerTag editor pre-filled
+  via /api/spoolman-spool/<id>/tigertag-spec.
+
+  Hooks: title, close, search, archived, refresh, count, list, by-id-input,
+         by-id-go, status, truncated-banner
+-->
+<template id="spool-picker-modal">
+    <div id="spool-picker-modal" class="tag-edit-overlay" style="display:none">
+        <div class="tag-edit-dialog spool-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="spool-picker-title">
+            <div class="tag-edit-header">
+                <h2 id="spool-picker-title" class="tag-edit-title" data-id="title">Pick a Spoolman spool</h2>
+                <button type="button" class="tag-edit-close" data-id="close" aria-label="Close">&times;</button>
+            </div>
+            <div class="tag-edit-body spool-picker-body">
+                <div class="spool-picker-toolbar">
+                    <input type="search" class="spool-picker-search" data-id="search" placeholder="Search vendor / material / name / external ID…" autocomplete="off">
+                    <label class="spool-picker-archived">
+                        <input type="checkbox" data-id="archived"> Show archived
+                    </label>
+                    <button type="button" class="spool-picker-refresh" data-id="refresh" title="Reload from Spoolman"><span class="spin-glyph">⟳</span></button>
+                </div>
+                <div class="spool-picker-truncated" data-id="truncated-banner" hidden>
+                    Showing the first matches only. Use the spool-ID field below if your spool is missing.
+                </div>
+                <div class="spool-picker-count" data-id="count"></div>
+                <div class="spool-picker-list" data-id="list" role="listbox"></div>
+                <div class="spool-picker-byid">
+                    <label class="spool-picker-byid-label">Or enter spool ID:</label>
+                    <input type="number" class="spool-picker-byid-input" data-id="by-id-input" min="1" placeholder="e.g. 42">
+                    <button type="button" class="spool-picker-byid-go" data-id="by-id-go">Use</button>
+                </div>
+                <div class="spool-picker-status" data-id="status"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="spool-picker-row">
+    <button type="button" class="spool-picker-row" role="option">
+        <span class="spool-picker-swatch" data-id="swatch"></span>
+        <span class="spool-picker-main">
+            <span class="spool-picker-vendor" data-id="vendor"></span>
+            <span class="spool-picker-material" data-id="material"></span>
+            <span class="spool-picker-name" data-id="name"></span>
+        </span>
+        <span class="spool-picker-meta">
+            <span class="spool-picker-id" data-id="id"></span>
+            <span class="spool-picker-weight" data-id="weight"></span>
+            <span class="spool-picker-archived-badge" data-id="archived-badge" hidden>archived</span>
+        </span>
+    </button>
+</template>
+

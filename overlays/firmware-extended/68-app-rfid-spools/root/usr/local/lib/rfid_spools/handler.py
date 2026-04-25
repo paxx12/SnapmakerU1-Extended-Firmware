@@ -19,7 +19,11 @@ from .discovery import lan_sweep_for_spoolman, probe_spoolman
 from . import moonraker
 from .runtime import event_bus, store, sync_state
 from .spoolman import (
+    fetch_inventory_counts,
+    fetch_spool_with_relations,
+    list_all_spools,
     resolve_display_fields,
+    spool_to_tigertag_spec,
     spoolman_api_request,
     sync_to_spoolman,
 )
@@ -88,6 +92,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         elif self.path.startswith("/api/spoolman-discover"):
             self._handle_spoolman_discover()
+
+        elif self.path.startswith("/api/spoolman-spools"):
+            self._handle_spoolman_spools()
+
+        elif self.path.startswith("/api/spoolman-spool/"):
+            self._handle_spoolman_spool_by_id()
 
         elif self.path.startswith("/api/spoolman-extra-fields-status"):
             self._handle_spoolman_extra_fields_status()
@@ -185,7 +195,98 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._send_json(200, {"configured": False})
             return
         ok = probe_spoolman(spoolman_url)
-        self._send_json(200, {"configured": True, "ok": ok})
+        out = {"configured": True, "ok": ok, "url": spoolman_url}
+        if ok:
+            try:
+                out["counts"] = fetch_inventory_counts(spoolman_url)
+            except Exception as e:
+                logging.warning("spoolman counts failed: %s", e)
+                out["counts"] = None
+        self._send_json(200, out)
+
+    def _handle_spoolman_spools(self):
+        """Bulk spool list — fetches every spool from Spoolman (paged
+        internally) and returns a thinned list for client-side filtering.
+        Cached in memory for ``SPOOL_BULK_CACHE_TTL_S`` seconds."""
+        config = load_config()
+        spoolman_url = config.get('spoolman_url', '').rstrip('/')
+        if not spoolman_url:
+            self._send_json(400, _ERR_SPOOLMAN_NOT_CONFIGURED)
+            return
+        parsed = urllib.parse.urlparse(self.path)
+        params = urllib.parse.parse_qs(parsed.query)
+        include_archived = params.get('include_archived', ['false'])[0].lower() in ('1', 'true', 'yes')
+        force_refresh = params.get('refresh', ['false'])[0].lower() in ('1', 'true', 'yes')
+        try:
+            payload = list_all_spools(
+                spoolman_url,
+                include_archived=include_archived,
+                force_refresh=force_refresh,
+            )
+        except Exception as e:
+            logging.exception("list_all_spools failed")
+            self._send_json(502, {"error": "spoolman list failed: {}".format(e)})
+            return
+        self._send_json(200, payload)
+
+    def _handle_spoolman_spool_by_id(self):
+        """``GET /api/spoolman-spool/<id>`` or ``.../<id>/tigertag-spec``.
+        The trailing segment selects the response shape:
+        - bare id → thin spool record (or 404)
+        - ``/tigertag-spec`` → editor-shaped pre-fill payload (or 404)
+        """
+        config = load_config()
+        spoolman_url = config.get('spoolman_url', '').rstrip('/')
+        if not spoolman_url:
+            self._send_json(400, _ERR_SPOOLMAN_NOT_CONFIGURED)
+            return
+        parsed = urllib.parse.urlparse(self.path)
+        # path is "/api/spoolman-spool/<id>" or "/api/spoolman-spool/<id>/tigertag-spec"
+        rest = parsed.path[len("/api/spoolman-spool/"):]
+        parts = rest.split('/', 1) if rest else []
+        if not parts or not parts[0]:
+            self._send_json(400, {"error": "missing spool id"})
+            return
+        spool_id_raw = parts[0]
+        sub = parts[1] if len(parts) > 1 else ''
+
+        try:
+            sid = int(spool_id_raw)
+        except (TypeError, ValueError):
+            self._send_json(400, {"error": "spool id must be numeric"})
+            return
+        if sid <= 0:
+            self._send_json(400, {"error": "spool id must be positive"})
+            return
+
+        try:
+            spool, filament, vendor = fetch_spool_with_relations(spoolman_url, sid)
+        except Exception as e:
+            logging.exception("fetch_spool_with_relations failed")
+            self._send_json(502, {"error": "spoolman lookup failed: {}".format(e)})
+            return
+        if spool is None:
+            self._send_json(404, {"error": "spool not found", "id": sid})
+            return
+
+        if sub == 'tigertag-spec':
+            self._send_json(200, spool_to_tigertag_spec(spool, filament, vendor))
+            return
+        if sub:
+            self._send_json(404, _ERR_NOT_FOUND)
+            return
+
+        # Bare id — return a thin record (same shape as list_all_spools items).
+        from .spoolman import _thin_spool
+        # Re-attach embedded fil/vendor so _thin_spool can read them, in case
+        # we had to fetch them separately above.
+        merged = dict(spool)
+        if filament and not merged.get('filament'):
+            f = dict(filament)
+            if vendor and not f.get('vendor'):
+                f['vendor'] = vendor
+            merged['filament'] = f
+        self._send_json(200, _thin_spool(merged))
 
     def _handle_spoolman_ping(self):
         parsed = urllib.parse.urlparse(self.path)

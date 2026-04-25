@@ -82,11 +82,14 @@ aspect / diameter / unit reuses the bundled OpenRFID JSON registry under
 | GET    | `/api/events`                              | SSE stream of channel updates                    |
 | POST   | `/api/tag-event`                           | OpenRFID webhook sink. `tag_read` populates the slot, `tag_parse_error` keeps the slot marked as **unrecognized/blank** (UID retained, no filament) so the UI can offer to write it, `tag_not_present` clears the slot |
 | POST   | `/api/scan`                                | trigger manual scan                              |
-| GET    | `/api/spoolman-status`                     | Spoolman reachability + counts                   |
+| GET    | `/api/spoolman-status`                     | Spoolman reachability + inventory counts (`{configured, ok, url, counts: {spools, filaments, vendors}}`) |
 | GET    | `/api/spoolman-ping`                       | probe a candidate URL                            |
 | GET    | `/api/spoolman-discover`                   | auto-discover Spoolman on the network            |
 | GET    | `/api/spoolman-candidates`                 | matching spools for a tag                        |
 | GET    | `/api/spoolman-filament`                   | filament lookup                                  |
+| GET    | `/api/spoolman-spools`                     | bulk-fetch every spool (cached 60 s). Optional `?include_archived=true`, `?refresh=true` |
+| GET    | `/api/spoolman-spool/<id>`                 | single spool with vendor + filament expanded     |
+| GET    | `/api/spoolman-spool/<id>/tigertag-spec`   | spool mapped to the TigerTag editor `f`-shape (used by the blank-tag picker) |
 | POST   | `/api/spoolman-sync`                       | sync one channel to Spoolman                     |
 | POST   | `/api/spoolman-sync-all`                   | sync every populated channel                     |
 | GET    | `/api/spoolman-extra-fields-status`        | check TigerTag UID extra-field registration      |

@@ -17,6 +17,16 @@ OPENRFID_WRITE_URL = "http://127.0.0.1:8740/write"
 MAX_CHANNELS = 4
 MAX_BODY_SIZE = 64 * 1024  # 64KB max request body
 
+# ── Spoolman bulk fetch (picker UI) ──────────────────────────────────────────
+# The picker fetches *all* spools at once and filters client-side. To stay
+# polite to Spoolman, the bulk loader pages internally in fixed-size chunks.
+# The hard cap protects the printer from runaway memory use on huge servers;
+# past it the response is marked ``truncated: true`` and the UI tells the
+# user to use the by-ID lookup instead.
+SPOOL_BULK_PAGE_SIZE = 500
+SPOOL_BULK_HARD_CAP = 5000
+SPOOL_BULK_CACHE_TTL_S = 60
+
 # ── TigerTag encoder constants (mirror OpenRFID tag/tigertag/constants.py) ──
 # See: https://github.com/suchmememanyskill/openrfid
 OPENRFID_TIGERTAG_DB_DIR = "/usr/local/share/openrfid/tag/tigertag/database"

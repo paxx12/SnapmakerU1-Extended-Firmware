@@ -265,21 +265,51 @@ var SpoolsPage = (function () {
         }
         var isWritable = uidByteLen === 7;
         if (isWritable) {
-            var editFooter = Templates.clone('channel-edit-footer');
-            var editBtn = Templates.$(editFooter, '[data-id="edit-btn"]');
             if (isUnrecognized) {
-                editBtn.textContent = '✎ Write TigerTag\u2026';
-            }
+                // Blank tag: 3-button action group — write defaults, pick a
+                // Spoolman spool, or enter a spool ID directly.
+                var blankFooter = Templates.clone('channel-blank-actions');
+                var writeBlankBtn = Templates.$(blankFooter, '[data-id="write-blank"]');
+                var fromSpoolmanBtn = Templates.$(blankFooter, '[data-id="from-spoolman"]');
+                var byIdBtn = Templates.$(blankFooter, '[data-id="by-id"]');
 
-            editBtn.addEventListener('click', function () {
-                ensureRegistry().then(function (reg) {
-                    enterEditMode(card, ch, config, f, reg, isUnrecognized);
-                }).catch(function (err) {
-                    alert('Failed to load TigerTag registry: ' + err.message);
+                writeBlankBtn.addEventListener('click', function () {
+                    ensureRegistry().then(function (reg) {
+                        enterEditMode(card, ch, config, f, reg, true);
+                    }).catch(function (err) {
+                        alert('Failed to load TigerTag registry: ' + err.message);
+                    });
                 });
-            });
 
-            footers.appendChild(editFooter);
+                // Hide Spoolman-aware buttons unless Spoolman is actually
+                // configured (and presumed reachable). The dialog itself
+                // surfaces a clear error if the network call fails.
+                if (config && config.spoolman_url) {
+                    fromSpoolmanBtn.addEventListener('click', function () {
+                        openSpoolPicker(card, ch, config);
+                    });
+                    byIdBtn.addEventListener('click', function () {
+                        promptByIdAndPrefill(card, ch, config);
+                    });
+                } else {
+                    fromSpoolmanBtn.hidden = true;
+                    byIdBtn.hidden = true;
+                }
+
+                footers.appendChild(blankFooter);
+            } else {
+                // Recognized writable tag: keep the original single Edit button.
+                var editFooter = Templates.clone('channel-edit-footer');
+                var editBtn = Templates.$(editFooter, '[data-id="edit-btn"]');
+                editBtn.addEventListener('click', function () {
+                    ensureRegistry().then(function (reg) {
+                        enterEditMode(card, ch, config, f, reg, false);
+                    }).catch(function (err) {
+                        alert('Failed to load TigerTag registry: ' + err.message);
+                    });
+                });
+                footers.appendChild(editFooter);
+            }
         }
 
         // Spoolman sync footer (shown when spoolman_url is configured and tag present)
@@ -425,20 +455,28 @@ var SpoolsPage = (function () {
         return control;
     }
 
-    // Prepend a "None" option to a registry-backed <select> and force-select
-    // it. Used for blank/unrecognized tags where Material/Brand should start
-    // unset rather than auto-picking the first sorted registry entry.
+    // Prepend a "None" option to a registry-backed <select>. Used for
+    // blank/unrecognized tags where Material/Brand should start unset
+    // rather than auto-picking the first sorted registry entry. If the
+    // select already has an explicitly selected option (e.g. a Spoolman
+    // pre-fill), we leave that selection alone—only force "None" when
+    // nothing else has been chosen.
     function _prependNoneOption(sel) {
         if (!sel) return;
+        var hadSelection = false;
+        for (var k = 0; k < sel.options.length; k++) {
+            if (sel.options[k].selected) { hadSelection = true; break; }
+        }
         var none = document.createElement('option');
         none.value = '';
         none.textContent = 'None';
         sel.insertBefore(none, sel.firstChild);
-        // Clear any existing selected attribute on other options.
-        for (var i = 0; i < sel.options.length; i++) {
-            sel.options[i].selected = (i === 0);
+        if (!hadSelection) {
+            for (var i = 0; i < sel.options.length; i++) {
+                sel.options[i].selected = (i === 0);
+            }
+            sel.value = '';
         }
-        sel.value = '';
     }
 
     // Resolve a numeric input default. For an already-written tag we honour
@@ -446,9 +484,14 @@ var SpoolsPage = (function () {
     // `defaultVal` when the field is missing entirely. For a blank tag the
     // default is always 0 so the user is forced to pick a real value.
     function _numericFieldDefault(value, isBlank, defaultVal) {
+        // Honor any explicit value first — this matters when a "blank" tag
+        // is being pre-filled from a Spoolman spool: isBlank is true (we're
+        // about to write the tag from scratch) but the spec carries real
+        // numbers we want to keep. Only when no value is supplied do we
+        // distinguish blank-tag (start at 0) from recognized-tag default.
+        if (value !== undefined && value !== null && value !== '') return value;
         if (isBlank) return 0;
-        if (value === undefined || value === null || value === '') return defaultVal;
-        return value;
+        return defaultVal;
     }
 
     function _firstColorHexFromFields(f) {
@@ -512,6 +555,296 @@ var SpoolsPage = (function () {
             delete _editingChannels[String(ch)];
             if (typeof fetchChannels === 'function') fetchChannels();
         }
+    }
+
+    // ── Spool picker modal ─────────────────────────────────────────────────
+    // Module-level state for the picker. Holds the most recent fetch result
+    // so the search input can filter without re-hitting the backend.
+    var _pickerState = {
+        spools: [],          // last list returned by /api/spoolman-spools
+        truncated: false,
+        archived: false,     // mirrors the checkbox; sent as query param
+        target: null,        // { card, ch, config } captured on open
+        searchTimer: null
+    };
+
+    function _ensureSpoolPicker() {
+        var existing = document.getElementById('spool-picker-modal');
+        if (existing) return existing;
+        var overlay = Templates.clone('spool-picker-modal');
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function (ev) {
+            if (ev.target === overlay) _closeSpoolPicker();
+        });
+        Templates.$(overlay, '[data-id="close"]').addEventListener('click', _closeSpoolPicker);
+        document.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape' && overlay.style.display !== 'none') {
+                _closeSpoolPicker();
+            }
+        });
+
+        var search = Templates.$(overlay, '[data-id="search"]');
+        search.addEventListener('input', function () {
+            // Debounce so very fast typists don't repaint on every keystroke.
+            if (_pickerState.searchTimer) clearTimeout(_pickerState.searchTimer);
+            _pickerState.searchTimer = setTimeout(_renderPickerList, 120);
+        });
+
+        var archived = Templates.$(overlay, '[data-id="archived"]');
+        archived.addEventListener('change', function () {
+            _pickerState.archived = !!archived.checked;
+            _loadPickerSpools(false);
+        });
+
+        var refresh = Templates.$(overlay, '[data-id="refresh"]');
+        refresh.addEventListener('click', function () {
+            _loadPickerSpools(true);
+        });
+
+        var byIdGo = Templates.$(overlay, '[data-id="by-id-go"]');
+        var byIdInput = Templates.$(overlay, '[data-id="by-id-input"]');
+        function submitById() {
+            var raw = byIdInput.value.trim();
+            if (!raw) return;
+            var n = parseInt(raw, 10);
+            if (!isFinite(n) || n <= 0) {
+                _setPickerStatus('Enter a positive spool ID.', true);
+                return;
+            }
+            _useSpoolId(n);
+        }
+        byIdGo.addEventListener('click', submitById);
+        byIdInput.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') { ev.preventDefault(); submitById(); }
+        });
+
+        return overlay;
+    }
+
+    function openSpoolPicker(card, ch, config) {
+        _pickerState.target = { card: card, ch: ch, config: config };
+        var overlay = _ensureSpoolPicker();
+        // Reset transient UI state but keep the cached list — the server
+        // already caches for 60 s so re-opening should feel instant.
+        Templates.$(overlay, '[data-id="search"]').value = '';
+        Templates.$(overlay, '[data-id="by-id-input"]').value = '';
+        Templates.$(overlay, '[data-id="archived"]').checked = _pickerState.archived;
+        _setPickerStatus('', false);
+        overlay.style.display = 'flex';
+        document.body.classList.add('tag-edit-open');
+        // If we already have data, render it immediately while we refresh
+        // in the background. Otherwise show a loading hint.
+        if (_pickerState.spools.length) {
+            _renderPickerList();
+        } else {
+            _setListEmpty('Loading spools…');
+        }
+        _loadPickerSpools(false);
+        // Focus the search box for quick typing.
+        setTimeout(function () {
+            Templates.$(overlay, '[data-id="search"]').focus();
+        }, 50);
+    }
+
+    function _closeSpoolPicker() {
+        var overlay = document.getElementById('spool-picker-modal');
+        if (!overlay) return;
+        overlay.style.display = 'none';
+        document.body.classList.remove('tag-edit-open');
+        _pickerState.target = null;
+    }
+
+    function _setPickerStatus(msg, isError) {
+        var overlay = document.getElementById('spool-picker-modal');
+        if (!overlay) return;
+        var el = Templates.$(overlay, '[data-id="status"]');
+        el.textContent = msg || '';
+        el.classList.toggle('error', !!isError);
+    }
+
+    function _setListEmpty(msg) {
+        var overlay = document.getElementById('spool-picker-modal');
+        if (!overlay) return;
+        var list = Templates.$(overlay, '[data-id="list"]');
+        list.innerHTML = '';
+        var empty = document.createElement('div');
+        empty.className = 'spool-picker-empty';
+        empty.textContent = msg;
+        list.appendChild(empty);
+    }
+
+    function _loadPickerSpools(forceRefresh) {
+        var overlay = document.getElementById('spool-picker-modal');
+        if (!overlay) return;
+        var refresh = Templates.$(overlay, '[data-id="refresh"]');
+        refresh.classList.add('spinning');
+
+        var qs = [];
+        if (_pickerState.archived) qs.push('include_archived=true');
+        if (forceRefresh) qs.push('refresh=true');
+        var url = '/spools/api/spoolman-spools' + (qs.length ? '?' + qs.join('&') : '');
+
+        fetch(url)
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function (data) {
+                _pickerState.spools = (data && data.items) || [];
+                _pickerState.truncated = !!(data && data.truncated);
+                var banner = Templates.$(overlay, '[data-id="truncated-banner"]');
+                banner.hidden = !_pickerState.truncated;
+                _renderPickerList();
+                _setPickerStatus('', false);
+            })
+            .catch(function (err) {
+                _setListEmpty('Failed to load spools.');
+                _setPickerStatus('Error: ' + err.message, true);
+            })
+            .then(function () {
+                refresh.classList.remove('spinning');
+            });
+    }
+
+    // Filter terms are matched as ANDed substrings against a single
+    // synthesized haystack per spool. Cheap, predictable, and good enough
+    // for a few thousand rows.
+    function _matchesQuery(spool, terms) {
+        if (!terms.length) return true;
+        // _thin_spool() flattens vendor/material/name onto the spool itself
+        // so we can join in one shot without nested lookups.
+        var hay = [
+            spool.vendor || '',
+            spool.material || '',
+            spool.name || '',
+            spool.external_id || '',
+            String(spool.id || '')
+        ].join(' ').toLowerCase();
+        for (var i = 0; i < terms.length; i++) {
+            if (hay.indexOf(terms[i]) === -1) return false;
+        }
+        return true;
+    }
+
+    function _renderPickerList() {
+        var overlay = document.getElementById('spool-picker-modal');
+        if (!overlay) return;
+        var list = Templates.$(overlay, '[data-id="list"]');
+        var countEl = Templates.$(overlay, '[data-id="count"]');
+        var search = Templates.$(overlay, '[data-id="search"]');
+        var raw = (search.value || '').trim().toLowerCase();
+        var terms = raw.length ? raw.split(/\s+/) : [];
+
+        var filtered = [];
+        for (var i = 0; i < _pickerState.spools.length; i++) {
+            if (_matchesQuery(_pickerState.spools[i], terms)) {
+                filtered.push(_pickerState.spools[i]);
+            }
+        }
+
+        // Default sort: vendor A→Z, then material, then name.
+        filtered.sort(function (a, b) {
+            var av = (a.vendor || '').toLowerCase();
+            var bv = (b.vendor || '').toLowerCase();
+            if (av !== bv) return av < bv ? -1 : 1;
+            var am = (a.material || '').toLowerCase();
+            var bm = (b.material || '').toLowerCase();
+            if (am !== bm) return am < bm ? -1 : 1;
+            var an = (a.name || '').toLowerCase();
+            var bn = (b.name || '').toLowerCase();
+            return an < bn ? -1 : (an > bn ? 1 : 0);
+        });
+
+        list.innerHTML = '';
+        if (!filtered.length) {
+            _setListEmpty(_pickerState.spools.length ? 'No matches.' : 'No spools.');
+        } else {
+            // Cap rendered rows for perf; if more match, the search box
+            // narrows the field quickly enough.
+            var max = Math.min(filtered.length, 500);
+            for (var j = 0; j < max; j++) {
+                list.appendChild(_renderPickerRow(filtered[j]));
+            }
+        }
+
+        var total = _pickerState.spools.length;
+        var shown = filtered.length;
+        var msg = shown + ' of ' + total + ' spool' + (total === 1 ? '' : 's');
+        if (_pickerState.archived) msg += ' (incl. archived)';
+        countEl.textContent = msg;
+    }
+
+    function _renderPickerRow(spool) {
+        var node = Templates.clone('spool-picker-row');
+
+        var swatch = node.querySelector('[data-id="swatch"]');
+        // Filament-level colour is the only standard Spoolman field; the
+        // backend pre-flattens it onto the spool. Spool-level extras
+        // override is applied backend-side at /tigertag-spec time.
+        var c = spool.color_hex;
+        if (c) {
+            swatch.style.background = (c.charAt(0) === '#' ? c : '#' + c);
+        }
+
+        node.querySelector('[data-id="vendor"]').textContent = spool.vendor || '(no vendor)';
+        node.querySelector('[data-id="material"]').textContent = spool.material || '';
+        node.querySelector('[data-id="name"]').textContent = spool.name || '';
+        node.querySelector('[data-id="id"]').textContent = '#' + spool.id;
+
+        var w = '';
+        if (typeof spool.weight_g === 'number') w = spool.weight_g + ' g';
+        node.querySelector('[data-id="weight"]').textContent = w;
+
+        var archBadge = node.querySelector('[data-id="archived-badge"]');
+        archBadge.hidden = !spool.archived;
+
+        node.addEventListener('click', function () { _useSpoolId(spool.id); });
+        return node;
+    }
+
+    function _useSpoolId(spoolId) {
+        var target = _pickerState.target;
+        if (!target) return;
+        _setPickerStatus('Loading spool #' + spoolId + '…', false);
+        fetch('/spools/api/spoolman-spool/' + encodeURIComponent(spoolId) + '/tigertag-spec')
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.text().then(function (t) {
+                        throw new Error('HTTP ' + r.status + (t ? ': ' + t : ''));
+                    });
+                }
+                return r.json();
+            })
+            .then(function (spec) {
+                _closeSpoolPicker();
+                ensureRegistry().then(function (reg) {
+                    enterEditMode(target.card, target.ch, target.config, spec, reg, true);
+                }).catch(function (err) {
+                    alert('Failed to load TigerTag registry: ' + err.message);
+                });
+            })
+            .catch(function (err) {
+                _setPickerStatus('Could not load spool: ' + err.message, true);
+            });
+    }
+
+    // Standalone "By spool ID…" entry point used when the user already
+    // knows the spool number and doesn't want to scroll the list.
+    function promptByIdAndPrefill(card, ch, config) {
+        var raw = window.prompt('Spoolman spool ID:');
+        if (raw === null) return;
+        var n = parseInt(String(raw).trim(), 10);
+        if (!isFinite(n) || n <= 0) {
+            alert('Please enter a positive spool ID.');
+            return;
+        }
+        // Reuse the picker plumbing for consistent error handling and the
+        // same /tigertag-spec → enterEditMode path.
+        _pickerState.target = { card: card, ch: ch, config: config };
+        // We skip opening the modal; _useSpoolId will close it (no-op) and
+        // enter the editor directly.
+        _useSpoolId(n);
     }
 
     function enterEditMode(card, ch, config, f, registry, isBlank) {
@@ -942,23 +1275,54 @@ var SpoolsPage = (function () {
         };
     }
 
-    function fetchSpoolmanStatus() {
+    function fetchSpoolmanStatus(forceRefreshInfoBox) {
         fetch('/spools/api/spoolman-status')
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 var dot = document.getElementById('spoolman-status-dot');
                 var text = document.getElementById('spoolman-status-text');
-                if (!dot || !text) return;
-                if (!data || !data.configured) {
-                    dot.style.display = 'none';
-                    text.style.display = 'none';
-                } else {
-                    dot.style.display = '';
-                    text.style.display = '';
-                    dot.className = 'status-dot ' + (data.ok ? 'connected' : 'disconnected');
+                if (dot && text) {
+                    if (!data || !data.configured) {
+                        dot.style.display = 'none';
+                        text.style.display = 'none';
+                    } else {
+                        dot.style.display = '';
+                        text.style.display = '';
+                        dot.className = 'status-dot ' + (data.ok ? 'connected' : 'disconnected');
+                    }
                 }
+                renderSpoolmanInfoBox(data);
             })
             .catch(function () { /* ignore */ });
+    }
+
+    // ── Spoolman info box ───────────────────────────────────────────────────
+    function renderSpoolmanInfoBox(data) {
+        var section = document.getElementById('spoolman-info-section');
+        if (!section) return;
+        if (!data || !data.configured) {
+            section.hidden = true;
+            return;
+        }
+        section.hidden = false;
+        var urlEl = section.querySelector('[data-id="url"]');
+        var statusEl = section.querySelector('[data-id="status-text"]');
+        var sp = section.querySelector('[data-id="count-spools"]');
+        var fi = section.querySelector('[data-id="count-filaments"]');
+        var ve = section.querySelector('[data-id="count-vendors"]');
+        if (urlEl && data.url) {
+            urlEl.href = data.url;
+            urlEl.textContent = data.url.replace(/^https?:\/\//, '');
+        }
+        if (statusEl) {
+            statusEl.textContent = data.ok ? 'connected' : 'unreachable';
+            statusEl.style.color = data.ok ? 'var(--success)' : 'var(--accent)';
+        }
+        var counts = (data.ok && data.counts) ? data.counts : {};
+        function fmt(v) { return (v === null || v === undefined) ? '—' : String(v); }
+        if (sp) sp.textContent = fmt(counts.spools);
+        if (fi) fi.textContent = fmt(counts.filaments);
+        if (ve) ve.textContent = fmt(counts.vendors);
     }
 
     function mount(container) {
@@ -966,6 +1330,23 @@ var SpoolsPage = (function () {
         section.id = 'channels';
         section.className = 'channels-grid';
         container.appendChild(section);
+
+        // Info box lives below the channel grid. Cloned from the template
+        // so the markup stays in spools.html. Hidden until the first
+        // /api/spoolman-status response says configured=true.
+        var infoBox = Templates.clone('spoolman-info-box');
+        // The template returns the <section> itself; tag it for lookup.
+        infoBox.id = 'spoolman-info-section';
+        var refreshBtn = infoBox.querySelector('[data-id="refresh"]');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function () {
+                refreshBtn.classList.add('spinning');
+                fetchSpoolmanStatus();
+                setTimeout(function () { refreshBtn.classList.remove('spinning'); }, 800);
+            });
+        }
+        container.appendChild(infoBox);
+
         fetchSpoolmanStatus();
         fetchChannels();
         startSSE();

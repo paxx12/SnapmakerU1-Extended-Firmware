@@ -851,4 +851,243 @@ body.tag-edit-open { overflow: hidden; }
 }
 
 
+/* ── Spoolman info box ─────────────────────────────────────────────────── */
+.spoolman-info {
+    margin: 1.5rem 0 0.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+}
+.spoolman-info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+.spoolman-info-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+}
+.spoolman-info-url {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    word-break: break-all;
+}
+.spoolman-info-url:hover { color: var(--accent); text-decoration: underline; }
+.spoolman-info-status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+.spoolman-info-refresh {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+.spoolman-info-refresh:hover { color: var(--text); border-color: var(--accent); }
+.spin-glyph { display: inline-block; }
+.spinning .spin-glyph { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spoolman-info-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+.spoolman-stat {
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+}
+.spoolman-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1.1;
+}
+.spoolman-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.25rem;
+}
+
+/* ── Blank-tag action group (3 buttons) ───────────────────────────────── */
+.channel-blank-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.channel-blank-actions .channel-edit-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.channel-edit-btn-secondary {
+    background: transparent !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-dim) !important;
+}
+.channel-edit-btn-secondary:hover {
+    color: var(--text) !important;
+    border-color: var(--accent) !important;
+}
+
+/* ── Spool picker modal ───────────────────────────────────────────────── */
+.spool-picker-dialog { width: min(680px, 95vw); max-height: 85vh; }
+.spool-picker-body { display: flex; flex-direction: column; gap: 0.75rem; }
+.spool-picker-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.spool-picker-search {
+    flex: 1 1 240px;
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+.spool-picker-search:focus { outline: none; border-color: var(--accent); }
+.spool-picker-archived { font-size: 0.85rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.3rem; }
+.spool-picker-refresh {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+.spool-picker-refresh:hover { color: var(--text); border-color: var(--accent); }
+.spool-picker-truncated {
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 152, 0, 0.12);
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--warning);
+}
+.spool-picker-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0 0.25rem;
+}
+.spool-picker-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    /* Pin both min and max so the modal doesn't reshape as the user types
+       and the result count changes. */
+    min-height: 50vh;
+    max-height: 50vh;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+}
+.spool-picker-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+.spool-picker-row:hover { background: rgba(233, 69, 96, 0.08); }
+.spool-picker-row:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.spool-picker-row:last-child { border-bottom: none; }
+.spool-picker-swatch {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--text-dim);
+}
+.spool-picker-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+.spool-picker-vendor { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.spool-picker-material { font-size: 0.85rem; color: var(--text-dim); }
+.spool-picker-name { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spool-picker-meta {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+.spool-picker-id { font-family: monospace; }
+.spool-picker-archived-badge {
+    font-size: 0.7rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.spool-picker-empty {
+    padding: 1.5rem 0.75rem;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+.spool-picker-byid {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--card-border);
+}
+.spool-picker-byid-label { font-size: 0.85rem; color: var(--text-dim); }
+.spool-picker-byid-input {
+    width: 6rem;
+    padding: 0.35rem 0.5rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+}
+.spool-picker-byid-go {
+    background: var(--accent);
+    border: none;
+    color: var(--text);
+    padding: 0.35rem 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+}
+.spool-picker-byid-go:hover { filter: brightness(1.1); }
+.spool-picker-status {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    min-height: 1.2em;
+}
+.spool-picker-status.error { color: var(--accent); }
 
