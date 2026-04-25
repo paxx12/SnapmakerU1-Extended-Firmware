@@ -50,6 +50,7 @@ Toggle settings directly from the web interface:
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
 | Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
+| Troubleshooting | Faulty Toolhead Bypass | Temporary toolhead thermistor bypass so the remaining toolheads can still be used ([faulty_toolhead](faulty_toolhead.md)) |
 | RFID Detection System | External, Snapmaker, OpenRFID, OpenRFID (force generic vendor) | Set how filament is detected ([rfid_support](rfid_support.md)) |
 
 Changes are applied immediately and relevant services are restarted.
@@ -94,6 +95,10 @@ For advanced configuration, edit the configuration file directly.
 ### Editing the Configuration File
 
 The `extended2.cfg` file is automatically created by the firmware.
+
+Some Firmware Config options, such as tweaks and troubleshooting helpers,
+install files into `extended/klipper/` or `extended/moonraker/` instead of
+writing to `extended2.cfg`.
 
 #### Via Fluidd/Mainsail
 
@@ -244,7 +249,8 @@ The `.default` files are updated on each boot to reflect the current firmware de
 - Lines starting with `#` are comments and ignored
 - Only one camera service can be active at a time for internal camera
 - Only one web interface can be active at a time
-- Changes made via the Firmware Config web interface are written to `extended2.cfg`
+- Many Firmware Config settings update `extended2.cfg`, but some options also
+  manage files in `extended/klipper/` or `extended/moonraker/`
 
 ## Recovery & Reset
 

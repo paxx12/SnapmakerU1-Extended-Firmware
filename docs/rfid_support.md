@@ -140,7 +140,8 @@ To enable it, navigate to the [firmware-config](firmware_config.md) web interfac
 | Snapmaker | Yes | - |
 | Elegoo | No | Elegoo spools tagged with RFID work unreliably |
 | [OpenSpool](https://openspool.io/) | Yes | - |
-| TigerTag | Yes | Fully offline implementation |
+| TigerTag | No | Fully offline implementation |
+| Qidi | Yes | - |
 
 ### Bambu / Creality Spool Configuration
 
@@ -165,6 +166,22 @@ encryption_key = <your 32 hex character key>
 
 After editing, restart the printer.
 
+### Enabling Disabled By Default Tag systems
+
+Some tag formats are disabled by default, for example as they do not read reliably. You can enable them by editing the following file:
+
+```
+/oem/printer_data/config/extended/openrfid_user.cfg
+```
+
+Enable them by removing the `#` prefix from the tag processor. 
+
+```
+# [elegoo_tag_processor]
+
+# [tigertag_tag_processor]
+```
+
 ## Troubleshooting
 
 **Tag not detected:**
@@ -173,7 +190,7 @@ After editing, restart the printer.
 - Ensure you place on tag on the side next to the U1 housing, which will depend on which side of the printer you load the spool
 - If a vendor tag is present, for example Bambu Lab filament tags, this will usually interfere with reading a user-provided tag (you can cover up the vendor tag with foil tape)
 - Manually read tag: `FILAMENT_DT_UPDATE CHANNEL=<n>` then `FILAMENT_DT_QUERY CHANNEL=<n>`
-- Check `klippy.log` for detection messages
+- For OpenRFID issues, open Fluidd **Logs** and fetch `openrfid.log`
 
 **OpenPrintTag tags don't work:**
 - Expected - OpenPrintTag uses ISO15693 which is not supported by U1 hardware

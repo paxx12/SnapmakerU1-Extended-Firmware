@@ -64,7 +64,7 @@ Use DataDog's [OpenMetrics integration](https://docs.datadoghq.com/integrations/
 
 **Setup:**
 1. Create `/etc/datadog-agent/conf.d/openmetrics.d/snapmaker_u1.yaml` on the computer running DataDog Agent
-   - Example config: [overlays/firmware-extended/99-monitoring/examples/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/99-monitoring/examples/example_datadog_snapmaker_u1.yaml)
+   - Example config: [overlays/firmware-extended/66-app-monitoring/examples/example_datadog_snapmaker_u1.yaml](../overlays/firmware-extended/66-app-monitoring/examples/example_datadog_snapmaker_u1.yaml)
 2. Edit config to set your printer's IP address
 3. Restart DataDog Agent
 
