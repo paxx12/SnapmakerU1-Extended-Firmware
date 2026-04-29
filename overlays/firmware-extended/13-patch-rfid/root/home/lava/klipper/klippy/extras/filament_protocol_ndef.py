@@ -2,12 +2,52 @@ import copy
 import io
 import json
 import logging
+import urllib.parse
 from . import filament_protocol
 
 NDEF_OK = 0
 NDEF_ERR = -1
 NDEF_PARAMETER_ERR = -2
 NDEF_NOT_FOUND_ERR = -3
+
+NDEF_URI_PREFIX_MAP = {
+    0x00: "",
+    0x01: "http://www.",
+    0x02: "https://www.",
+    0x03: "http://",
+    0x04: "https://",
+    0x05: "tel:",
+    0x06: "mailto:",
+    0x07: "ftp://anonymous:anonymous@",
+    0x08: "ftp://ftp.",
+    0x09: "ftps://",
+    0x0A: "sftp://",
+    0x0B: "smb://",
+    0x0C: "nfs://",
+    0x0D: "ftp://",
+    0x0E: "dav://",
+    0x0F: "news:",
+    0x10: "telnet://",
+    0x11: "imap:",
+    0x12: "rtsp://",
+    0x13: "urn:",
+    0x14: "pop:",
+    0x15: "sip:",
+    0x16: "sips:",
+    0x17: "tftp:",
+    0x18: "btspp://",
+    0x19: "btl2cap://",
+    0x1A: "btgoep://",
+    0x1B: "tcpobex://",
+    0x1C: "irdaobex://",
+    0x1D: "file://",
+    0x1E: "urn:epc:id:",
+    0x1F: "urn:epc:tag:",
+    0x20: "urn:epc:pat:",
+    0x21: "urn:epc:raw:",
+    0x22: "urn:epc:",
+    0x23: "urn:nfc:",
+}
 
 def xxd_dump(data, max_lines=16):
     if isinstance(data, list):
@@ -106,7 +146,7 @@ def ndef_parse(data_buf):
                     if ndef_offset + type_len + id_len + payload_len > len(ndef_data):
                         break
 
-                    mime_type = ndef_data[ndef_offset:ndef_offset + type_len].decode('ascii', errors='ignore')
+                    record_type = ndef_data[ndef_offset:ndef_offset + type_len].decode('ascii', errors='ignore')
                     ndef_offset += type_len
 
                     if id_len > 0:
@@ -116,8 +156,11 @@ def ndef_parse(data_buf):
                     ndef_offset += payload_len
 
                     if tnf == 0x02:
-                        records.append({'mime_type': mime_type, 'payload': payload})
-                        logging.info(f"NDEF record found: mime_type='{mime_type}', payload_len={len(payload)}")
+                        records.append({'tnf': tnf, 'type': record_type, 'mime_type': record_type, 'payload': payload})
+                        logging.info(f"NDEF MIME record found: mime_type='{record_type}', payload_len={len(payload)}")
+                    elif tnf == 0x01 and record_type == 'U':
+                        records.append({'tnf': tnf, 'type': record_type, 'payload': payload})
+                        logging.info(f"NDEF URI record found: payload_len={len(payload)}")
             else:
                 data_io.seek(tlv_len, 1)
 
@@ -138,6 +181,113 @@ def parse_color_hex(value):
         return int(hex_str, 16)
     except (ValueError, TypeError):
         return 0xFFFFFF
+
+def parse_rgba_hex(value):
+    hex_str = str(value).strip()
+    if hex_str.startswith('#'):
+        hex_str = hex_str[1:]
+
+    if len(hex_str) == 6:
+        return int(hex_str, 16), 0xFF
+    if len(hex_str) == 8:
+        return int(hex_str[:6], 16), int(hex_str[6:], 16)
+
+    raise ValueError(f"Unsupported RGBA hex length: {len(hex_str)}")
+
+def parse_int_or_default(value, default=0):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+def ndef_decode_uri_payload(payload):
+    if payload is None or not isinstance(payload, (bytes, bytearray)) or len(payload) < 1:
+        raise ValueError("Invalid NDEF URI payload")
+
+    prefix_code = payload[0]
+    prefix = NDEF_URI_PREFIX_MAP.get(prefix_code, "")
+    uri_suffix = payload[1:].decode('utf-8', errors='ignore')
+    return (prefix + uri_suffix).strip()
+
+def spoolease_parse_payload(payload, card_uid=[]):
+    if None == payload or not isinstance(payload, (bytes, bytearray)):
+        logging.error("SpoolEase payload parsing failed: Invalid payload parameter")
+        return filament_protocol.FILAMENT_PROTO_PARAMETER_ERR, None
+
+    try:
+        url = ndef_decode_uri_payload(payload)
+        parsed = urllib.parse.urlparse(url)
+
+        if parsed.netloc.lower() != 'tag.spoolease.io' or not parsed.path.startswith('/S1'):
+            logging.error(f"SpoolEase payload parsing failed: Unsupported URL '{url}'")
+            return filament_protocol.FILAMENT_PROTO_ERR, None
+
+        query = urllib.parse.parse_qs(parsed.query, keep_blank_values=False)
+        material = (query.get('M', ['PLA'])[0] or 'PLA').upper()
+        subtype = query.get('MS', ['Basic'])[0] or 'Basic'
+        brand = query.get('B', ['Generic'])[0] or 'Generic'
+        color_field = query.get('CC', ['FFFFFFFF'])[0] or 'FFFFFFFF'
+
+        info = copy.copy(filament_protocol.FILAMENT_INFO_STRUCT)
+        info['VERSION'] = 1
+        info['VENDOR'] = brand
+        info['MANUFACTURER'] = brand
+
+        info['MAIN_TYPE'] = material
+        info['SUB_TYPE'] = subtype
+        info['TRAY'] = 0
+
+        colors = []
+        alpha = 0xFF
+        for i, color_code in enumerate(color_field.split(';')):
+            if len(colors) >= 5:
+                break
+            color_code = color_code.strip()
+            if not color_code:
+                continue
+            try:
+                rgb, parsed_alpha = parse_rgba_hex(color_code)
+                colors.append(rgb)
+                if i == 0:
+                    alpha = parsed_alpha
+            except Exception:
+                logging.warning(f"SpoolEase payload parsing warning: Invalid color '{color_code}', skipping")
+
+        if not colors:
+            colors = [0xFFFFFF]
+
+        info['COLOR_NUMS'] = len(colors)
+        for i in range(1, 6):
+            info[f'RGB_{i}'] = colors[i - 1] if i <= len(colors) else 0
+
+        info['ALPHA'] = max(0x00, min(0xFF, alpha))
+        info['ARGB_COLOR'] = info['ALPHA'] << 24 | info['RGB_1']
+
+        info['DIAMETER'] = 175
+        info['WEIGHT'] = parse_int_or_default(query.get('WL', [0])[0], 0)
+        info['LENGTH'] = 0
+        info['DRYING_TEMP'] = 0
+        info['DRYING_TIME'] = 0
+
+        info['HOTEND_MIN_TEMP'] = parse_int_or_default(query.get('NN', [0])[0], 0)
+        info['HOTEND_MAX_TEMP'] = parse_int_or_default(query.get('NX', [0])[0], 0)
+        info['BED_TEMP'] = 0
+
+        info['BED_TYPE'] = 0
+        info['FIRST_LAYER_TEMP'] = info['HOTEND_MIN_TEMP']
+        info['OTHER_LAYER_TEMP'] = info['HOTEND_MIN_TEMP']
+
+        info['SKU'] = 0
+        info['MF_DATE'] = '19700101'
+        info['RSA_KEY_VERSION'] = 0
+        info['OFFICIAL'] = True
+        info['CARD_UID'] = card_uid
+
+        logging.info(f"SpoolEase parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
+        return filament_protocol.FILAMENT_PROTO_OK, info
+    except Exception as e:
+        logging.exception("SpoolEase payload parsing failed: %s", str(e))
+        return filament_protocol.FILAMENT_PROTO_ERR, None
 
 def openspool_parse_payload(payload, card_uid=[]):
     if None == payload or not isinstance(payload, (bytes, bytearray)):
@@ -245,10 +395,9 @@ def ndef_proto_data_parse(data_buf):
         return filament_protocol.FILAMENT_PROTO_ERR, None
 
     for record in records:
-        mime_type = record['mime_type']
         payload = record['payload']
 
-        if mime_type == 'application/json':
+        if record.get('tnf') == 0x02 and record.get('mime_type') == 'application/json':
             logging.info(f"Detected OpenSpool format, parsing payload ({len(payload)} bytes)")
             error_code, info = openspool_parse_payload(payload, card_uid)
             if error_code != filament_protocol.FILAMENT_PROTO_OK:
@@ -257,12 +406,19 @@ def ndef_proto_data_parse(data_buf):
             else:
                 logging.info(f"OpenSpool parse success: vendor={info.get('VENDOR')}, type={info.get('MAIN_TYPE')}")
                 return error_code, info
+        elif record.get('tnf') == 0x01 and record.get('type') == 'U':
+            logging.info(f"Detected URI record, attempting SpoolEase parsing ({len(payload)} bytes)")
+            error_code, info = spoolease_parse_payload(payload, card_uid)
+            if error_code != filament_protocol.FILAMENT_PROTO_OK:
+                logging.error(f"SpoolEase parse failed: Payload parsing error (code: {error_code})")
+                continue
+            return error_code, info
 
         else:
-            logging.warning(f"Skipping unsupported MIME type '{mime_type}'")
+            logging.warning(f"Skipping unsupported NDEF record: tnf={record.get('tnf')}, type='{record.get('type')}'")
 
     logging.error("NDEF parse failed: No supported records found")
-    return filament_protocol.FILAMENT_PROTO_SIGN_CHECK_ERR, None
+    return filament_protocol.FILAMENT_PROTO_ERR, None
 
 if __name__ == '__main__':
     import sys
