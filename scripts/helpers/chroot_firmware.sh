@@ -20,11 +20,13 @@ cleanup() {
   rm -rf "$ROOTFS/root"
   mkdir -p "$ROOTFS/root"
 
-  [[ -e ./etc/resolv.conf.bak ]] && mv ./etc/resolv.conf.bak ./etc/resolv.conf
   rm -f ./etc/resolv.conf
+  if [[ -e ./etc/resolv.conf.bak || -L ./etc/resolv.conf.bak ]]; then
+    mv ./etc/resolv.conf.bak ./etc/resolv.conf
+  fi
 }
 
-if [[ -e ./etc/resolv.conf ]]; then
+if [[ -e ./etc/resolv.conf || -L ./etc/resolv.conf ]]; then
   mv ./etc/resolv.conf ./etc/resolv.conf.bak
 fi
 
