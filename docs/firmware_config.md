@@ -49,7 +49,7 @@ Toggle settings directly from the web interface:
 | Klipper Metrics Exporter | Enabled, Disabled | Enable Prometheus metrics |
 | VPN Provider | None, Tailscale | Enable VPN remote access (Experimental) |
 | Cloud | None, OctoEverywhere | Enable Cloud-based remote access (Experimental) |
-| Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
+| Tweaks | TMC AutoTune, TMC Reduced Current, Object Processing, AFC Stub, Force Auto Bed Leveling, Force Timelapse | Experimental Klipper tweaks ([tweaks](tweaks.md)) |
 | Troubleshooting | Faulty Toolhead Bypass | Temporary toolhead thermistor bypass so the remaining toolheads can still be used ([faulty_toolhead](faulty_toolhead.md)) |
 | RFID Detection System | External, Snapmaker, OpenRFID, OpenRFID (force generic vendor) | Set how filament is detected ([rfid_support](rfid_support.md)) |
 

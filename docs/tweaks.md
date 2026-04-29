@@ -86,6 +86,29 @@ Enables object processing in Moonraker's file manager to support adaptive mesh f
 **Configuration:**
 This feature can **only** be configured via Firmware Configuration web interface. Manual configuration is not supported.
 
+## Force Auto Bed Leveling
+
+Forces auto bed leveling to be enabled at the start of every print from Fluidd/Mainsail.
+
+**What it does:**
+- Overrides the `SDCARD_PRINT_FILE` Klipper macro to inject `SET_PRINT_PREFERENCES AUTO_BED_LEVELING=1` before each print starts
+- Works for prints started from Fluidd or Mainsail (virtual SD card prints)
+- Does not affect prints started from Snapmaker's own app
+
+**Configuration:**
+This feature can **only** be configured via Firmware Configuration web interface. Manual configuration is not supported.
+
+## Force Timelapse
+
+Forces timelapse recording to be enabled at the start of every print from Fluidd/Mainsail.
+
+**What it does:**
+- Overrides the `SDCARD_PRINT_FILE` Klipper macro to inject `SET_PRINT_PREFERENCES TIMELAPSE=1` before each print starts
+- Forces timelapse on for every print regardless of which app started it, including Snapmaker Orca (OrcaSlicer), Fluidd, and Mainsail
+
+**Configuration:**
+This feature can **only** be configured via Firmware Configuration web interface. Manual configuration is not supported.
+
 ## How to Configure
 
 1. Open the printer's web interface (Fluidd or Mainsail)
@@ -103,5 +126,7 @@ These tweaks work by adding or removing configuration files from `/oem/printer_d
 - `klipper/tmc_autotune.cfg` - TMC AutoTune parameters
 - `klipper/tmc_current.cfg` - Reduced current settings
 - `moonraker/object_processing.cfg` - Moonraker object processing settings
+- `klipper/bed_leveling_force.cfg` - overrides `SDCARD_PRINT_FILE` and calls `SET_PRINT_PREFERENCES AUTO_BED_LEVELING=1`
+- `klipper/timelapse_force.cfg` - overrides `SDCARD_PRINT_FILE` and calls `SET_PRINT_PREFERENCES TIMELAPSE=1`
 
 These files are automatically included by the main printer configuration if present. Manual editing of these files is not recommended as they will be overwritten by the Firmware Configuration interface.
