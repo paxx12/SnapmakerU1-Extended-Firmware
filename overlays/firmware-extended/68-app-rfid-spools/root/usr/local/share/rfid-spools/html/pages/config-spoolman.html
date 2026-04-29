@@ -1,0 +1,51 @@
+<!--
+  Templates for the Spoolman config page.
+
+  Hooks (data-id):
+    page section:
+      - url-input         : server URL <input>
+      - status-badge      : connection status badge
+      - find-btn          : "Find Spoolman" button
+      - extra-fields      : container for extra-field rows
+      - register-btn      : "Register fields" button
+      - register-status   : status badge next to register button
+    extra-field-row:
+      - checkbox          : sync-on/off checkbox
+      - label             : human-readable label
+      - key               : raw extra-field key (code)
+      - status            : ✓ / ✗ / … indicator
+-->
+
+<template id="config-spoolman-section">
+    <div class="config-section">
+        <div class="config-slot-row">
+            <label class="config-field-label">
+                Server URL
+                <div class="config-spoolman-input-wrap">
+                    <input type="text" id="spoolman-url-input" class="config-input" data-id="url-input" placeholder="http://spoolman.local:7912">
+                    <span class="spoolman-status-badge" data-id="status-badge"></span>
+                </div>
+            </label>
+            <div class="config-spoolman-btn-row">
+                <button class="config-btn-secondary" data-id="find-btn" type="button">Find Spoolman</button>
+            </div>
+        </div>
+        <div class="config-slot-row">
+            <div class="config-extra-fields-title">Extra fields to sync (requires custom fields in Spoolman)</div>
+            <div class="config-extra-fields-table" data-id="extra-fields"></div>
+            <div class="config-spoolman-syncall-row">
+                <button class="config-btn-secondary" data-id="register-btn" type="button">Register fields in Spoolman</button>
+                <span class="spoolman-status-badge" data-id="register-status"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="config-spoolman-extra-row">
+    <label class="config-extra-field-row">
+        <input type="checkbox" class="config-extra-field-cb" data-id="checkbox">
+        <span class="config-extra-field-label" data-id="label"></span>
+        <code class="config-extra-field-key" data-id="key"></code>
+        <span class="config-extra-field-status" data-id="status">…</span>
+    </label>
+</template>

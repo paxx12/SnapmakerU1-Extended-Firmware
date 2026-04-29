@@ -27,6 +27,42 @@ For external RFID API and mapping details, see [External RFID Support](design/fi
 
 The `./dev.sh` script automatically sets up a Debian Trixie ARM64 environment with all required dependencies.
 
+### Docker Desktop on Windows: use `dev-local.sh`
+
+`./dev.sh` bind-mounts `tmp/` from the host. On native Linux Docker that
+preserves UID 0 (root) on files like `/etc/passwd`, which the
+`unsquashfs`/`mksquashfs` steps require. Docker Desktop on Windows and
+some WSL configurations silently remap ownership through their bind-mount
+layer, breaking the build with:
+
+```
+Error: .../tmp/firmware/rootfs/etc/passwd should be 0:0, got 1000:1000
+This system does not properly preserve file ownership in squashfs operations.
+```
+
+Use `./dev-local.sh` instead — it is identical to `./dev.sh` but mounts
+`tmp/` as a Docker named volume (`snapmaker-u1-tmp`) on a real Linux ext4
+filesystem inside Docker's storage, where ownership is preserved.
+
+Practical consequences when using `dev-local.sh`:
+
+- Contents of `tmp/` are **not visible from the host filesystem**. To inspect
+  intermediate build artifacts, open a shell in the container:
+
+  ```bash
+  ./dev-local.sh bash
+  ls tmp/firmware
+  ```
+
+- To wipe build state (equivalent to `rm -rf tmp/`):
+
+  ```bash
+  docker volume rm snapmaker-u1-tmp
+  ```
+
+- The final firmware image (e.g. `firmware/U1_extended.bin`) is written to
+  `firmware/` which remains a normal bind mount and is visible on the host.
+
 ## Source Repository
 
 The project is hosted on GitHub with a mirror on Codeberg:

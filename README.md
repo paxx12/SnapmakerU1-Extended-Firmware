@@ -28,6 +28,23 @@ See [User Documentation](https://snapmakeru1-extended-firmware.pages.dev/) for f
 
 See [Building from Source](docs/development.md) for instructions on building custom firmware using Docker.
 
+### Running tests
+
+Two independent test suites exist:
+
+```bash
+# Firmware repacking tools (C). Needs Docker; downloads firmware first.
+./dev.sh make test
+
+# Python unit tests for overlay code (rfid_spools, …). Pure Python, no Docker.
+make test-python      # or:  cd tests/python && python3 -m pytest
+
+# Both
+make test-all
+```
+
+The Python suite is also run on every PR by the [Python tests](.github/workflows/python_tests.yaml) workflow.
+
 ## Dependent projects
 
 - [v4l2-mpp](https://github.com/paxx12/v4l2-mpp) - Hardware-accelerated camera stack with WebRTC streaming, V4L2 controls, and settings persistence

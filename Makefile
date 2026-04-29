@@ -70,6 +70,16 @@ firmware/$(FIRMWARE_FILE):
 test: firmware/$(FIRMWARE_FILE)
 	make -C tools test FIRMWARE_FILE=$(CURDIR)/firmware/$(FIRMWARE_FILE)
 
+# Pure-Python unit tests for overlay code. Runs on the host (no Docker
+# needed) and has no external dependencies beyond pytest.
+.PHONY: test-python
+test-python:
+	cd tests/python && python3 -m pytest -v
+
+# Convenience: run both the firmware-tools test and the Python suite.
+.PHONY: test-all
+test-all: test test-python
+
 # ================= Helpers =================
 
 .PHONY: changelog

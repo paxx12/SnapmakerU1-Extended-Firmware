@@ -1,0 +1,25 @@
+<!--
+  Templates for the Slot Config page.
+
+  Hooks (data-id):
+    - slot-label   : default slot name (read-only)
+    - name-input   : custom name input
+    - note-input   : note textarea
+
+  The outer page shell + save footer come from ConfigShared (still imperative).
+-->
+<template id="config-slots-row">
+    <div class="config-slot-row">
+        <div class="config-slot-label" data-id="slot-label"></div>
+        <div class="config-slot-fields">
+            <label class="config-field-label">
+                Custom name
+                <input type="text" class="config-input" data-id="name-input" data-config-key="slot_names">
+            </label>
+            <label class="config-field-label">
+                Note
+                <textarea class="config-textarea" rows="2" data-id="note-input" data-config-key="slot_notes" placeholder="e.g. backup spool, low remaining…"></textarea>
+            </label>
+        </div>
+    </div>
+</template>

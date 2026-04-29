@@ -1,0 +1,51 @@
+#!/bin/sh
+
+PIDFILE="/var/run/rfid-spools.pid"
+NAME="rfid-spools-api"
+DAEMON="/usr/local/bin/rfid-spools-api.py"
+PORT=8093
+BIND=127.0.0.1
+
+start() {
+    printf "Starting $NAME: "
+    if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+        echo "already running"
+        return 0
+    fi
+    start-stop-daemon -S -b -m \
+        -p "$PIDFILE" \
+        -x /usr/bin/python3 -- "$DAEMON" \
+        --bind "$BIND" --port "$PORT"
+    echo "OK"
+}
+
+stop() {
+    printf "Stopping $NAME: "
+    if [ -f "$PIDFILE" ]; then
+        start-stop-daemon -K -p "$PIDFILE" -s TERM
+        rm -f "$PIDFILE"
+        echo "OK"
+    else
+        echo "not running"
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        stop
+        sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit $?

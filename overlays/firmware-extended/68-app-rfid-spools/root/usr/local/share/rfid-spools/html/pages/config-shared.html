@@ -1,0 +1,34 @@
+<!--
+  Shared templates used by every config page.
+
+  Hooks (data-id):
+    page-shell:
+      - heading      : <h2> page title
+      - body         : append page-specific sections here
+    save-footer:
+      - save-btn     : Save button
+      - status       : status message slot
+    candidate-list / candidate-btn:
+      - used by ConfigShared.findSpoolman to render auto-discovery results
+-->
+
+<template id="config-page-shell">
+    <div class="config-page">
+        <h2 class="config-heading" data-id="heading"></h2>
+    </div>
+</template>
+
+<template id="config-save-footer">
+    <div class="config-footer">
+        <button class="config-save-btn" data-id="save-btn" type="button">Save</button>
+        <span class="config-save-status" data-id="status"></span>
+    </div>
+</template>
+
+<template id="spoolman-candidate-list">
+    <div class="spoolman-candidates"></div>
+</template>
+
+<template id="spoolman-candidate-btn">
+    <button class="spoolman-candidate-btn" type="button"></button>
+</template>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFID Spool Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>RFID Spool Management</h1>
+    <div id="status-bar" class="status-bar">
+        <span id="connection-status" class="status-dot disconnected"></span>
+        <span id="connection-text">RFID: Connecting...</span>
+        <span id="spoolman-status-dot" class="status-dot" style="display:none;margin-left:0.6rem"></span>
+        <span id="spoolman-status-text" style="display:none">Spoolman</span>
+        <button id="scan-btn" class="header-btn" onclick="scanAll()">Read spool tags</button>
+    </div>
+</header>
+
+<div id="app-shell">
+    <nav id="sidebar" class="sidebar"></nav>
+    <main id="content" class="content"></main>
+</div>
+
+<script src="utils.js"></script>
+<script src="templates.js"></script>
+<script src="pages/spools.js"></script>
+<script src="pages/config-shared.js"></script>
+<script src="pages/config-spoolman.js"></script>
+<script src="pages/config-slots.js"></script>
+<script src="router.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

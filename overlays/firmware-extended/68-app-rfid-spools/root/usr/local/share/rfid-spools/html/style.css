@@ -1,0 +1,1102 @@
+:root {
+    --bg: #1a1a2e;
+    --card-bg: #16213e;
+    --card-border: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --text-dim: #999;
+    --empty-bg: #1a1a2e;
+    --success: #4caf50;
+    --warning: #ff9800;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#app-shell {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+
+.sidebar {
+    width: 160px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem 0;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+}
+
+.nav-item.active {
+    background: var(--card-border);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.nav-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.nav-label {
+    line-height: 1;
+}
+
+/* ── Content area ───────────────────────────────────────────────────────── */
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+}
+
+header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.status-dot {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: bold;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.status-dot.connected {
+    color: var(--success);
+}
+.status-dot.connected::before {
+    content: '\2713'; /* ✓ */
+}
+
+.status-dot.disconnected {
+    color: var(--accent);
+}
+.status-dot.disconnected::before {
+    content: '\2717'; /* ✗ */
+}
+
+.header-btn {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.header-btn:hover:not(:disabled) {
+    background: var(--card-border);
+}
+
+.header-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.channel-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.channel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.channel-label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.channel-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.channel-note {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.tag-type-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: var(--card-border);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.channel-body {
+    padding: 1rem;
+    flex: 1;
+}
+
+.channel-empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 2rem 1rem;
+    font-style: italic;
+}
+
+.channel-unrecognized {
+    text-align: center;
+    padding: 1.5rem 1rem;
+}
+
+.channel-unrecognized-title {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.channel-unrecognized-sub {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1rem;
+    font-size: 0.85rem;
+}
+
+.field-label {
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.field-value {
+    word-break: break-all;
+}
+
+.color-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.temp-range {
+    color: var(--warning);
+}
+
+.uid-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+/* ── Config page ────────────────────────────────────────────────────────── */
+
+.config-page {
+    padding: 1.5rem;
+    max-width: 860px;
+}
+
+.config-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+}
+
+.config-section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.config-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.config-slot-row {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.config-slot-row:last-child {
+    border-bottom: none;
+}
+
+.config-slot-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.config-slot-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.config-field-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.config-input,
+.config-textarea {
+    background: var(--bg);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
+    width: 100%;
+    resize: vertical;
+    transition: border-color 0.15s;
+}
+
+.config-input:focus,
+.config-textarea:focus {
+    outline: none;
+    border-color: #4a6fa5;
+}
+
+.config-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.config-save-btn {
+    padding: 0.4rem 1.2rem;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: var(--card-border);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.config-save-btn:hover:not(:disabled) {
+    background: #1a3a6a;
+}
+
+.config-save-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.config-save-status {
+    font-size: 0.8rem;
+}
+
+.config-save-ok {
+    color: var(--success);
+}
+
+.config-save-err {
+    color: var(--accent);
+}
+
+/* ── Spoolman config section ─────────────────────────────────────────────── */
+.config-spoolman-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.config-spoolman-btn-row {
+    margin-top: 0.4rem;
+}
+.config-extra-fields-title {
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+.config-extra-fields-table {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.config-extra-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.2rem 0;
+}
+.config-extra-field-cb {
+    flex-shrink: 0;
+}
+.config-extra-field-label {
+    flex: 1;
+    font-size: 0.88rem;
+}
+.config-extra-field-key {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    padding: 0.05rem 0.3rem;
+}
+.config-extra-field-status {
+    font-size: 0.78rem;
+    margin-left: auto;
+    min-width: 1.4rem;
+    text-align: center;
+    color: var(--text-dim);
+}
+.config-extra-field-status-ok {
+    color: #4caf50;
+}
+.config-extra-field-status-missing {
+    color: #f44336;
+}
+.config-spoolman-syncall-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+.config-checkbox-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    cursor: pointer;
+    user-select: none;
+}
+.config-hint {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+    font-style: italic;
+}
+.config-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+}
+.config-btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.spoolman-status-badge {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+.spoolman-status-checking { color: var(--text-dim); }
+.spoolman-status-ok       { color: #4caf50; }
+.spoolman-status-err      { color: #f44336; }
+
+.spoolman-candidates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.4rem;
+}
+.spoolman-candidate-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    text-align: left;
+}
+.spoolman-candidate-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ── Spoolman card footer ────────────────────────────────────────────────── */
+.channel-spoolman-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0.4rem 0.5rem 0.5rem;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+}
+
+/* Sync box — self-contained form, auto-width */
+.spoolman-sync-box {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 13rem;
+    max-width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.65rem 0.4rem;
+    box-sizing: border-box;
+}
+.spoolman-sync-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.1rem;
+    border-bottom: 1px solid var(--border);
+}
+.spoolman-sync-box-title {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    opacity: 0.75;
+}
+
+/* Label–input field rows */
+.spoolman-sync-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+}
+.spoolman-sync-label {
+    width: 4.2rem;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.73rem;
+    color: var(--text-dim);
+}
+
+/* Indented rows (find existing, sync button) — aligned with input column */
+.spoolman-sync-indent-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+    padding-left: calc(4.2rem + 0.45rem);
+    flex-wrap: wrap;
+}
+
+.spoolman-name-input {
+    flex: 1;
+    min-width: 7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 0.22rem 0.45rem;
+}
+.spoolman-name-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+.spoolman-density-input {
+    width: 4.2rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 0.22rem 0.4rem;
+    text-align: right;
+}
+.spoolman-density-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+.spoolman-density-unit {
+    color: var(--text-dim);
+    font-size: 0.73rem;
+    white-space: nowrap;
+}
+.spoolman-sync-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.7rem;
+    white-space: nowrap;
+}
+.spoolman-sync-btn:hover    { opacity: 0.85; }
+.spoolman-sync-btn:disabled { opacity: 0.5; cursor: default; }
+.spoolman-sync-status {
+    display: block;
+    font-size: 0.73rem;
+    white-space: normal;
+    word-break: break-word;
+    padding: 0.25rem 0 0.05rem;
+    min-height: 1em;
+}
+.spoolman-sync-ok  { color: #4caf50; }
+.spoolman-sync-err { color: #f44336; }
+
+/* ── Spoolman sync state badge + spinner (inside box header) ─────────────── */
+@keyframes spoolman-spin { to { transform: rotate(360deg); } }
+.spoolman-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: rgba(255,255,255,0.7);
+    border-radius: 50%;
+    animation: spoolman-spin 0.7s linear infinite;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+/* Full-body loading state */
+.spoolman-sync-body-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.4rem;
+}
+.spoolman-sync-body-loading-text {
+    font-size: 0.73rem;
+    color: var(--text-dim);
+}
+.spoolman-sync-body-loading .spoolman-spinner {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+/* Full-body error state */
+.spoolman-sync-body-error {
+    padding: 0.45rem 0.2rem 0.3rem;
+    font-size: 0.73rem;
+    color: #f44336;
+    opacity: 0.85;
+}
+.spoolman-sync-badge {
+    display: inline-block;
+    background: rgba(76, 175, 80, 0.12);
+    border: 1px solid rgba(76, 175, 80, 0.4);
+    border-radius: 4px;
+    color: #4caf50;
+    font-size: 0.68rem;
+    padding: 0.12rem 0.4rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.spoolman-sync-badge:hover { background: rgba(76, 175, 80, 0.22); text-decoration: underline; }
+
+/* ── Spoolman onboarding footer ──────────────────────────────────────────── */
+.channel-spoolman-onboard {
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+}
+.spoolman-onboard-link {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    text-decoration: none;
+    opacity: 0.7;
+}
+.spoolman-onboard-link:hover { color: var(--accent); opacity: 1; text-decoration: underline; }
+
+/* ── Inline TigerTag edit / write footer ─────────────────────────────────── */
+.channel-edit-footer {
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+}
+.channel-edit-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.channel-edit-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.channel-edit-body { padding-top: 0.5rem; }
+.channel-edit-grid { gap: 0.4rem 0.6rem; }
+.channel-edit-input {
+    width: 100%;
+    padding: 0.2rem 0.4rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    box-sizing: border-box;
+}
+.channel-edit-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.channel-edit-color {
+    width: 2.5rem;
+    height: 1.5rem;
+    padding: 0;
+    cursor: pointer;
+}
+.channel-edit-emoji { width: 3rem; text-align: center; }
+.channel-edit-actions {
+    margin-top: 0.75rem;
+    padding: 0 0.75rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.channel-edit-cancel,
+.channel-edit-write {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    transition: all 0.15s;
+}
+.channel-edit-clear {
+    border: 1px solid #f44336;
+    border-radius: 4px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: transparent;
+    color: #f44336;
+    transition: all 0.15s;
+}
+.channel-edit-clear:hover { background: #f44336; color: #fff; }
+.channel-edit-clear:disabled { opacity: 0.6; cursor: wait; }
+.channel-edit-cancel:hover { border-color: var(--text-dim); }
+.channel-edit-write {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.channel-edit-write:hover { filter: brightness(1.1); }
+.channel-edit-write:disabled,
+.channel-edit-cancel:disabled { opacity: 0.6; cursor: wait; }
+.channel-edit-status {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+}
+.channel-edit-ok { color: #4caf50; }
+.channel-edit-err { color: #f44336; }
+
+/* ── TigerTag edit modal ─────────────────────────────────────────────────── */
+.tag-edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+body.tag-edit-open { overflow: hidden; }
+.tag-edit-dialog {
+    background: var(--card-bg, var(--bg));
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    width: min(640px, 100%);
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.tag-edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-header-bg, transparent);
+}
+.tag-edit-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+.tag-edit-close {
+    background: transparent;
+    border: 0;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.25rem;
+}
+.tag-edit-close:hover { color: var(--accent); }
+.tag-edit-body {
+    padding: 0.75rem 1rem 0.5rem;
+    overflow: auto;
+}
+.tag-edit-format-note {
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid var(--accent, #4a9eff);
+    background: rgba(74, 158, 255, 0.08);
+    color: var(--text-dim, inherit);
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+/* Inside the modal, give the action row some breathing room and align right. */
+.tag-edit-body .channel-edit-actions {
+    margin-top: 1rem;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--border);
+}
+
+
+/* ── Spoolman info box ─────────────────────────────────────────────────── */
+.spoolman-info {
+    /* Width matches the channels grid above (same max-width + centered)
+       so the box lines up with the card layout. The 1.5rem horizontal
+       padding mirrors the grid's outer padding so the card itself sits
+       flush with the channel cards' edges. */
+    max-width: 1400px;
+    margin: 0 auto 1.5rem;
+    padding: 0 1.5rem;
+    box-sizing: border-box;
+}
+.spoolman-info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+.spoolman-info-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+.spoolman-info-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+}
+.spoolman-info-url {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    word-break: break-all;
+}
+.spoolman-info-url:hover { color: var(--accent); text-decoration: underline; }
+.spoolman-info-status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+.spoolman-info-refresh {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+}
+.spoolman-info-refresh:hover { color: var(--text); border-color: var(--accent); }
+.spin-glyph { display: inline-block; }
+.spinning .spin-glyph { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spoolman-info-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+.spoolman-stat {
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+}
+.spoolman-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1.1;
+}
+.spoolman-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.25rem;
+}
+
+/* ── Blank-tag action group (3 buttons) ───────────────────────────────── */
+.channel-blank-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.channel-blank-actions .channel-edit-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.channel-edit-btn-secondary {
+    background: transparent !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-dim) !important;
+}
+.channel-edit-btn-secondary:hover {
+    color: var(--text) !important;
+    border-color: var(--accent) !important;
+}
+
+/* ── Spool picker modal ───────────────────────────────────────────────── */
+.spool-picker-dialog { width: min(680px, 95vw); max-height: 85vh; }
+.spool-picker-body { display: flex; flex-direction: column; gap: 0.75rem; }
+.spool-picker-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.spool-picker-search {
+    flex: 1 1 240px;
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+.spool-picker-search:focus { outline: none; border-color: var(--accent); }
+.spool-picker-archived { font-size: 0.85rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.3rem; }
+.spool-picker-refresh {
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text-dim);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+.spool-picker-refresh:hover { color: var(--text); border-color: var(--accent); }
+.spool-picker-truncated {
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 152, 0, 0.12);
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: var(--warning);
+}
+.spool-picker-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0 0.25rem;
+}
+.spool-picker-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    /* Pin both min and max so the modal doesn't reshape as the user types
+       and the result count changes. */
+    min-height: 50vh;
+    max-height: 50vh;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+}
+.spool-picker-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+.spool-picker-row:hover { background: rgba(233, 69, 96, 0.08); }
+.spool-picker-row:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+.spool-picker-row:last-child { border-bottom: none; }
+.spool-picker-swatch {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--text-dim);
+}
+.spool-picker-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+.spool-picker-vendor { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.spool-picker-material { font-size: 0.85rem; color: var(--text-dim); }
+.spool-picker-name { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spool-picker-meta {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+.spool-picker-id { font-family: monospace; }
+.spool-picker-archived-badge {
+    font-size: 0.7rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.spool-picker-empty {
+    padding: 1.5rem 0.75rem;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+.spool-picker-byid {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--card-border);
+}
+.spool-picker-byid-label { font-size: 0.85rem; color: var(--text-dim); }
+.spool-picker-byid-input {
+    width: 6rem;
+    padding: 0.35rem 0.5rem;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text);
+}
+.spool-picker-byid-go {
+    background: var(--accent);
+    border: none;
+    color: var(--text);
+    padding: 0.35rem 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+}
+.spool-picker-byid-go:hover { filter: brightness(1.1); }
+.spool-picker-status {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    min-height: 1.2em;
+}
+.spool-picker-status.error { color: var(--accent); }
+
