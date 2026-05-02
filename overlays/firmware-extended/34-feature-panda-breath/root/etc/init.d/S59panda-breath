@@ -2,11 +2,43 @@
 
 PANDA_BREATH_MODULE="/usr/local/share/firmware-config/tweaks/klipper/panda_breath.py"
 PANDA_BREATH_TEMPLATE="/usr/local/share/firmware-config/tweaks/klipper/panda_breath.cfg"
-PANDA_BREATH_HEATER="/usr/local/share/firmware-config/tweaks/klipper/panda_breath_heater.cfg"
+PANDA_BREATH_HEATER_AUTO="/usr/local/share/firmware-config/tweaks/klipper/panda_breath_heater_auto.cfg"
+PANDA_BREATH_HEATER_MANUAL="/usr/local/share/firmware-config/tweaks/klipper/panda_breath_heater_manual.cfg"
 KLIPPER_EXTRAS_LINK="/home/lava/klipper/klippy/extras/panda_breath.py"
 CFG="/oem/printer_data/config/extended/klipper/panda_breath.cfg"
 CFG_HEATER="/oem/printer_data/config/extended/klipper/panda_breath_heater.cfg"
 CFG_DIR="/oem/printer_data/config/extended/klipper"
+EXTENDED2_CFG="/oem/printer_data/config/extended/extended2.cfg"
+
+get_mode() {
+    MODE=$(/usr/local/bin/extended-config.py get "$EXTENDED2_CFG" tweaks panda_breath "__unset__" 2>/dev/null || echo "__unset__")
+    case "$MODE" in
+        auto|manual|disabled)
+            echo "$MODE"
+            ;;
+        *)
+            if [ -f "$CFG" ] || [ -L "$CFG" ]; then
+                echo "manual"
+            else
+                echo "disabled"
+            fi
+            ;;
+    esac
+}
+
+get_heater_template() {
+    case "$1" in
+        auto)
+            echo "$PANDA_BREATH_HEATER_AUTO"
+            ;;
+        manual)
+            echo "$PANDA_BREATH_HEATER_MANUAL"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
 
 ensure_user_config() {
     mkdir -p "$CFG_DIR"
@@ -38,7 +70,8 @@ cleanup_disabled_state() {
 }
 
 start() {
-    if [ ! -f "$CFG" ] && [ ! -L "$CFG" ]; then
+    MODE=$(get_mode)
+    if [ "$MODE" = "disabled" ]; then
         cleanup_disabled_state
         return 0
     fi
@@ -46,8 +79,18 @@ start() {
     ensure_user_config
 
     if ensure_module_link; then
-        echo "Ensuring Panda Breath heater config symlink..."
-        ln -sf "$PANDA_BREATH_HEATER" "$CFG_HEATER"
+        HEATER_TEMPLATE=$(get_heater_template "$MODE") || {
+            echo "Unknown Panda Breath mode '$MODE'; cleaning up."
+            cleanup_disabled_state
+            return 1
+        }
+        if [ ! -f "$HEATER_TEMPLATE" ]; then
+            echo "Panda Breath heater template for mode '$MODE' is missing."
+            rm -f "$CFG_HEATER"
+            return 1
+        fi
+        echo "Ensuring Panda Breath heater config symlink for mode '$MODE'..."
+        ln -sf "$HEATER_TEMPLATE" "$CFG_HEATER"
     else
         echo "Skipping Panda Breath heater config until module link is ready."
     fi
