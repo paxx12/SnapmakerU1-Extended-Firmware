@@ -1,0 +1,44 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/timelapse.py
++++ rootfs/home/lava/klipper/klippy/extras/timelapse.py
+@@ -27,6 +27,7 @@ class TimeLapse:
+         self.is_active = False
++        self._force = False
+         self.mqtt_client = None
+         self.mqtt_subscrip_handle = None
+         self.print_task_config = None
+@@ -79,10 +80,12 @@ class TimeLapse:
+     cmd_TIMELAPSE_START_help = "Start timelapse recording"
+     def cmd_TIMELAPSE_START(self, gcmd):
++        force = gcmd.get_int('FORCE', 0)
+         if self.mqtt_client is None or self.print_task_config is None:
+             raise gcmd.error("[timelapse] cannot start, klippy not ready!")
+
+-        if not self.print_task_config.print_task_config['time_lapse_camera']:
++        if not force and not self.print_task_config.print_task_config['time_lapse_camera']:
+             gcmd.respond_info("[timelapse] cannot start, not enabled!")
+             return
+
+@@ -92,6 +95,7 @@ class TimeLapse:
+             return
+
+         start_type = gcmd.get('TYPE', 'new')
++        self._force = bool(force)
+         frame_rate = gcmd.get_int('FRAME_RATE', self.frame_rate)
+@@ -175,6 +179,7 @@ class TimeLapse:
+         finally:
+             self.is_active = False
++            self._force = False
+
+     cmd_TIMELAPSE_TAKE_FRAME_help = "Trigger timelapse photo capture"
+     def cmd_TIMELAPSE_TAKE_FRAME(self, gcmd):
++        force = gcmd.get_int('FORCE', 0)
+         debug = gcmd.get_int('DEBUG', 0)
+         reason = "printing"
+         filepath = "/tmp/tmp.jpg"
+@@ -197,7 +204,7 @@ class TimeLapse:
+             return
+
+         if debug == 0:
+-            if not self.is_active or not self.print_task_config.print_task_config['time_lapse_camera']:
++            if not self.is_active or (not force and not self._force and not self.print_task_config.print_task_config['time_lapse_camera']):
+                 return

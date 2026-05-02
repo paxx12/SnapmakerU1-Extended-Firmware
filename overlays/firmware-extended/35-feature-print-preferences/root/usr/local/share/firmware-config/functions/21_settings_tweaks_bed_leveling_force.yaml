@@ -3,7 +3,7 @@ settings:
     items:
       bed_leveling_force:
         label: Force Auto Bed Leveling
-        description: Forces auto bed leveling before each print.
+        description: Forces bed mesh calibration before each print, with adaptive mesh when possible.
         help_url: http://snapmakeru1-extended-firmware.pages.dev/tweaks#force-auto-bed-leveling
         get_cmd:
           - bash
@@ -12,7 +12,7 @@ settings:
         options:
           enabled:
             label: Enabled
-            confirm: "Force auto bed leveling? This overrides the print start macro to call SET_PRINT_PREFERENCES AUTO_BED_LEVELING=1 before each print."
+            confirm: "Force bed mesh calibration before every print? Overrides BED_MESH_CALIBRATE to pass FORCE=1 ADAPTIVE=1."
             cmd:
               - bash
               - -xc

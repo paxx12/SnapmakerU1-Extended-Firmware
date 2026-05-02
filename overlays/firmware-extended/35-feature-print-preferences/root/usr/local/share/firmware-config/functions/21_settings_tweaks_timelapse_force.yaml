@@ -12,7 +12,7 @@ settings:
         options:
           enabled:
             label: Enabled
-            confirm: "Force timelapse for every print? This overrides the print start macro to call SET_PRINT_PREFERENCES TIMELAPSE=1 before each print."
+            confirm: "Force timelapse for every print? Overrides TIMELAPSE_START and TIMELAPSE_TAKE_FRAME to pass FORCE=1."
             cmd:
               - bash
               - -xc

@@ -1,0 +1,14 @@
+--- rootfs.original/home/lava/klipper/klippy/extras/bed_mesh.py
++++ rootfs/home/lava/klipper/klippy/extras/bed_mesh.py
+@@ -717,11 +717,12 @@ class BedMeshCalibrate:
+     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
+     def cmd_BED_MESH_CALIBRATE(self, gcmd):
++        force = gcmd.get_int('FORCE', 0)
+         if self.probe_mgr.is_inductance_coil_probe:
+             print_config = self.printer.lookup_object('print_task_config', None)
+             print_stats = self.printer.lookup_object('print_stats', None)
+             if print_config is not None and print_stats is not None:
+-                if print_stats.state == 'printing' and not print_config.get_status()['auto_bed_leveling']:
++                if print_stats.state == 'printing' and not force and not print_config.get_status()['auto_bed_leveling']:
+                     gcmd.respond_info("print_task_config configuration does not do auto-leveling")
+                     return
