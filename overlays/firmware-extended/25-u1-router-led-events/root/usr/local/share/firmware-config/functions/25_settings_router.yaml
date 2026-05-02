@@ -1,0 +1,44 @@
+status:
+  router:
+    title: Klipper Router
+    items:
+      - label: Router Service
+        cmd: if [ -f /var/run/klipper-router.pid ] && kill -0 "$(cat /var/run/klipper-router.pid)" 2>/dev/null; then echo "running"; else echo "stopped"; fi
+      - label: Instances Running
+        cmd: ls /var/run/klippy-router-*.pid 2>/dev/null | wc -l
+      - label: Router Log
+        cmd: test -f /home/lava/printer_data/logs/klipper-router.log && echo "/home/lava/printer_data/logs/klipper-router.log" || echo "-"
+
+settings:
+  router:
+    label: Router Mode
+    items:
+      enabled:
+        label: Enable Klipper Router
+        get_cmd:
+          - /usr/local/bin/extended-config.py
+          - get
+          - /home/lava/printer_data/config/extended/extended2.cfg
+          - router
+          - enabled
+          - "false"
+        options:
+          "false":
+            label: Disabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg router enabled false
+                /etc/init.d/S99klipper-router stop
+                /etc/init.d/S98klipper-router-instances stop
+          "true":
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg router enabled true
+                /etc/init.d/S98klipper-router-instances restart
+                /etc/init.d/S99klipper-router restart
+        default: "false"
