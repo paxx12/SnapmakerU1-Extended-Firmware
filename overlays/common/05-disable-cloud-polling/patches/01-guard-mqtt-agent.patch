@@ -1,0 +1,12 @@
+--- a/etc/init.d/S59mqtt_agent
++++ b/etc/init.d/S59mqtt_agent
+@@ -6,6 +6,9 @@
+ PROG=mqtt_agent
+ PIDFILE=/var/run/mqtt_agent.pid
+ ARGS="-v true"
++
++# Skip cloud agent if disabled by custom firmware
++[ -f /oem/.cloud_agent_disabled ] && exit 0
+
+ log()
+ {

@@ -1,0 +1,32 @@
+settings:
+  remote_access:
+    items:
+      cloud-agent:
+        label: Snapmaker Cloud Agent
+        description: >
+          Controls the mqtt_agent cloud connectivity service. When disabled, the printer
+          stops making repeated DNS requests to id.snapmaker.com every 5 seconds. Disable
+          this if you do not use the Snapmaker mobile app or cloud remote control features.
+        get_cmd:
+          - bash
+          - -c
+          - test -f /oem/.cloud_agent_disabled && echo "disabled" || echo "enabled"
+        options:
+          enabled:
+            label: Enabled
+            cmd:
+              - bash
+              - -xc
+              - |
+                rm -f /oem/.cloud_agent_disabled &&
+                /etc/init.d/S59mqtt_agent start
+          disabled:
+            label: Disabled (stops DNS queries to id.snapmaker.com)
+            confirm: "Disabling stops the Snapmaker cloud connectivity service. The Snapmaker mobile app and cloud remote control will not work. Continue?"
+            cmd:
+              - bash
+              - -xc
+              - |
+                touch /oem/.cloud_agent_disabled &&
+                /etc/init.d/S59mqtt_agent stop
+        default: enabled
