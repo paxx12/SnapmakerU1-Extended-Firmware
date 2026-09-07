@@ -8,7 +8,7 @@ settings:
       chamber_heater:
         options:
           auto:
-            label: Panda Auto (Recommended)
+            label: Panda Breath
             confirm: |
               WARNING: Panda Breath significantly raises sustained enclosure temperatures, accelerating wear on electronics, motors, and other components beyond their rated conditions. Any damage attributable to elevated thermal stress is unlikely to be covered under warranty. Additional motherboard cooling is required before use — see the documentation for details.
 
@@ -65,7 +65,7 @@ settings:
                 echo ">> Panda Breath auto mode enabled. Restarting Klipper..."
                 /etc/init.d/S60klipper restart
           manual:
-            label: Manual (Advanced)
+            label: Panda Breath (Manual mode)
             hidden: true
             confirm: |
               WARNING: Panda Breath significantly raises sustained enclosure temperatures, accelerating wear on electronics, motors, and other components beyond their rated conditions. Any damage attributable to elevated thermal stress is unlikely to be covered under warranty. Additional motherboard cooling is required before use — see the documentation for details.

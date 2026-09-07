@@ -8,7 +8,7 @@ settings:
       chamber_heater:
         options:
           dragonbreath:
-            label: DragonBreath
+            label: DragonBreath (Recommended)
             confirm: |
               WARNING: A chamber heater raises sustained enclosure temperatures, accelerating wear on electronics and motors beyond their rated conditions — likely NOT warranty-covered. Additional motherboard cooling is required (see docs).
 
