@@ -57,7 +57,7 @@ quick_actions:
 
             echo ""
             echo ">> Unbinding Panda Breath and switching Klipper to DragonBreath..."
-            /usr/local/bin/panda_breath_cli.py --host "${HOST}" unbind || true
+            /usr/local/bin/panda_breath_cli.py --host "${HOST}" unbind 2>/dev/null || true
             mkdir -p "$CFG"
             cp -n /usr/local/share/firmware-config/tweaks/klipper/dragonbreath.cfg "$CFG/dragonbreath.cfg"
             /usr/local/bin/extended-config.py add "$CFG/dragonbreath.cfg" dragonbreath host "${HOST}"
