@@ -23,6 +23,7 @@ let initialized = false;
 let refreshing = false;
 let spoolmanActive = false;
 let spoolmanUrl = null;
+let forceGenericVendor = false;
 let spoolmanSpools = new Map();
 let spoolPickerChannel = null;
 let spoolRefreshTimer = null;
@@ -188,6 +189,16 @@ function loadSpoolmanStatus() {
 
     sendRPC('server.config').then(config => {
         spoolmanUrl = config.config?.spoolman?.server || null;
+
+        const rawForceGeneric =
+            config.config?.spoollink?.force_generic_vendor;
+
+        forceGenericVendor =
+            rawForceGeneric === true ||
+            String(rawForceGeneric).toLowerCase() === 'true';
+
+        // Config may arrive after the first channel render.
+        rebuildFromCache();
     }).catch(() => {});
 }
 
@@ -350,12 +361,20 @@ function parseChannelInfo(i, fd, fdState, ptc) {
 
     const cmpStr = (a, b) => !!(a && b && a.toLowerCase() !== b.toLowerCase());
 
+    const spoolmanVendor = spoolInfo?.filament?.vendor?.name || null;
+    const forceGenericApplied =
+        forceGenericVendor &&
+        rfidData?.vendor?.toLowerCase() === 'generic' &&
+        !!spoolmanVendor &&
+        spoolmanVendor.toLowerCase() !== 'generic' &&
+        spoolmanVendor.toLowerCase() !== 'snapmaker';
+
     let mismatch = false;
     if (rfidData && spoolInfo) {
         const sm = spoolInfo.filament || {};
         const smColor = sm.color_hex ? sm.color_hex.replace('#', '').toUpperCase() : null;
-        if (cmpStr(rfidData.type,   sm.material))     mismatch = true;
-        if (cmpStr(rfidData.vendor, sm.vendor?.name)) mismatch = true;
+        if (cmpStr(rfidData.type, sm.material)) mismatch = true;
+        if (!forceGenericApplied && cmpStr(rfidData.vendor, sm.vendor?.name)) mismatch = true;
         if (rfidData.color && smColor && rfidData.color !== smColor) mismatch = true;
     } else if (rfidData) {
         if (cmpStr(rfidData.type,     type))    mismatch = true;
@@ -382,6 +401,8 @@ function parseChannelInfo(i, fd, fdState, ptc) {
         spool_id: spoolId,
         rfid_data: rfidData,
         mismatch,
+        force_generic_applied: forceGenericApplied,
+        display_vendor: forceGenericApplied ? spoolmanVendor : vendor,
         ptc_sources: ptcSources,
         empty: hasUid && !fdMainType && tagStatus !== 'error',
         malformed: hasUid && !fdMainType && tagStatus === 'error',
@@ -421,7 +442,8 @@ function createChannelCard(channel) {
     const displayCh = channel.channel + 1;
     const { present, filament_exists: filamentExists, official: isOfficial,
             empty: isEmpty, malformed: isMalformed, filament, card_type, uid,
-            spool_id: spoolId, mismatch, ptc_sources: ptcSources } = channel;
+            spool_id: spoolId, mismatch, display_vendor: displayVendor,
+            ptc_sources: ptcSources } = channel;
     const hasUid = uid.length > 0;
     const hasPtcInfo = !!filament.type;
     const showBody = present || filamentExists || hasPtcInfo || spoolmanActive;
@@ -552,7 +574,7 @@ function createChannelCard(channel) {
 
         if (filament.type) {
             const subtypePart = filament.subtype ? ` ${filament.subtype}` : '';
-            const profileName = `${filament.brand || 'Generic'} ${filament.type}${subtypePart}`.trim();
+            const profileName = `${displayVendor || filament.brand || 'Generic'} ${filament.type}${subtypePart}`.trim();
             addRow('Material',
                 `<span class="orca-profile-name">${escHtml(profileName)}</span>` +
                 `<button type="button" class="copy-name-btn" aria-label="Copy name">⧉</button>`);
@@ -784,6 +806,8 @@ function openMismatchModal(channel) {
     const ch = channelsData.find(c => c.channel === channel);
     if (!ch) return;
 
+    const forceGenericApplied = !!ch.force_generic_applied;
+
     document.getElementById('mismatch-modal-title').textContent =
         `Tag Mismatch — Extruder ${channel + 1}`;
     document.getElementById('mismatch-apply').dataset.channel = channel;
@@ -806,7 +830,7 @@ function openMismatchModal(channel) {
 
     const rows = [];
     if (rfid.type     || otherType)    rows.push({ label: 'Type',    rfid: rfid.type     || '—', other: otherType    || '—', differs: cmpStr(rfid.type,     otherType) });
-    if (rfid.vendor   || otherVendor)  rows.push({ label: 'Vendor',  rfid: rfid.vendor   || '—', other: otherVendor  || '—', differs: cmpStr(rfid.vendor,   otherVendor) });
+    if (rfid.vendor || otherVendor) rows.push({ label: 'Vendor', rfid: rfid.vendor || '—', other: otherVendor || '—', differs: !forceGenericApplied && cmpStr(rfid.vendor, otherVendor) });
     if (rfid.sub_type || otherSubtype) rows.push({ label: 'Subtype', rfid: rfid.sub_type || '—', other: otherSubtype || '—', differs: cmpStr(rfid.sub_type, otherSubtype) });
     if (rfid.color    || otherColor)   rows.push({ label: 'Color',   rfid: hexVal(rfid.color),   other: hexVal(otherColor),  differs: cmpHex(rfid.color, otherColor) });
     if (rfid.bed_temp != null) rows.push({ label: 'Bed',    rfid: `${rfid.bed_temp} °C`,                          other: '—', differs: false });
