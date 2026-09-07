@@ -27,7 +27,17 @@
 +            params = web_request.get_dict('info', {})
 +            filament_info = dict(filament_protocol.FILAMENT_INFO_STRUCT)
 +            if 'CARD_UID' in params:
-+                filament_info['CARD_UID'] = [int(b) for b in params.pop('CARD_UID')]
++                card_uid = [int(b) & 0xFF for b in params.pop('CARD_UID')]
++                if card_uid:
++                    for other_channel, other_info in enumerate(self._filament_info):
++                        if other_channel == channel:
++                            continue
++                        other_uid = other_info.get('CARD_UID', 0)
++                        if isinstance(other_uid, (list, tuple)) and list(other_uid) == card_uid:
++                            raise web_request.error(
++                                "CARD_UID %s is already assigned to channel %d"
++                                % (card_uid, other_channel))
++                filament_info['CARD_UID'] = card_uid
 +            if 'CARD_TYPE' in params:
 +                filament_info['CARD_TYPE'] = str(params.pop('CARD_TYPE'))
 +

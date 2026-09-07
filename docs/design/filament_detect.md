@@ -105,6 +105,9 @@ The endpoint has three modes determined by the filament fields present in `info`
 
 `CARD_UID` and `CARD_TYPE` are both popped before `has_params` is computed, so they never contribute to `OFFICIAL`. `CARD_TYPE` is populated automatically on hardware reads (`NTAG` via `filament_protocol_ndef`, `M1` via `filament_protocol`).
 
+A non-empty `CARD_UID` may only be assigned to one channel at a time. Repeating the same UID, but assigning it to another channel is rejected with an API
+error. The first successful assignment remains authoritative until that channel is cleared.
+
 ## openrfid Integration
 
 `openrfid_u1_base.cfg` registers two webhook exporters that drive `filament_detect/set` automatically:

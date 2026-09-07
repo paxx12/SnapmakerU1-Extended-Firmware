@@ -6,6 +6,7 @@
 import sys
 import time
 import argparse
+import urllib.error
 
 import filament_detect as fd
 
@@ -195,6 +196,28 @@ def main():
     rfid, ptc = get_state(host)
     expect("CARD_EVENT_TIME is still stamped on a clear (it marks detection activity, not tag content)")
     check("rfid.CARD_EVENT_TIME > 0 after clear", rfid.get("CARD_EVENT_TIME", 0) > 0, True)
+
+    section("Step 8: reject the same CARD_UID on another channel")
+    reset(host)
+    fd.cmd_clear_rfid(host, 1)
+    op(f"set-rfid channel=0 with CARD_UID={RFID_CARD_UID}")
+    fd.cmd_set_rfid(host, 0, RFID_VENDOR, RFID_TYPE, RFID_SUBTYPE, RFID_COLOR,
+                    card_uid=RFID_CARD_UID)
+    op(f"set-rfid channel=1 with the same CARD_UID={RFID_CARD_UID}")
+    try:
+        result = fd.post(host, "filament_detect/set", {
+            "channel": 1,
+            "info": {
+                "VENDOR": RFID_VENDOR,
+                "MAIN_TYPE": RFID_TYPE,
+                "SUB_TYPE": RFID_SUBTYPE,
+                "RGB_1": int(RFID_COLOR, 16),
+                "CARD_UID": RFID_CARD_UID,
+            },
+        })
+        check("duplicate CARD_UID rejected", result.get("state") == "error", True)
+    except urllib.error.HTTPError:
+        check("duplicate CARD_UID rejected", True, True)
 
     print(f"\n{'OK' if _failures == 0 else 'FAILED'}  {_passes} passed, {_failures} failed")
     sys.exit(0 if _failures == 0 else 1)
