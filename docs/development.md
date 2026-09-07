@@ -95,6 +95,8 @@ Overlays are organized into categories based on their scope and build mods. Each
   - e.g. `./dev.sh make build PROFILE=extended-devel`
 - `extended-qemu` - Add the `qemu` mod overlays from `overlays/mods/qemu/` (eth0 hotplug and virtio-touch hwdb mapping for the QEMU dev environment)
   - e.g. `./dev.sh make build PROFILE=extended-qemu`
+- `extended-afc` - **Experimental.** Add the `afc` mod overlays from `overlays/mods/afc/`, integrating the full [AFC-Klipper-Add-On](https://github.com/AFCProject/AFC-Klipper-Add-On) for physical AFC hardware (hubs, buffers, lane control) over CAN bus. See [Experimental AFC Mod](#experimental-afc-mod) below.
+  - e.g. `./dev.sh make build PROFILE=extended-afc`
 
 ### Devel Mod Features
 
@@ -120,6 +122,32 @@ Other entware-ctrl commands:
 - `entware-ctrl nuke` - Remove Entware installation completely
 
 Once initialized, use `opkg` to install packages from the Entware repository.
+
+### Experimental AFC Mod
+
+> **Experimental**: The `afc` mod is not maintained by this project (see
+> [Mods](mods.md#rules)) and may break or be removed at any point without
+> notice. It does not ship in public releases — it is only available as a
+> `develop`-channel CI build artifact or via a local build from source.
+
+Unlike the [AFC-Lite Stub](afc-lite.md), which is a status-reporting-only
+compatibility shim included in the regular `extended` build, the `afc` mod
+adds the **real** [AFC-Klipper-Add-On](https://github.com/AFCProject/AFC-Klipper-Add-On)
+for people with actual AFC hardware (hubs, buffers, lane control) connected
+over CAN bus. It:
+
+- Clones `AFC-Klipper-Add-On` from upstream at build time into
+  `/home/lava/AFC-Klipper-Add-On`.
+- Adds udev rules bringing up the onboard CAN bus chip at 1 Mbps so external
+  AFC MCUs can be reached — see
+  [`overlays/mods/afc/docs/canbus.md`](https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware/blob/develop/overlays/mods/afc/docs/canbus.md)
+  for wiring and MCU flashing instructions.
+- Patches Moonraker's gcode metadata parser and Klipper's extruder handling
+  for compatibility with AFC's virtual lane extruders.
+- Exposes an **Enable AFC-Klipper-Add-On Plugin** toggle under
+  **Snapmaker Components** in Fluidd/Mainsail firmware config, which runs
+  AFC-Klipper-Add-On's own installer to wire it into Klipper. It is disabled
+  by default even on `extended-afc` builds.
 
 ### Directory Structure
 
