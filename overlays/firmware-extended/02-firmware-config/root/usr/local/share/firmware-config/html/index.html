@@ -135,6 +135,13 @@
         <div class="card" id="upgrade-card">
             <div class="card-header"><span class="card-title">Firmware Upgrade</span></div>
             <div class="input-row">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;">
+                    <input type="checkbox" id="prerelease-check"> Include pre-releases
+                </label>
+                <button class="btn" id="check-update-btn" onclick="checkLatest()">Check for latest</button>
+            </div>
+            <div id="update-status" style="font-size:13px;margin:2px 0 8px;color:var(--text-secondary,#888);"></div>
+            <div class="input-row">
                 <input type="text" class="input" id="url-input" placeholder="Enter firmware URL" oninput="validateURL()">
                 <button class="btn btn-primary" id="download-btn" disabled onclick="downloadUpgrade()">Download & Upgrade</button>
             </div>
@@ -361,6 +368,50 @@
         // ========================================
         // URL & File Handling
         // ========================================
+
+        async function checkLatest() {
+            const btn = $('check-update-btn'), status = $('update-status');
+            const prerelease = $('prerelease-check').checked ? '1' : '0';
+            btn.disabled = true;
+            status.textContent = 'Checking GitHub for the latest release…';
+            try {
+                const resp = await apiFetch('api/upgrade/latest?prerelease=' + prerelease);
+                const data = await resp.json();
+                if (!data.ok) {
+                    status.textContent = 'Could not find a release: ' + (data.error || 'unknown error');
+                    return;
+                }
+                const kind = data.prerelease ? 'pre-release' : 'stable';
+                const addNotes = () => {
+                    if (!data.release_url) return;
+                    const a = document.createElement('a');
+                    a.href = data.release_url;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = ' Read the release notes ↗';
+                    status.appendChild(a);
+                };
+                if (!data.update_available) {
+                    // Already on the latest of this channel (or ahead of it, e.g. on a
+                    // newer pre-release than the latest stable) — do not fill the URL.
+                    status.textContent = data.current_version
+                        ? `You're up to date — running ${data.current_version}; latest ${kind} is ${data.version}.`
+                        : `Latest ${kind} is ${data.version}.`;
+                    addNotes();
+                    return;
+                }
+                $('url-input').value = data.url;
+                validateURL();
+                status.textContent = `Update available — latest ${kind}: ${data.version} (${data.size_mb} MB)`
+                    + (data.current_version ? `, you have ${data.current_version}` : '')
+                    + '. URL filled below.';
+                addNotes();
+            } catch (e) {
+                status.textContent = 'Check failed: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
         function validateURL() {
             const url = $('url-input').value.trim();

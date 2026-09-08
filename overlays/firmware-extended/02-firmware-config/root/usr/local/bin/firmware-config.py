@@ -13,7 +13,7 @@ import time
 import fcntl
 import yaml
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 def deep_merge(base, override):
     """Deep merge override into base, modifying base in place."""
@@ -59,6 +59,16 @@ def shell_to_cmd(shell, *args):
         cmd.extend(args)
     return cmd
 
+
+def _build_number(version):
+    # Extract the monotonic paxx build number from a version/tag like
+    # "v1.6.0-paxx12-22" -> 22. Falls back to the trailing integer. Returns -1 when
+    # no number is found, so callers can treat it as "unknown / offer the update".
+    if not version:
+        return -1
+    m = re.search(r"paxx\d*-(\d+)", version) or re.search(r"(\d+)\s*$", version)
+    return int(m.group(1)) if m else -1
+
 class FirmwareConfigHandler(SimpleHTTPRequestHandler):
     html_dir = None
     functions = {'settings': {}, 'links': {}, 'actions': {}, 'quick_actions': {}, 'status': {}, 'upgrade_url': {}, 'upgrade_upload': {}}
@@ -81,6 +91,8 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             self.handle_get_actions('quick_actions')
         elif path == "/api/actions":
             self.handle_get_actions('actions')
+        elif path == "/api/upgrade/latest":
+            self.handle_upgrade_latest()
         else:
             super().do_GET()
 
@@ -215,6 +227,83 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             log(f"Action error: {e}")
             self.send_error(500, str(e))
+
+    def handle_upgrade_latest(self):
+        # Query the project's GitHub releases for the newest firmware upgrade asset
+        # and return its download URL, so the UI can pre-fill the "Firmware Upgrade
+        # (URL)" field instead of the user hunting down the release by hand.
+        #   ?prerelease=1  -> newest release OR pre-release (the "testing" channel)
+        #   otherwise      -> latest stable release only
+        # Always replies 200 with an {ok: bool} envelope so the front-end can show a
+        # friendly message rather than treating a missing release as a server error.
+        qs = parse_qs(urlparse(self.path).query)
+        prerelease = qs.get("prerelease", ["0"])[0] in ("1", "true", "yes")
+        repo = os.environ.get(
+            "FW_UPDATE_REPO", "paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware")
+        url = "https://api.github.com/repos/%s/releases?per_page=30" % repo
+        try:
+            out = subprocess.run(
+                ["/usr/local/bin/curl", "-fsSL", "--max-time", "15",
+                 "-H", "Accept: application/vnd.github+json",
+                 "-H", "X-GitHub-Api-Version: 2022-11-28", url],
+                capture_output=True, text=True, timeout=20)
+            if out.returncode != 0:
+                return self.send_json(
+                    {"ok": False, "error": "GitHub request failed (no network?)"})
+            data = json.loads(out.stdout)
+        except Exception:
+            return self.send_json({"ok": False, "error": "could not reach GitHub"})
+        if not isinstance(data, list):
+            return self.send_json({"ok": False, "error": "unexpected GitHub response"})
+
+        # Only mainline, version-tagged releases (vX.Y.Z...) — this excludes drafts
+        # and the rolling `development`/nightly/test tags that never carry a real
+        # version, so a pre-PR/test build can never be offered as an upgrade. GitHub
+        # returns releases newest-first, so the first match is the newest.
+        version_tag = re.compile(r"^v?\d+\.\d+\.\d+")
+        releases = [r for r in data
+                    if not r.get("draft") and version_tag.match(r.get("tag_name") or "")]
+        if not prerelease:                       # stable: exclude pre-releases too
+            releases = [r for r in releases if not r.get("prerelease")]
+        rel = releases[0] if releases else None
+        if not rel:
+            return self.send_json({"ok": False, "error": "no matching release found"})
+
+        # The firmware image is the large .bin/.zip asset (the URL/upload upgrade
+        # actions require >= 50 MB); pick the biggest matching one.
+        assets = [a for a in rel.get("assets", [])
+                  if a.get("name", "").lower().endswith((".bin", ".zip"))]
+        asset = max(assets, key=lambda a: a.get("size", 0), default=None)
+        if not asset:
+            return self.send_json({"ok": False, "error": "release has no firmware asset"})
+
+        # Is this actually newer than what's running? The tags carry a monotonic
+        # build number (...-paxx12-N), so compare that. If the device is already on
+        # the latest of the selected channel (or ahead of it — e.g. on a newer
+        # pre-release than the latest stable), update_available is false and the UI
+        # won't offer a (re)download or a downgrade.
+        latest = rel.get("tag_name") or ""
+        try:
+            with open("/etc/BUILD_VERSION") as f:
+                current = f.read().strip()
+        except Exception:
+            current = ""
+        cur_n = _build_number(current)
+        latest_n = _build_number(latest)
+        update_available = latest_n > cur_n if (cur_n >= 0 and latest_n >= 0) else True
+
+        self.send_json({
+            "ok": True,
+            "version": latest or rel.get("name") or "unknown",
+            "current_version": current,
+            "update_available": update_available,
+            "prerelease": bool(rel.get("prerelease")),
+            "url": asset.get("browser_download_url"),
+            "name": asset.get("name"),
+            "size_mb": round(asset.get("size", 0) / 1024 / 1024),
+            # The release page — assets + release notes the user should read first.
+            "release_url": rel.get("html_url"),
+        })
 
     def send_json(self, data):
         response = json.dumps(data, indent=2).encode()
