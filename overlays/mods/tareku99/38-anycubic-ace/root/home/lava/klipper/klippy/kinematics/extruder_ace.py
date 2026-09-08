@@ -558,6 +558,12 @@ class PrinterExtruder:
             self.gcode_offset = [0, 0, 0]
             gcode.register_command("M104", self.cmd_M104)
             gcode.register_command("M109", self.cmd_M109)
+            # The stock touchscreen calls this command during filament
+            # changes. Keep it available in ACE mode with the same behavior
+            # as the stock extruder implementation.
+            gcode.register_command(
+                "INNER_HEAT_TO_LOADED_FILAMENT_TEMP",
+                self.cmd_INNER_HEAT_TO_LOADED_FILAMENT_TEMP)
             gcode.register_command("SET_MAX_E_ACCEL", self.cmd_SET_MAX_E_ACCEL)
             gcode.register_command("SET_MAX_E_VELOCITY", self.cmd_SET_MAX_E_VELOCITY)
             gcode.register_command("ENTER_PARK_POINT_MANUAL_CALIBRATION", self.cmd_ENTER_PARK_POINT_MANUAL_CALIBRATION)
@@ -1068,6 +1074,29 @@ class PrinterExtruder:
         pheaters = self.printer.lookup_object('heaters')
         pheaters.set_temperature(extruder.get_heater(), temp, wait)
 
+    def _get_filament_temp(self, extruder_index=None):
+        print_task_config = self.printer.lookup_object(
+            'print_task_config', None)
+        filament_parameters = self.printer.lookup_object(
+            'filament_parameters', None)
+        if extruder_index is None:
+            extruder_index = self.extruder_index
+        extruder_obj = self.printer.lookup_object('extruder', None)
+        if extruder_index != 0:
+            extruder_obj = self.printer.lookup_object(
+                'extruder%d' % extruder_index, None)
+        if (print_task_config is None or filament_parameters is None
+                or extruder_obj is None):
+            return 220
+
+        status = print_task_config.get_status()
+        return filament_parameters.get_print_temp(
+            status['filament_vendor'][extruder_index],
+            status['filament_type'][extruder_index],
+            status['filament_sub_type'][extruder_index],
+            extruder_obj.nozzle_diameter,
+            extruder_obj.nozzle_volume_type)
+
     def _handle_control_extruder_temp(self, web_request):
         """Handle extruder temperature setting request"""
         try:
@@ -1134,6 +1163,19 @@ class PrinterExtruder:
     def cmd_M109(self, gcmd):
 
         self.cmd_M104(gcmd, wait=True)
+
+    def cmd_INNER_HEAT_TO_LOADED_FILAMENT_TEMP(self, gcmd):
+        index = gcmd.get_int('T', None, minval=0)
+        temp = gcmd.get_float('S', self._get_filament_temp(index))
+        extruder_map = gcmd.get_int('A', 1, minval=0)
+        wait = gcmd.get_int('WAIT', 0, minval=0)
+        delta = gcmd.get_float('DELTA', 0.)
+        temp += delta
+        try:
+            self._set_extruder_temp(temp, index, extruder_map, wait)
+        except Exception as e:
+            raise gcmd.error(str(e))
+
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
