@@ -20,6 +20,33 @@ upgrade_url:
       exit 1
     fi
 
+    # Verify the downloaded image against the release's published SHA-256 (the
+    # GitHub asset digest, passed as $2) BEFORE unpacking or flashing. This catches
+    # a truncated/corrupted download or a swapped URL. The digest is of the asset
+    # exactly as served, so this must run before unpack_firmware (which rewrites a
+    # .zip into its inner .bin). No checksum ($2 empty, e.g. a hand-pasted URL) ->
+    # warn and proceed, preserving the manual-URL behaviour.
+    expected_sha=$(printf '%s' "$2" | tr 'A-F' 'a-f')
+    if [ -n "$expected_sha" ]; then
+      echo "Verifying SHA-256..."
+      actual_sha=$(sha256sum /userdata/url_upgrade.bin 2>/dev/null | awk '{print $1}' | tr 'A-F' 'a-f')
+      if [ -z "$actual_sha" ]; then
+        echo "ERROR: could not compute SHA-256 of the downloaded file."
+        rm -f /userdata/url_upgrade.bin
+        exit 1
+      fi
+      if [ "$expected_sha" != "$actual_sha" ]; then
+        echo "ERROR: SHA-256 mismatch - refusing to flash."
+        echo "  expected: $expected_sha"
+        echo "  actual:   $actual_sha"
+        rm -f /userdata/url_upgrade.bin
+        exit 1
+      fi
+      echo "SHA-256 verified OK."
+    else
+      echo "WARNING: no checksum provided - integrity not verified (manual URL)."
+    fi
+
     unpack_firmware() {
       file="$1"
       magic=$(head -c 2 "$file" 2>/dev/null || true)

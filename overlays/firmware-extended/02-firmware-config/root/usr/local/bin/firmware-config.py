@@ -277,6 +277,14 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
         if not asset:
             return self.send_json({"ok": False, "error": "release has no firmware asset"})
 
+        # GitHub now exposes a per-asset content digest (e.g. "sha256:abc123…") for
+        # the asset exactly as served. Pass the real sha256 through so the flash step
+        # can verify the downloaded image before handing it to systemUpgrade.sh — no
+        # hashing of the 250 MB blob on the release side. Older API responses (or a
+        # missing digest) simply yield an empty string, and verification is skipped.
+        digest = asset.get("digest") or ""
+        sha256 = digest.split("sha256:", 1)[1].strip() if digest.startswith("sha256:") else ""
+
         # Is this actually newer than what's running? The tags carry a monotonic
         # build number (...-paxx12-N), so compare that. If the device is already on
         # the latest of the selected channel (or ahead of it — e.g. on a newer
@@ -300,6 +308,7 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             "prerelease": bool(rel.get("prerelease")),
             "url": asset.get("browser_download_url"),
             "name": asset.get("name"),
+            "sha256": sha256,
             "size_mb": round(asset.get("size", 0) / 1024 / 1024),
             # The release page — assets + release notes the user should read first.
             "release_url": rel.get("html_url"),
@@ -680,6 +689,10 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             try:
                 data = json.loads(body)
                 url = data.get('url', '').strip()
+                # Optional expected SHA-256 (the release asset's published digest).
+                # When present, the flash shell verifies the download against it
+                # before flashing. Keep only hex so it's safe to pass as an argv word.
+                sha256 = re.sub(r'[^0-9a-fA-F]', '', (data.get('sha256') or ''))
             except json.JSONDecodeError:
                 self.send_error(400, "Invalid JSON")
                 return
@@ -693,10 +706,12 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             stream_started = True
             self._write_stream_chunk(f"=== Upgrade Started ===\n")
             self._write_stream_chunk(f"URL: {url}\n")
+            if sha256:
+                self._write_stream_chunk(f"Expected SHA-256: {sha256}\n")
             self._write_stream_chunk(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             self._write_stream_chunk(f"{'=' * 40}\n\n")
 
-            rc, stopped = self._stream_command(shell_to_cmd(shell_template, url), stop_token=stop_token)
+            rc, stopped = self._stream_command(shell_to_cmd(shell_template, url, sha256), stop_token=stop_token)
             self._write_stream_chunk(f"\n{'=' * 40}\n")
             if rc == 0 or stopped:
                 self._write_stream_chunk("SUCCESS: Completed successfully.\n")

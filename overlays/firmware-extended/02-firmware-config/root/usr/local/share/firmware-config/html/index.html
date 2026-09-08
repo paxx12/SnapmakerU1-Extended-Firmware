@@ -369,6 +369,11 @@
         // URL & File Handling
         // ========================================
 
+        // Remembers the URL + SHA-256 from the last "Check for latest" so the flash
+        // request can carry the expected checksum. Bound to the exact URL string: if
+        // the user edits the field after checking, the stale hash is not sent.
+        let _latestCheck = null;
+
         async function checkLatest() {
             const btn = $('check-update-btn'), status = $('update-status');
             const prerelease = $('prerelease-check').checked ? '1' : '0';
@@ -401,6 +406,7 @@
                     return;
                 }
                 $('url-input').value = data.url;
+                _latestCheck = { url: data.url, sha256: data.sha256 || '' };
                 validateURL();
                 status.textContent = `Update available — latest ${kind}: ${data.version} (${data.size_mb} MB)`
                     + (data.current_version ? `, you have ${data.current_version}` : '')
@@ -601,10 +607,17 @@
             $('action-log').classList.add('visible');
 
             try {
+                // Include the expected SHA-256 only when it belongs to this exact
+                // URL (from a fresh "Check for latest"). A hand-pasted URL sends no
+                // hash and the device flashes with a "not verified" warning instead.
+                const body = { url };
+                if (_latestCheck && _latestCheck.url === url && _latestCheck.sha256) {
+                    body.sha256 = _latestCheck.sha256;
+                }
                 const resp = await apiFetch('api/upgrade/url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify(body)
                 });
                 await streamResponse(resp);
             } catch (e) {
