@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2025 @paxx12
+
+set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
   echo "Usage: $0 <rootfs> <cmd> [args...]"
@@ -16,10 +21,6 @@ shift
 cd "$ROOTFS"
 
 cleanup() {
-  mountpoint "$ROOTFS/root" && umount "$ROOTFS/root"
-  rm -rf "$ROOTFS/root"
-  mkdir -p "$ROOTFS/root"
-
   rm -f ./etc/resolv.conf
   if [[ -e ./etc/resolv.conf.bak || -L ./etc/resolv.conf.bak ]]; then
     mv ./etc/resolv.conf.bak ./etc/resolv.conf
@@ -31,14 +32,6 @@ if [[ -e ./etc/resolv.conf || -L ./etc/resolv.conf ]]; then
 fi
 
 trap 'cleanup' EXIT
-
-if [[ -z "$CI" ]]; then
-  # Cache /root
-  mkdir -p "$CHROOT_CACHE/root"
-  mount --bind "$CHROOT_CACHE/root" "$ROOTFS/root"
-fi
-
-set -euo pipefail
 
 echo "nameserver 1.1.1.1" > ./etc/resolv.conf
 chroot "$ROOTFS" "$@"

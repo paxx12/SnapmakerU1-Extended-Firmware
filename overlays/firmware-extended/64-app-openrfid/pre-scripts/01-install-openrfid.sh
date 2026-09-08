@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
 
 GIT_URL=https://github.com/suchmememanyskill/OpenRFID.git
-GIT_SHA=ddd1609e9abe9cd37c4b8fa1a0e4307b976d5fd4
+GIT_SHA=1a6f605d0334157b532afdd14f89fc182d9000f6
 
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
 
 if [[ -z "$CREATE_FIRMWARE" ]]; then
   echo "Error: This script should be run within the create_firmware.sh environment."
@@ -17,9 +20,9 @@ if [[ ! -L "$ROOTFS_DIR/etc/nginx/sites-enabled/fluidd" ]]; then
   exit 1
 fi
 
-VERSION=v2.17.0
+VERSION=v2.19.0
 URL=https://github.com/mainsail-crew/mainsail/releases/download/$VERSION/mainsail.zip
-SHA256=d010f4df25557d520ccdbb8e42fc381df2288e6a5c72d3838a5a2433c7a31d4e
+SHA256=c4d9d96f89851c6ae0709c2f20725447f3fe8c57cf193869b0083441bd93378a
 FILENAME=mainsail-$VERSION.zip
 
 rm -rf "$ROOTFS_DIR/home/lava/mainsail"

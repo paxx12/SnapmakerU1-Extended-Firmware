@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2025 @paxx12, @horzadome
+
 name: Build
 
 concurrency:
@@ -101,18 +105,18 @@ jobs:
     - name: Build with Extended Fluidd firmware
       run: ./dev.sh make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
 
-    - name: Build DEVEL version of Extended Fluidd firmware
-      run: ./dev.sh make build PROFILE=extended-devel OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_devel.bin
-
     - uses: actions/upload-artifact@v4
       with:
         name: extended-build
         path: U1_extended_*_upgrade.bin
 
+    - name: Build with Extended Fluidd + AFC firmware (experimental)
+      run: ./dev.sh make build PROFILE=extended-afc OUTPUT_FILE=U1_extended-afc_${{ env.GIT_VERSION }}_upgrade.bin
+
     - uses: actions/upload-artifact@v4
       with:
-        name: extended-devel-build
-        path: U1_extended_*_devel.bin
+        name: extended-afc-build
+        path: U1_extended-afc_*_upgrade.bin
 
     - name: Save PR info
       if: github.event_name == 'pull_request'
@@ -126,7 +130,7 @@ jobs:
         echo "${{ env.JOB_START }}" > pr-info/job_start
         echo "$(date +%s)" > pr-info/job_end
         echo extended-build >> pr-info/artifacts
-        echo extended-devel-build >> pr-info/artifacts
+        echo extended-afc-build >> pr-info/artifacts
 
     - name: Upload PR info
       if: github.event_name == 'pull_request'

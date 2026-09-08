@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 @paxx12, @liberodark
 
 set -e
 
@@ -15,4 +18,4 @@ TTY_FLAG=""
 
 ENV_FLAGS="-e GIT_VERSION -e CI -e PASSWORD"
 
-exec docker run --rm $DOCKER_OPTS $TTY_FLAG $ENV_FLAGS --cap-add=SYS_ADMIN -w "$PWD" -v "$PWD:$PWD" "$IMAGE_NAME" "$@"
+exec docker run --rm $DOCKER_OPTS $TTY_FLAG $ENV_FLAGS -w "$PWD" -v "$PWD:$PWD" "$IMAGE_NAME" "$@"

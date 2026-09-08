@@ -1,0 +1,117 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
+
+ENTWARE_DIR="/userdata/extended/entware"
+
+start() {
+  if [ ! -d "$ENTWARE_DIR" ]; then
+    echo "Error: Entware directory $ENTWARE_DIR does not exist. Please run 'init' first."
+    return 1
+  fi
+
+  if mountpoint /opt > /dev/null 2>&1; then
+    echo "Info: Entware already active - mount found at /opt"
+    echo "Info: To re-activate, please run 'stop' first."
+    return 1
+  fi
+
+  mount --bind "$ENTWARE_DIR" /opt
+}
+
+init() {
+  if mountpoint /opt > /dev/null 2>&1; then
+    echo "Error: Entware is currently active. Please run 'stop' before initializing."
+    return 1
+  fi
+
+  if [ -d "$ENTWARE_DIR" ]; then
+    echo "Error: Entware directory $ENTWARE_DIR already exists. To re-initialize, please run 'nuke' first."
+    return 1
+  fi
+
+  echo ">> Initializing Entware environment in $ENTWARE_DIR"
+  mkdir -p "$ENTWARE_DIR/bin" \
+   "$ENTWARE_DIR/etc" \
+   "$ENTWARE_DIR/lib/opkg" \
+   "$ENTWARE_DIR/tmp" \
+   "$ENTWARE_DIR/var/lock"
+
+  # Fix for multiuser environment
+  chmod 777 "$ENTWARE_DIR/tmp"
+
+  # Required symlinks for Entware to function properly
+  ln -sf /etc/passwd \
+    /etc/group \
+    /etc/shells \
+    /etc/shadow \
+    /etc/gshadow \
+    /etc/localtime \
+    "$ENTWARE_DIR/etc/"
+
+  # Create opkg configuration
+  cat <<EOF > "$ENTWARE_DIR/etc/opkg.conf"
+src/gz entware http://bin.entware.net/aarch64-k3.10
+dest root /
+dest ram /opt/tmp
+lists_dir ext /opt/var/opkg-lists
+option tmp_dir /opt/tmp
+arch all 100
+arch aarch64-3.10 160
+EOF
+
+  mount --bind "$ENTWARE_DIR" /opt
+
+  echo ">> Downloading and installing Entware bootstrap..."
+  /usr/local/bin/opkg update
+  /usr/local/bin/opkg install entware-opt
+
+  echo ">> Entware initialization complete."
+}
+
+nuke() {
+  stop
+
+  if [ -d "$ENTWARE_DIR" ]; then
+    echo "Info: Removing Entware directory at $ENTWARE_DIR"
+    rm -rf "$ENTWARE_DIR"
+  else
+    echo "Info: No Entware directory found at $ENTWARE_DIR"
+  fi
+}
+
+stop() {
+  if ! mountpoint /opt > /dev/null 2>&1; then
+    echo "Info: Entware doesn't appear to be active."
+    echo "Info: No mount found at /opt pointing to $ENTWARE_DIR."
+    return 1
+  fi
+
+  umount /opt
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  init)
+    init
+    ;;
+  nuke)
+    nuke
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|init|nuke}"
+    exit 1
+    ;;
+esac
+
+exit 0

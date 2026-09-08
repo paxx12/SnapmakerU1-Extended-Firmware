@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
+
+quick_actions:
+  upgrades:
+    items:
+      octoeverywhere-upgrade:
+        label: Upgrade OctoEverywhere
+        description: Download and install the latest pinned OctoEverywhere version.
+        if_cmd: /usr/local/bin/extended-pkg octoeverywhere needs_upgrade
+        confirm: "Upgrade OctoEverywhere and restart the cloud service?"
+        cmd:
+          - bash
+          - -ec
+          - |
+            /usr/local/bin/extended-pkg octoeverywhere upgrade
+            /etc/init.d/S99cloud restart
+        message: "Upgrading OctoEverywhere..."

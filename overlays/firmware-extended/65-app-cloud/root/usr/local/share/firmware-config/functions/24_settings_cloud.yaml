@@ -1,9 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
+
 settings:
   remote_access:
     items:
       cloud:
         label: Cloud Access (Experimental)
         description: Enable alternative cloud access from outside your network.
+        help_url: https://snapmakeru1-extended-firmware.pages.dev/cloud
         get_cmd:
           - /usr/local/bin/extended-config.py
           - get
@@ -20,7 +25,7 @@ settings:
               - |
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud none &&
                 /etc/init.d/S99cloud stop
-                /usr/local/bin/octoeverywhere-pkg clean
+                /usr/local/bin/extended-pkg octoeverywhere clean
                 rm -rf /home/lava/printer_data/octoeverywhere-store
           octoeverywhere:
             label: OctoEverywhere
@@ -37,7 +42,7 @@ settings:
                 sleep 5
 
                 echo ">> Downloading OctoEverywhere package..."
-                /usr/local/bin/octoeverywhere-pkg download
+                /usr/local/bin/extended-pkg octoeverywhere download
 
                 echo ">> Enabling OctoEverywhere..."
                 /usr/local/bin/extended-config.py add /home/lava/printer_data/config/extended/extended2.cfg remote_access cloud octoeverywhere
@@ -50,6 +55,8 @@ settings:
                 echo "If you need help, follow this guide:"
                 echo "https://octoeverywhere.com/s/snapmaker-u1"
                 echo "Contact Support: https://octoeverywhere.com/support"
+                echo ""
+                echo "If the plugin is already connected to your account, you can ignore this message."
                 echo
 
                 for i in {1..15}; do
@@ -62,4 +69,5 @@ settings:
                 done
 
                 echo "Authorization URL not found in logs. Please check the logs for more details."
+                echo "If the plugin is already connected to your account, you can ignore this message."
         default: none
