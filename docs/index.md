@@ -11,6 +11,8 @@ Custom firmware for the Snapmaker U1 3D printer, enabling debug features like SS
 
 This is an independent project and is not affiliated with Snapmaker.
 
+![Fluidd Dashboard](screenshots/fluidd.png)
+
 > **Warning**: While installing custom firmware does not automatically void the product warranty, any damage caused by or attributable to the installation or use of custom firmware is not covered under warranty. Use at your own risk. See [Snapmaker Terms of Use](https://www.snapmaker.com/terms-of-use) for details.
 >
 > Custom firmware is intended for users with appropriate technical knowledge. Ensure you understand the implications before proceeding.
@@ -45,6 +47,7 @@ Heavily expanded firmware with extensive features and customization:
 
 - [Firmware Configuration](firmware_config.md) - Customize firmware behavior via web interface or config file
 - [Fluidd or Mainsail](firmware_config.md#web) (selectable) - Choose your preferred web interface
+- [Firmware Upgrade Channels](firmware_upgrade.md) - Redirect or disable the stock firmware-update check
 
 **Camera & Media:**
 
@@ -65,6 +68,7 @@ Heavily expanded firmware with extensive features and customization:
 - [RFID Filament Tag Support](design/rfid.md) - NTAG213/215/216 support for [OpenSpool format](design/openspool.md)
 - [Alternative Filament Detection](design/rfid.md#enabling-openrfid) - Alternative detection implementations with extended spool/tag support from Bambu, Creality, Anycubic, and others
 - [Spoolman Integration](spoolman.md) - Automatic filament metadata sync and spool tracking via Spoolman, resolving spools by ID or RFID card UID, with [community companion apps](spoolman.md#apps) for tagging and linking spools
+- [NFC Tags & Spoolman Setup Guide](nfc_spoolman_setup.md) - Step-by-step guide to tagging spools and tracking them in Spoolman
 
 **Monitoring & Notifications:**
 
