@@ -30,12 +30,17 @@ if [ ! -f "$SEED_DIR/ace_vars.cfg" ]; then
     SEED_DIR="$SCRIPT_DIR"
 fi
 mkdir -p "$STATE_DIR/i18n"
+# Firmware Config invokes this script as root, but Klipper runs as lava and
+# must be able to update save_variables state during normal operation.
+chown lava:lava "$STATE_DIR" "$STATE_DIR/i18n" 2>/dev/null || true
 if [ ! -f "$VARS_FILE" ]; then
     cp "$SEED_DIR/ace_vars.cfg" "$VARS_FILE"
 fi
 if [ ! -f "$STATE_DIR/i18n/en.json" ]; then
     cp "$SEED_DIR/i18n/en.json" "$STATE_DIR/i18n/en.json"
 fi
+chown lava:lava "$VARS_FILE" "$STATE_DIR/i18n/en.json" 2>/dev/null || true
+chmod 0664 "$VARS_FILE" 2>/dev/null || true
 if [ "$SCRIPT_DIR" != "$STATE_DIR" ]; then
     cp "$SCRIPT_DIR/ace_mode_switch.sh" "$STATE_DIR/ace_mode_switch.sh"
     chmod 0755 "$STATE_DIR/ace_mode_switch.sh"

@@ -701,6 +701,28 @@ class FilamentFeed:
         if self.manual_feeding[channel]:
             return
 
+        # During a load the feed-port event is expected as the filament path
+        # advances.  Do not turn it into a queued PRELOAD operation: the
+        # preload callback waits for channel_active to clear, then sees the
+        # newly loaded filament at the toolhead as "residual" and can
+        # overwrite a successful LOAD_FINISH with a false failure.
+        if self.channel_active is not None:
+            logging.info(
+                "[feed] port event channel[%d] detected=%s ignored while "
+                "channel[%d] is active (state=%s)",
+                channel, detected, self.channel_active,
+                self.channel_state[channel])
+            return
+
+        # A late duplicate event after LOAD_FINISH is also harmless and must
+        # not restart the preload state machine for an already-loaded head.
+        if detected and (self.channel_state[channel] == FEED_STA_LOAD_FINISH
+                         or self.config['load_finish'][channel]):
+            logging.info(
+                "[feed] port event channel[%d] ignored after LOAD_FINISH",
+                channel)
+            return
+
         if detected:
             if self.channel_state[channel] == FEED_STA_PRELOAD_PREPARE:
                 self._set_light_state(channel, FEED_STA_PRELOAD_PREPARE)

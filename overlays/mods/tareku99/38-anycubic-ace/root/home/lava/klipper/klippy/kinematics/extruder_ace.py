@@ -23,8 +23,10 @@ EXTRUDER_SWITCH_RECORDER = "extruder_switch_recorder.json"
 
 NOZZLE_CONFIG_POSTFIX = "_nozzle_config.json"
 VALID_NOZZLE_DIAMETERS = [0.2, 0.4, 0.6, 0.8]
+VALID_NOZZLE_VOLUME_TYPES = ['standard', 'high_flow']
 NOZZLE_CONFIG_DEFAULT = {
     "diameter": 0.4,
+    "volume_type": "standard",
 }
 
 class ExtruderSwitchRecorder:
@@ -401,6 +403,8 @@ class PrinterExtruder:
         self.nozzle_config_info = self.printer.load_snapmaker_config_file(
             self.nozzle_config_path, NOZZLE_CONFIG_DEFAULT)
         self.nozzle_diameter = self.nozzle_config_info['diameter']
+        self.nozzle_volume_type = self.nozzle_config_info.get(
+            'volume_type', NOZZLE_CONFIG_DEFAULT['volume_type'])
 
         pheaters = self.printer.load_object(config, 'heaters')
         gcode_id = 'T%d' % (extruder_num,)
@@ -663,6 +667,7 @@ class PrinterExtruder:
         sts['can_extrude'] = bool(self.heater.can_extrude)
         sts['extruder_index'] = self.extruder_index
         sts['nozzle_diameter'] = self.nozzle_diameter
+        sts['nozzle_volume_type'] = self.nozzle_volume_type
         sts['printing_e_pos'] = self.printing_e_pos
         sts['activating_move'] = self.activating_move
         if self.park_detector is not None:
