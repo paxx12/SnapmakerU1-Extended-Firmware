@@ -5,12 +5,6 @@
 name: Build
 
 on:
-  push:
-    branches:
-      - develop
-    paths-ignore:
-      - '*.md'
-      - .github/workflows/*.yaml
   pull_request:
   workflow_dispatch:
 
@@ -80,13 +74,6 @@ jobs:
         key: downloads-${{ runner.os }}-${{ runner.arch }}-${{ github.head_ref || github.ref_name }}
         restore-keys: |
           downloads-${{ runner.os }}-${{ runner.arch }}-
-
-    - name: Set GIT_VERSION (for branch)
-      shell: bash
-      if: github.event_name == 'push'
-      run: |
-        nextVer=$(./scripts/next_version.sh paxx12 test-branch-${{ github.ref_name }})
-        echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
 
     - name: Set GIT_VERSION (for Pull Request)
       shell: bash

@@ -54,7 +54,7 @@ jobs:
       shell: bash
       run: |
         nextVer=$(./scripts/next_version.sh paxx12)
-        echo "GIT_VERSION=${nextVer//v/}" | tee -a $GITHUB_ENV
+        echo "GIT_VERSION=${nextVer#v}" | tee -a $GITHUB_ENV
 
     - name: Download firmware
       run: ./dev.sh make firmware
@@ -65,15 +65,19 @@ jobs:
     - name: Generate Changelog
       run: make changelog >> RELEASE.md
 
+    - name: Generate upgrade descriptor
+      run: node .github/scripts/gen_upgrade_desc.js U1_extended_${{ env.GIT_VERSION }}_upgrade.bin RELEASE.md "v${{ env.GIT_VERSION }}" "${{ env.GIT_VERSION }}" U1_extended_${{ env.GIT_VERSION }}_upgrade_desc.json
+
     - name: 'Release debian files'
       uses: ncipollo/release-action@v1
       with:
         tag: "v${{ env.GIT_VERSION }}"
+        name: "v${{ env.GIT_VERSION }}"
         allowUpdates: false
         updateOnlyUnreleased: true
         draft: true
         bodyFile: RELEASE.md
-        artifacts: "U1_*_upgrade.bin"
+        artifacts: "U1_*_upgrade.bin,U1_*_upgrade_desc.json"
 
     - name: Save Firmwares Cache
       if: steps.cache-firmwares.outputs.cache-hit != 'true'

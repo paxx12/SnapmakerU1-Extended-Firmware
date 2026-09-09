@@ -12,16 +12,18 @@ if [ "$1" = start ]; then
         stable|testing)
             echo "Starting lmd with firmware-upgrade imposter (channel=$FIRMWARE_IMPOSTER)!"
             VERSION=$(cat /etc/VERSION 2>/dev/null)
+            FULLVERSION=$(cat /etc/FULLVERSION 2>/dev/null)
             BUILD_VERSION=$(cat /etc/BUILD_VERSION 2>/dev/null)
             BUILD_PROFILE=$(cat /etc/BUILD_PROFILE 2>/dev/null)
-            export FW_UPDATE_REWRITE_URL="https://snapmakeru1-extended-firmware.pages.dev/api/device/firmware/latest?channel=$FIRMWARE_IMPOSTER&version=$VERSION&build_version=$BUILD_VERSION&build_profile=$BUILD_PROFILE"
+            export FW_UPDATE_REWRITE_URL="https://snapmakeru1-extended-firmware.pages.dev/api/device/firmware/latest?channel=$FIRMWARE_IMPOSTER&version=$VERSION&fullversion=$FULLVERSION&build_version=$BUILD_VERSION&build_profile=$BUILD_PROFILE"
             ;;
         develop)
             echo "Starting lmd with firmware-upgrade imposter in develop mode (channel=$FIRMWARE_IMPOSTER)!"
             VERSION=$(cat /etc/VERSION 2>/dev/null)
+            FULLVERSION=$(cat /etc/FULLVERSION 2>/dev/null)
             BUILD_VERSION=$(cat /etc/BUILD_VERSION 2>/dev/null)
             BUILD_PROFILE=$(cat /etc/BUILD_PROFILE 2>/dev/null)
-            export FW_UPDATE_REWRITE_URL="https://develop.snapmakeru1-extended-firmware.pages.dev/api/device/firmware/latest?channel=$FIRMWARE_IMPOSTER&version=$VERSION&build_version=$BUILD_VERSION&build_profile=$BUILD_PROFILE"
+            export FW_UPDATE_REWRITE_URL="https://develop.snapmakeru1-extended-firmware.pages.dev/api/device/firmware/latest?channel=$FIRMWARE_IMPOSTER&version=$VERSION&fullversion=$FULLVERSION&build_version=$BUILD_VERSION&build_profile=$BUILD_PROFILE"
             ;;
         *)
             echo "Starting lmd with firmware-upgrade check disabled!"
