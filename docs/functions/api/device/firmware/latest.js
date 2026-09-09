@@ -89,13 +89,6 @@ export async function onRequestGet(context) {
 
   let newVersion = (release.name || release.tag_name).replace(/^(?:Rolling:\s*)?v/, "");
 
-  // HACK:
-  // The device already reported it's running this exact build (its
-  // `BUILD_VERSION` is `<newVersion>-<git abbrev>`, so match on the
-  // `newVersion` prefix) — nothing to offer, so respond the way stock
-  // Snapmaker's API does when there's no pending update.
-  const isCurrentVersion = buildVersion && (buildVersion === newVersion || buildVersion.startsWith(`${newVersion}-`));
-
   const body = {
     code: 200,
     msg: "success",
@@ -105,9 +98,7 @@ export async function onRequestGet(context) {
       note: descAsset.browser_download_url,
       url: binAsset.browser_download_url,
       status: 200,
-      // If the device is already running this exact build, report the version it's running
-      // (so it doesn't try to "upgrade" to the same build again) — otherwise report the new version.
-      version: isCurrentVersion && fullversion ? fullversion : newVersion,
+      version: newVersion,
       createDate: toApiTimestamp(release.created_at),
       modifiedDate: toApiTimestamp(release.published_at || release.created_at),
     },
