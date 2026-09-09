@@ -10,7 +10,10 @@ fi
 
 ABBRV=$(git describe --abbrev --always)
 
-if [[ -n "$GIT_VERSION" ]]; then
+if [[ "$GIT_VERSION" == *"-$ABBRV" ]]; then
+  # 0.9.0-paxx12-1-gabcdef0
+  echo "${GIT_VERSION#v}" > "$ROOTFS_DIR/etc/BUILD_VERSION"
+elif [[ -n "$GIT_VERSION" ]]; then
   # 0.9.0-paxx12-1-gabcdef0
   echo "${GIT_VERSION#v}-${ABBRV}" > "$ROOTFS_DIR/etc/BUILD_VERSION"
 else

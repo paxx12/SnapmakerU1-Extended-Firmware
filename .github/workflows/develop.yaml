@@ -1,0 +1,187 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
+
+name: Develop Release
+
+on:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - '*.md'
+      - .github/workflows/*.yaml
+  workflow_dispatch:
+
+jobs:
+  custom-firmware-build:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image with cache
+      uses: docker/build-push-action@v6
+      with:
+        context: .github/dev
+        load: true
+        tags: snapmaker-u1-dev:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: BUILDKIT_INLINE_CACHE=1
+
+    - name: Load values vars.mk
+      run: cat vars.mk >> "$GITHUB_ENV"
+
+    - name: Restore Firmwares Cache
+      id: cache-firmwares
+      uses: actions/cache/restore@v4
+      with:
+        path: firmware/
+        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
+
+    - name: Restore Kernel Cache
+      id: cache-kernel
+      uses: actions/cache/restore@v4
+      with:
+        path: tmp/kernel/
+        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
+
+    - name: Restore ccache
+      uses: actions/cache/restore@v4
+      with:
+        path: tmp/ccache/
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-develop
+        restore-keys: |
+          ccache-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Restore downloads cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          tmp/cache/**/.git
+          tmp/cache/**/*.zip
+          tmp/cache/**/*.gz
+          tmp/cache/**/*.xz
+        key: downloads-${{ runner.os }}-${{ runner.arch }}-develop
+        restore-keys: |
+          downloads-${{ runner.os }}-${{ runner.arch }}-
+
+    - name: Set GIT_VERSION
+      shell: bash
+      run: |
+        nextVer=$(./scripts/next_version.sh paxx12 "develop-$(git describe --abbrev --always)")
+        echo "GIT_VERSION=${nextVer#v}" | tee -a $GITHUB_ENV
+
+    - name: Download firmware
+      run: ./dev.sh make firmware
+
+    - name: Build with Extended Fluidd firmware
+      run: ./dev.sh make build PROFILE=extended OUTPUT_FILE=U1_extended_${{ env.GIT_VERSION }}_upgrade.bin
+
+    - name: Build with Extended Fluidd + AFC firmware (experimental)
+      run: ./dev.sh make build PROFILE=extended-afc OUTPUT_FILE=U1_extended-afc_${{ env.GIT_VERSION }}_upgrade.bin
+
+    - name: Generate rolling release notes
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const { execSync } = require('child_process');
+
+          const mainCommits = new Set(
+            execSync('git log origin/main --format=%H', { encoding: 'utf8' })
+              .trim().split('\n').filter(Boolean)
+          );
+
+          const { data: prs } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'closed',
+            base: 'develop',
+            sort: 'updated',
+            direction: 'desc',
+            per_page: 100
+          });
+
+          const includedPrs = [];
+          for (const pr of prs) {
+            if (!pr.merged_at) continue;
+            if (pr.merge_commit_sha && !mainCommits.has(pr.merge_commit_sha)) {
+              includedPrs.push({
+                number: pr.number,
+                title: pr.title,
+                author: pr.user.login,
+                mergedAt: new Date(pr.merged_at)
+              });
+            }
+          }
+          includedPrs.sort((a, b) => b.mergedAt - a.mergedAt);
+
+          const changelog = includedPrs.length > 0
+            ? includedPrs.map(pr => `- #${pr.number}: ${pr.title} (@${pr.author})`).join('\n')
+            : '- No changes queued yet — `develop` matches the last release.';
+
+          const template = fs.readFileSync('RELEASE.dev.md', 'utf8');
+          fs.writeFileSync('RELEASE.dev.md', template.replace('<!-- CHANGELOG_PLACEHOLDER -->', changelog));
+
+    - name: Generate upgrade descriptors
+      run: |
+        node .github/scripts/gen_upgrade_desc.js U1_extended_${{ env.GIT_VERSION }}_upgrade.bin RELEASE.dev.md "Rolling: v${{ env.GIT_VERSION }}" "${{ env.GIT_VERSION }}" U1_extended_${{ env.GIT_VERSION }}_upgrade_desc.json
+        node .github/scripts/gen_upgrade_desc.js U1_extended-afc_${{ env.GIT_VERSION }}_upgrade.bin RELEASE.dev.md "Rolling: v${{ env.GIT_VERSION }}" "${{ env.GIT_VERSION }}" U1_extended-afc_${{ env.GIT_VERSION }}_upgrade_desc.json
+
+    - name: Move `rolling` tag to this build
+      run: |
+        git tag -f rolling
+        git push origin rolling --force
+
+    - name: 'Update rolling release'
+      uses: ncipollo/release-action@v1
+      with:
+        tag: "rolling"
+        name: "Rolling: v${{ env.GIT_VERSION }}"
+        allowUpdates: true
+        removeArtifacts: true
+        prerelease: true
+        makeLatest: false
+        bodyFile: RELEASE.dev.md
+        artifacts: "U1_*_upgrade.bin,U1_*_upgrade_desc.json"
+
+    - name: Save Firmwares Cache
+      if: steps.cache-firmwares.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: firmware/
+        key: firmwares-${{ runner.os }}-${{ runner.arch }}-${{ env.FIRMWARE_VERSION }}
+
+    - name: Save Kernel Cache
+      if: steps.cache-kernel.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: tmp/kernel/
+        key: kernels-${{ runner.os }}-${{ runner.arch }}-${{ env.KERNEL_SHA }}
+
+    - name: Save ccache
+      uses: actions/cache/save@v4
+      with:
+        path: tmp/ccache/
+        key: ccache-${{ runner.os }}-${{ runner.arch }}-develop
+
+    - name: Save downloads cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          tmp/cache/**/.git
+          tmp/cache/**/*.zip
+          tmp/cache/**/*.gz
+          tmp/cache/**/*.xz
+        key: downloads-${{ runner.os }}-${{ runner.arch }}-develop
