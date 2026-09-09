@@ -7,7 +7,7 @@ status:
     title: System Information
     items:
       - label: Base
-        cmd: cat /etc/FULLVERSION
+        cmd: cat /etc/BASE_VERSION
       - label: Version
         cmd: cat /etc/BUILD_VERSION
       - label: Profile
