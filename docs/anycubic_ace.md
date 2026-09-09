@@ -4,26 +4,27 @@ title: Anycubic ACE Wiring and Test Guide
 
 # Anycubic ACE Pro / ACE 2 Pro
 
-This guide covers the experimental MultiACE-derived integration for one to
-four Anycubic ACE units on a Snapmaker U1. It supports the original ACE Pro
+This guide covers the experimental ACE integration for one to four Anycubic
+ACE units on a Snapmaker U1. It supports the original ACE Pro
 (also called ACE 1 Pro) and ACE 2 Pro through their different host protocols:
 
 - ACE Pro: direct USB serial and the V1 JSON protocol.
 - ACE 2 Pro: USB-to-RS485 serial adapter and the V2 protobuf protocol.
 
 The firmware-side implementation is disabled until it is enabled in Firmware
-Config. It has not been hardware-validated in this branch. The procedures
-below are the test plan, not a report of successful hardware results.
+Config. This branch has been tested on a real U1 with an ACE 2 Pro, including
+connection, RFID metadata, loading, unloading, recovery, and a successful
+multi-color print. Additional hardware combinations remain experimental.
 
-## Implementation basis and attribution
+## Provenance and attribution
 
-The runtime is adapted from [decay71/multiACE](https://github.com/decay71/multiACE),
-pinned for this draft to commit
+This ACE runtime contains code derived from
+[decay71/multiACE](https://github.com/decay71/multiACE), pinned for this draft
+to commit
 [c9c22e391cee89bc7d7894ce4a25876a59565cbc](https://github.com/decay71/multiACE/tree/c9c22e391cee89bc7d7894ce4a25876a59565cbc).
-The repository is GPLv3, matching this firmware project. The overlay keeps
-MultiACE's protocol split, per-device state, stable device ordering, feed
-assist, retry, RFID, and head-source mapping, while using Firmware Config to
-activate and restore the Klipper modules.
+The source is GPLv3, and the derived source file retains its attribution.
+The surrounding activation, configuration, macro layout, and U1 integration
+are maintained as the Paxx ACE implementation in this firmware project.
 
 The following projects and contributors informed the surrounding research and
 hardware work:
@@ -39,9 +40,6 @@ hardware work:
 - [hakimio/U1-Ace](https://github.com/hakimio/U1-Ace) and
   [DnG-Crafts/U1-Ace](https://github.com/DnG-Crafts/U1-Ace) are additional
   U1/ACE integration references.
-
-The runtime code in this overlay is based on MultiACE; the other repositories
-are references and attribution, not runtime dependencies.
 
 ## Build and enablement
 
@@ -65,7 +63,7 @@ After flashing:
 When enabled, Firmware Config:
 
 - verifies that an ACE serial device is visible;
-- switches the MultiACE-derived `*_ace.py` modules into the active Klipper
+- switches the ACE `*_ace.py` modules into the active Klipper
   paths;
 - links the ACE include;
 - restarts Klipper.
@@ -85,10 +83,10 @@ The active include is:
 /oem/printer_data/config/extended/klipper/ace.cfg
 ~~~
 
-On first activation, the firmware seeds the persistent MultiACE state at:
+On first activation, the firmware seeds the persistent ACE state at:
 
 ~~~text
-/home/lava/printer_data/config/extended/multiace/ace_vars.cfg
+/home/lava/printer_data/config/extended/ace/ace_vars.cfg
 ~~~
 
 The default configuration expects one ACE:
@@ -192,7 +190,7 @@ Inspect serial devices over SSH:
 ls -l /dev/serial/by-id/
 ~~~
 
-The MultiACE-derived runtime recognizes:
+The ACE runtime recognizes:
 
 ~~~text
 ACE Pro:
@@ -220,24 +218,40 @@ A_TEMP ACE=0
 
 Useful management commands include:
 
-- `ACE_SWITCH TARGET=0` — select the active ACE.
+- `ACE_SWITCH TARGET=0` — select the active ACE internally.
 - `ACE_LOAD_HEAD HEAD=0` — load a head from the active ACE.
 - `ACE_UNLOAD_HEAD HEAD=0` — unload a head back to its mapped ACE.
 - `ACE_UNLOAD_ALL_HEADS` — unload all heads with recorded ACE sources.
 - `ACE_DRY ACE=0 TEMP=55 DURATION=240` — start drying on one ACE.
-- `ACE_STOP_DRYING` — stop drying on the active ACE.
-- `ACEG__Status` — convenience macro for head/device status.
-- `ACEG__List` — convenience macro for the device list.
-- `ACEF__Mode_Normal` and `ACEF__Mode_Multi` — switch between stock and
-  MultiACE operation; Klipper requires a restart after a module switch.
+- `ACE_STOP_DRYING ACE=0` — stop drying on a specific ACE.
 
-The optional MultiACE web service and online updater are not bundled in this
+The user-facing macros are organized into these frontend groups:
+
+- `ACE | Status`: `ACE_STATUS`, `ACE_LIST_DEVICES`
+- `ACE | Loading`: `ACE_AUTOLOAD_1`–`ACE_AUTOLOAD_4`, `ACE_LOAD_T0`–`ACE_LOAD_T3`
+- `ACE | Unloading`: `ACE_UNLOAD_ALL`, `ACE_UNLOAD_T0`–`ACE_UNLOAD_T3`
+- `ACE | Tool Switching`: `ACE_SELECT_1`–`ACE_SELECT_4`
+- `ACE | Drying`: `ACE_DRY_START_1`–`ACE_DRY_START_4`, `ACE_DRY_STOP_1`–`ACE_DRY_STOP_4`
+
+Stock operation is not an ACE mode. Disable ACE in Firmware Config to restore
+the stock U1 feeder modules. The internal ACE topologies are `all_heads` and
+the advanced `hybrid` wiring mode; neither is exposed as a normal macro button.
+
+The ACE setting also organizes the convenience macros in the web interface:
+Fluidd receives `ACE | ...` categories, and Mainsail receives matching macro
+groups on its dashboard. Mainsail must be switched to Expert Mode under
+**Settings > Macros** to show its macro-group panels. The Firmware Config
+troubleshooting action **Apply ACE macro layout** can reapply the layout if the
+frontend database was not available when ACE was enabled.
+
+The optional ACE web service and online updater are not bundled in this
 firmware overlay. Fluidd/Mainsail console commands and Firmware Config remain
 the supported control path for this draft.
 
-## First hardware test plan
+## Remaining hardware test plan
 
-This is intentionally left for a real U1 and ACE setup:
+The following checks remain useful for additional hardware and recovery
+validation:
 
 1. Enable the feature with one ACE connected.
 2. Run `ACE_LIST`, `ACE_HEAD_STATUS`, `A_INFO ACE=0`, and `A_STATUS ACE=0`.
@@ -249,9 +263,13 @@ This is intentionally left for a real U1 and ACE setup:
 6. Test RFID metadata and manual/no-RFID spool handling.
 7. Only then set `ace_device_count` above one and verify stable ACE ordering,
    `ACE_SWITCH`, per-ACE drying, cross-ACE unload, and retry/recovery.
-8. Disable the feature and confirm the stock U1 modules are restored.
+8. Test explicit `ACE_DRY_STOP_1`–`ACE_DRY_STOP_4` targeting.
+9. Disable the feature and confirm the stock U1 modules are restored.
 
-Do not treat a successful build or static Python check as hardware validation.
+The current hardware result includes a successful real print with bed heating,
+timelapse, and dynamic flow calibration. The intermittent first-attempt
+no-flow/pre-loading case and full ACE-side unloading behavior should still be
+repeated before calling the integration complete.
 
 ## Safety checklist
 
@@ -262,4 +280,5 @@ Do not treat a successful build or static Python check as hardware validation.
 - Do not connect ACE 2 Pro directly to USB data lines.
 - If ACE 2 Pro enumerates but does not answer, swap only RS485 A and B.
 - Test status and temperature before attempting a filament load.
-- Keep this pull request in draft until the complete test plan has been run.
+- Keep this pull request clearly marked experimental until the remaining
+  recovery and hardware matrix has been run.

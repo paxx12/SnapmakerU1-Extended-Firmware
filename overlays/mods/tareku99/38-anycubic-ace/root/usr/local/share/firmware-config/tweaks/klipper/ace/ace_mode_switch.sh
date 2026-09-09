@@ -4,8 +4,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HOME_DIR="/home/lava"
 EXTRAS_DIR="${HOME_DIR}/klipper/klippy/extras"
 KINEMATICS_DIR="${HOME_DIR}/klipper/klippy/kinematics"
-STATE_DIR="${HOME_DIR}/printer_data/config/extended/multiace"
-BUNDLE_DIR="/usr/local/share/firmware-config/tweaks/klipper/multiace"
+STATE_DIR="${HOME_DIR}/printer_data/config/extended/ace"
+BUNDLE_DIR="/usr/local/share/firmware-config/tweaks/klipper/ace"
 SEED_DIR="$BUNDLE_DIR"
 VARS_FILE="${STATE_DIR}/ace_vars.cfg"
 LOGDIR="${HOME_DIR}/printer_data/logs"
@@ -18,12 +18,12 @@ touch "$LOGFILE" 2>/dev/null || true
 chmod 0666 "$LOGFILE" 2>/dev/null || true
 MODE="$1"
 log() {
-    msg="$(date '+%Y-%m-%d %H:%M:%S') [mUlt1ACE] $1"
+    msg="$(date '+%Y-%m-%d %H:%M:%S') [ACE] $1"
     printf '%s\n' "$msg"
     printf '%s\n' "$msg" >> "$LOGFILE" 2>/dev/null || true
 }
-if [ "$MODE" != "ace" ] && [ "$MODE" != "normal" ]; then
-    echo "Usage: $0 [ace|normal]"
+if [ "$MODE" != "ace" ] && [ "$MODE" != "stock" ]; then
+    echo "Usage: $0 [ace|stock]"
     exit 1
 fi
 if [ ! -f "$SEED_DIR/ace_vars.cfg" ]; then
@@ -60,17 +60,17 @@ if [ ! -f "$EXTRAS_DIR/filament_switch_sensor_ace.py" ]; then
     log "ERROR: filament_switch_sensor_ace.py not found in $EXTRAS_DIR! Aborting."
     exit 1
 fi
-if [ ! -f "$EXTRAS_DIR/filament_feed_pre_multiace.py" ]; then
+if [ ! -f "$EXTRAS_DIR/filament_feed_stock.py" ]; then
     log "First run: backing up stock filament_feed.py"
-    cp "$EXTRAS_DIR/filament_feed.py" "$EXTRAS_DIR/filament_feed_pre_multiace.py"
+    cp "$EXTRAS_DIR/filament_feed.py" "$EXTRAS_DIR/filament_feed_stock.py"
 fi
-if [ ! -f "$KINEMATICS_DIR/extruder_pre_multiace.py" ]; then
+if [ ! -f "$KINEMATICS_DIR/extruder_stock.py" ]; then
     log "First run: backing up stock extruder.py"
-    cp "$KINEMATICS_DIR/extruder.py" "$KINEMATICS_DIR/extruder_pre_multiace.py"
+    cp "$KINEMATICS_DIR/extruder.py" "$KINEMATICS_DIR/extruder_stock.py"
 fi
-if [ ! -f "$EXTRAS_DIR/filament_switch_sensor_pre_multiace.py" ]; then
+if [ ! -f "$EXTRAS_DIR/filament_switch_sensor_stock.py" ]; then
     log "First run: backing up stock filament_switch_sensor.py"
-    cp "$EXTRAS_DIR/filament_switch_sensor.py" "$EXTRAS_DIR/filament_switch_sensor_pre_multiace.py"
+    cp "$EXTRAS_DIR/filament_switch_sensor.py" "$EXTRAS_DIR/filament_switch_sensor_stock.py"
 fi
 copy_or_die() {
     local src="$1"
@@ -87,11 +87,11 @@ if [ "$MODE" = "ace" ]; then
     copy_or_die "$KINEMATICS_DIR/extruder_ace.py" "$KINEMATICS_DIR/extruder.py"
     copy_or_die "$EXTRAS_DIR/filament_switch_sensor_ace.py" "$EXTRAS_DIR/filament_switch_sensor.py"
     log "ACE files activated"
-elif [ "$MODE" = "normal" ]; then
-    log "Activating NORMAL mode..."
-    copy_or_die "$EXTRAS_DIR/filament_feed_pre_multiace.py" "$EXTRAS_DIR/filament_feed.py"
-    copy_or_die "$KINEMATICS_DIR/extruder_pre_multiace.py" "$KINEMATICS_DIR/extruder.py"
-    copy_or_die "$EXTRAS_DIR/filament_switch_sensor_pre_multiace.py" "$EXTRAS_DIR/filament_switch_sensor.py"
+elif [ "$MODE" = "stock" ]; then
+    log "Restoring stock U1 runtime files..."
+    copy_or_die "$EXTRAS_DIR/filament_feed_stock.py" "$EXTRAS_DIR/filament_feed.py"
+    copy_or_die "$KINEMATICS_DIR/extruder_stock.py" "$KINEMATICS_DIR/extruder.py"
+    copy_or_die "$EXTRAS_DIR/filament_switch_sensor_stock.py" "$EXTRAS_DIR/filament_switch_sensor.py"
     log "Stock files restored"
 fi
 find "$EXTRAS_DIR/__pycache__" -name "filament_feed*" -delete 2>/dev/null || true

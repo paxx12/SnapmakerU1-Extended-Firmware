@@ -72,17 +72,17 @@ class RunoutHelper:
             loc = ' (ACE %d / Slot %d)' % (ace._disp(a), ace._disp(s)) \
                 if a is not None and s is not None else ''
             return ace._t('msg.pause_runout', head=hd, loc=loc)
-        return ('[multiACE] %s runout - reload filament '
+        return ('[ACE] %s runout - reload filament '
                 '(display or web "Reload"), then RESUME' % self.name)
 
     def _runout_event_handler(self, eventtime):
 
         ace = self.printer.lookup_object('ace', None)
         if ace is not None and getattr(ace, '_swap_in_progress', False):
-            logging.info("[multiACE] filament_switch_sensor: blocking runout during swap")
+            logging.info("[ACE] filament_switch_sensor: blocking runout during swap")
             return
         if ace is not None and self.extruder_index in getattr(ace, '_runout_suppress_heads', ()):
-            logging.info("[multiACE] filament_switch_sensor: runout suppressed for head %d (recovery: empty head awaiting reload)" % self.extruder_index)
+            logging.info("[ACE] filament_switch_sensor: runout suppressed for head %d (recovery: empty head awaiting reload)" % self.extruder_index)
             return
 
         full_msg = self._runout_disp()
@@ -152,7 +152,7 @@ class RunoutHelper:
             ace = self.printer.lookup_object('ace', None)
             if ace is not None and self.extruder_index in getattr(ace, '_runout_suppress_heads', ()):
                 ace._runout_suppress_heads.discard(self.extruder_index)
-                logging.info("[multiACE] note_filament_present: head %d (re)loaded - clearing runout suppression" % self.extruder_index)
+                logging.info("[ACE] note_filament_present: head %d (re)loaded - clearing runout suppression" % self.extruder_index)
             if ace is not None and self.extruder_index in getattr(ace, '_bg_left_empty', ()):
                 ace._bg_left_empty.discard(self.extruder_index)
             if not is_printing and self.insert_gcode is not None:
@@ -168,10 +168,10 @@ class RunoutHelper:
 
             ace = self.printer.lookup_object('ace', None)
             if ace is not None and getattr(ace, '_swap_in_progress', False):
-                logging.info("[multiACE] note_filament_present: blocking runout callback during swap")
+                logging.info("[ACE] note_filament_present: blocking runout callback during swap")
                 return
             if ace is not None and self.extruder_index in getattr(ace, '_runout_suppress_heads', ()):
-                logging.info("[multiACE] note_filament_present: runout suppressed for head %d (recovery: empty head awaiting reload)" % self.extruder_index)
+                logging.info("[ACE] note_filament_present: runout suppressed for head %d (recovery: empty head awaiting reload)" % self.extruder_index)
                 return
 
             if self.print_task_config is not None and \
@@ -221,7 +221,7 @@ class RunoutHelper:
                 if ace is not None and self.extruder_index in getattr(
                         ace, '_runout_suppress_heads', ()):
                     logging.info(
-                        '[multiACE] CHECK_FILAMENT_RUNOUT: suppressed for '
+                        '[ACE] CHECK_FILAMENT_RUNOUT: suppressed for '
                         'head %d (recovery: empty head awaiting reload)'
                         % self.extruder_index)
                     return
@@ -230,9 +230,9 @@ class RunoutHelper:
                         and ace.head_uses_ace(self.extruder_index)
                         and not ace._head_is_loaded(self.extruder_index)):
                     logging.info(
-                        '[multiACE] CHECK_FILAMENT_RUNOUT: head %d is an '
+                        '[ACE] CHECK_FILAMENT_RUNOUT: head %d is an '
                         'unloaded ACE-driven head and this print carries '
-                        'multiACE loads - its load is ahead in the gcode, '
+                        'ACE loads - its load is ahead in the gcode, '
                         'allowing RESUME' % self.extruder_index)
                     return
                 raise gcmd.error(

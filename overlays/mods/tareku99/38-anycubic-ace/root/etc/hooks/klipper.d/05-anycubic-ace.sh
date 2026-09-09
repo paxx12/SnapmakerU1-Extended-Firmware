@@ -9,20 +9,20 @@
 # or incomplete ACE installation must not prevent stock Klipper from starting.
 
 if [ "$1" = "start" ]; then
-    ACE_STATE="/home/lava/printer_data/config/extended/multiace/ace_vars.cfg"
+    ACE_STATE="/home/lava/printer_data/config/extended/ace/ace_vars.cfg"
     ACE_CFG="/home/lava/printer_data/config/extended/klipper/ace.cfg"
-    ACE_SWITCH="/usr/local/share/firmware-config/tweaks/klipper/multiace/ace_mode_switch.sh"
+    ACE_SWITCH="/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh"
     ACE_EXTRAS="/home/lava/klipper/klippy/extras"
     ACE_KINEMATICS="/home/lava/klipper/klippy/kinematics"
 
     # The mode file is a Klipper save_variables file, e.g.
-    #   ace__mode = 'multi'
+    #   ace__mode = 'all_heads'
     ACE_MODE=""
     if [ -r "$ACE_STATE" ]; then
         ACE_MODE="$(sed -n "s/^ace__mode[[:space:]]*=[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" "$ACE_STATE" 2>/dev/null | head -n 1)"
     fi
 
-    if [ -f "$ACE_CFG" ] && { [ "$ACE_MODE" = "multi" ] || [ "$ACE_MODE" = "head" ]; } \
+    if [ -f "$ACE_CFG" ] && { [ "$ACE_MODE" = "all_heads" ] || [ "$ACE_MODE" = "hybrid" ]; } \
         && [ -f "$ACE_SWITCH" ] \
         && [ -f "$ACE_EXTRAS/filament_feed_ace.py" ] \
         && [ -f "$ACE_KINEMATICS/extruder_ace.py" ] \
@@ -32,9 +32,9 @@ if [ "$1" = "start" ]; then
         if ! cmp -s "$ACE_EXTRAS/filament_feed.py" "$ACE_EXTRAS/filament_feed_ace.py" \
             || ! cmp -s "$ACE_KINEMATICS/extruder.py" "$ACE_KINEMATICS/extruder_ace.py" \
             || ! cmp -s "$ACE_EXTRAS/filament_switch_sensor.py" "$ACE_EXTRAS/filament_switch_sensor_ace.py"; then
-            echo "[multiACE] Restoring ACE runtime files before Klipper start"
+            echo "[ACE] Restoring ACE runtime files before Klipper start"
             if ! bash "$ACE_SWITCH" ace; then
-                echo "[multiACE] WARNING: ACE runtime file activation failed; starting Klipper with current files"
+                echo "[ACE] WARNING: ACE runtime file activation failed; starting Klipper with current files"
             fi
         fi
     fi

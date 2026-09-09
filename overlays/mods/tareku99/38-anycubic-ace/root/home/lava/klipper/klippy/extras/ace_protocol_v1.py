@@ -99,7 +99,7 @@ class AceProtocolV1(AceProtocol):
             try:
                 ret = json.loads(payload.decode('utf-8'))
             except (json.decoder.JSONDecodeError, UnicodeDecodeError):
-                logging.info('[multiACE] V1 invalid JSON/UTF-8 frame dropped')
+                logging.info('[ACE] V1 invalid JSON/UTF-8 frame dropped')
                 continue
             results.append(ret)
         return results

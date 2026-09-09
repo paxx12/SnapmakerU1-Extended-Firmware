@@ -215,7 +215,7 @@ class AceProtocolV2(AceProtocol):
             crc_in_frame = buffer[HEADER_LEN + payload_len] | (buffer[HEADER_LEN + payload_len + 1] << 8)
             crc_calc = crc16_kermit(inner)
             if crc_in_frame != crc_calc:
-                logging.info('[multiACE] V2 CRC mismatch (calc=%04x frame=%04x), dropping frame',
+                logging.info('[ACE] V2 CRC mismatch (calc=%04x frame=%04x), dropping frame',
                              crc_calc, crc_in_frame)
                 del buffer[:total_len]
                 continue
@@ -373,10 +373,10 @@ class AceProtocolV2(AceProtocol):
             try:
                 payload = bytes.fromhex(hex_payload) if hex_payload else b''
             except ValueError:
-                logging.info('[multiACE] V2 raw: invalid hex %r', hex_payload)
+                logging.info('[ACE] V2 raw: invalid hex %r', hex_payload)
                 payload = b''
             return cmd_id, payload
-        logging.info('[multiACE] V2: unknown V1 method %r, falling back to GET_STATUS', method)
+        logging.info('[ACE] V2: unknown V1 method %r, falling back to GET_STATUS', method)
         return Cmd.GET_STATUS, b''
 
     def _v2_response_to_v1(self, cmd, seq, payload):
@@ -386,7 +386,7 @@ class AceProtocolV2(AceProtocol):
         try:
             fields = pb_decode(payload)
         except Exception as e:
-            logging.info('[multiACE] V2 protobuf decode failure cmd=%d: %s', cmd, e)
+            logging.info('[ACE] V2 protobuf decode failure cmd=%d: %s', cmd, e)
             return ret
         if cmd == Cmd.DISCOVER_DEVICE:
             ret['result'] = {

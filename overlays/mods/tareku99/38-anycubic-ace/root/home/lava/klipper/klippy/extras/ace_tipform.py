@@ -116,15 +116,15 @@ class AceTipform:
                 if _utemp is not None:
                     self.unload_temps[opt.strip().lower()] = _utemp
             except ValueError as e:
-                logging.error('[multiACE] ace_tipform: table %r DISABLED '
+                logging.error('[ACE] ace_tipform: table %r DISABLED '
                               '(falls back to stock): %s' % (opt, e))
-        logging.info('[multiACE] ace_tipform: mode=%s tables=%s '
+        logging.info('[ACE] ace_tipform: mode=%s tables=%s '
                      'unload_temps=%s'
                      % (self.mode, sorted(self.tables.keys()) or 'none',
                         sorted(self.unload_temps.keys()) or 'none'))
         if self.unload_temps and self.mode != 'custom':
             logging.error(
-                "[multiACE] ace_tipform: unloadtemp set for %s but mode is "
+                "[ACE] ace_tipform: unloadtemp set for %s but mode is "
                 "'stock' - IGNORED. Set 'mode: custom' to activate "
                 "(choreography stays stock for param-only tables)."
                 % sorted(self.unload_temps.keys()))

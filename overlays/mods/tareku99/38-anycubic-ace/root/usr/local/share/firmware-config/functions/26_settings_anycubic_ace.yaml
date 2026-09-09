@@ -3,7 +3,7 @@ settings:
     items:
       anycubic_ace_experimental:
         label: Anycubic ACE (experimental)
-        description: Optional MultiACE-derived ACE Pro / ACE 2 Pro integration for one to four units.
+        description: Optional ACE Pro / ACE 2 Pro integration for one to four units.
         get_cmd:
           - bash
           - -c
@@ -12,7 +12,7 @@ settings:
           enabled:
             label: Enabled
             confirm: |
-              Enable the experimental MultiACE-derived Anycubic ACE path?
+              Enable the experimental Anycubic ACE path?
 
               The ACE model and protocol are detected over USB. Review
               ace.cfg, set ace_device_count, and tune the load values before
@@ -32,15 +32,21 @@ settings:
                   echo "ERROR: No compatible ACE serial device detected."
                   exit 1
                 fi
-                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/multiace/ace_mode_switch.sh
+                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh
                 if [ ! -f "$ace_mode" ]; then
-                  echo "ERROR: MultiACE runtime files are missing from this firmware."
+                  echo "ERROR: ACE runtime files are missing from this firmware."
                   exit 1
                 fi
                 bash "$ace_mode" ace
                 mkdir -p /oem/printer_data/config/extended/klipper
                 ln -sf /usr/local/share/firmware-config/tweaks/klipper/ace.cfg /oem/printer_data/config/extended/klipper/ace.cfg
-                echo "Experimental MultiACE-derived ACE integration enabled. Review ace.cfg and restart Klipper..."
+                ace_macro_layout=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_macro_layout.py
+                if [ -f "$ace_macro_layout" ]; then
+                  python3 "$ace_macro_layout" apply --best-effort
+                else
+                  echo "WARNING: ACE macro layout helper is not installed."
+                fi
+                echo "Experimental ACE integration enabled. Review ace.cfg and restart Klipper..."
                 /etc/init.d/S60klipper restart
           disabled:
             label: Disabled
@@ -48,13 +54,12 @@ settings:
               - bash
               - -ec
               - |
-                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/multiace/ace_mode_switch.sh
-                stock_feed=/home/lava/klipper/klippy/extras/filament_feed_pre_multiace.py
-                if [ -f "$ace_mode" ] && [ -f "$stock_feed" ]; then
-                  bash "$ace_mode" normal
+                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh
+                if [ -f "$ace_mode" ]; then
+                  bash "$ace_mode" stock
                 fi
                 rm -f /oem/printer_data/config/extended/klipper/ace.cfg
-                echo "Experimental MultiACE-derived ACE integration disabled. Restarting Klipper..."
+                echo "Experimental ACE integration disabled. Restoring stock U1 behavior and restarting Klipper..."
                 /etc/init.d/S60klipper restart
         default: disabled
 

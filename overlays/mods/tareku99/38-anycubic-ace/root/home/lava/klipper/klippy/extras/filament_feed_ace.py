@@ -948,7 +948,7 @@ class FilamentFeed:
             elif action == FEED_ACT_FILAMENT_RUNOUT:
 
                 if self.ace is not None and getattr(self.ace, '_swap_in_progress', False):
-                    logging.info("[multiACE] _do_feed: blocking FILAMENT_RUNOUT during swap")
+                    logging.info("[ACE] _do_feed: blocking FILAMENT_RUNOUT during swap")
                     return
                 if (self.channel_state[ch] == FEED_STA_LOAD_FINISH
                         and self.runout_sensor[ch] is not None
@@ -1245,10 +1245,10 @@ class FilamentFeed:
                             if ace_idx in self.ace._fa_load_disable or _manual_head:
                                 if _manual_head:
                                     logging.info(
-                                        '[multiACE] FEED_AUTO LOAD: head %d manual, skipping ACE feed+FA' % self.filament_ch[ch])
+                                        '[ACE] FEED_AUTO LOAD: head %d manual, skipping ACE feed+FA' % self.filament_ch[ch])
                                 else:
                                     logging.info(
-                                        '[multiACE] FEED_AUTO LOAD: ACE %d in fa_load_disable, skipping feed+FA' % ace_idx)
+                                        '[ACE] FEED_AUTO LOAD: ACE %d in fa_load_disable, skipping feed+FA' % ace_idx)
                                 self.channel_error[ch] = FEED_OK
                             else:
 
@@ -1347,14 +1347,14 @@ class FilamentFeed:
                         self.ace.wait_ace_ready()
                         head_idx = self.filament_ch[ch]
                         fa_slot = self.ace._ace_slot_for_head(head_idx)
-                        logging.info('[multiACE] FEED_AUTO LOAD: about to call _arm_fa_for idx=%d slot=%d auto_feed=%s fa_context=%s' % (
+                        logging.info('[ACE] FEED_AUTO LOAD: about to call _arm_fa_for idx=%d slot=%d auto_feed=%s fa_context=%s' % (
                             self.ace._active_device_index, fa_slot, self.ace._auto_feed_enabled, self.ace._fa_context))
                         try:
                             self.ace._arm_fa_for(
                                 self.ace._active_device_index, fa_slot)
                         except Exception as fa_e:
                             logging.info(
-                                '[multiACE] FEED_AUTO LOAD: _arm_fa_for failed: %s'
+                                '[ACE] FEED_AUTO LOAD: _arm_fa_for failed: %s'
                                 % fa_e)
                     self.gcode.run_script_from_command("M104 S%d\r\n" % (filament_feed_temp))
                     try:
@@ -1623,7 +1623,7 @@ class FilamentFeed:
                                         % (wiggle_char, slot_p3, ace_idx_p3))
                                 except Exception as e:
                                     logging.info(
-                                        '[multiACE] phase3 stop_feed_assist failed: %s' % e)
+                                        '[ACE] phase3 stop_feed_assist failed: %s' % e)
 
                             if wiggle_char == 'A':
 
@@ -1643,7 +1643,7 @@ class FilamentFeed:
                                             % extruder_name)
                                     except Exception as e:
                                         logging.info(
-                                            '[multiACE] phase3 extruder disable failed: %s' % e)
+                                            '[ACE] phase3 extruder disable failed: %s' % e)
                                     try:
                                         retract_speed = getattr(self.ace, 'retract_speed', 25)
                                         feed_speed = getattr(self.ace, 'feed_speed', 25)
@@ -1672,7 +1672,7 @@ class FilamentFeed:
                                             % (slot_p3, ace_idx_p3, retract_mm, push_mm))
                                     except Exception as e:
                                         logging.info(
-                                            '[multiACE] phase3 ACE wiggle failed: %s' % e)
+                                            '[ACE] phase3 ACE wiggle failed: %s' % e)
                                     finally:
                                         if extruder_disabled:
                                             try:
@@ -1684,7 +1684,7 @@ class FilamentFeed:
                                                     % extruder_name)
                                             except Exception as e:
                                                 logging.info(
-                                                    '[multiACE] phase3 extruder re-enable failed: %s' % e)
+                                                    '[ACE] phase3 extruder re-enable failed: %s' % e)
                             else:
 
                                 self.gcode.run_script_from_command(
@@ -1701,7 +1701,7 @@ class FilamentFeed:
                                             % (slot_p3, ace_idx_p3))
                                     except Exception as e:
                                         logging.info(
-                                            '[multiACE] phase3 FA restart failed: %s' % e)
+                                            '[ACE] phase3 FA restart failed: %s' % e)
 
                                 if filament_soft:
                                     self.gcode.run_script_from_command(
@@ -1800,7 +1800,7 @@ class FilamentFeed:
                         }
                         self.ace._save_head_source()
                         self.ace._ghost_heads.discard(head_idx)
-                        logging.info('[multiACE] FEED_AUTO LOAD: head_source[%d] -> ACE %d / Slot %d' % (
+                        logging.info('[ACE] FEED_AUTO LOAD: head_source[%d] -> ACE %d / Slot %d' % (
                             head_idx, ace_idx, ace_slot))
 
                     self.gcode.respond_raw('ok')
@@ -1825,7 +1825,7 @@ class FilamentFeed:
                             self.ace._disable_feed_assist_all()
                         except Exception as fa_e:
                             logging.info(
-                                '[multiACE] FA disable after load failed: %s' % fa_e)
+                                '[ACE] FA disable after load failed: %s' % fa_e)
 
             elif action == FEED_ACT_UNLOAD:
 
@@ -1838,7 +1838,7 @@ class FilamentFeed:
                         self.ace._v2_arm_fa_for_unload(self.filament_ch[ch])
                     except Exception as fa_e:
                         logging.info(
-                            '[multiACE] V2 arm FA for FEED_ACT_UNLOAD failed: %s' % fa_e)
+                            '[ACE] V2 arm FA for FEED_ACT_UNLOAD failed: %s' % fa_e)
 
                 if self.ace is not None:
                     self.ace._disable_feed_assist_all()
@@ -1982,7 +1982,7 @@ class FilamentFeed:
                             head_idx = self.filament_ch[ch]
                             source = self.ace._head_source.get(head_idx)
                             if source and source['ace_index'] != self.ace._active_device_index:
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: switching to ACE %d for retract' % source['ace_index'])
+                                logging.info('[ACE] FEED_AUTO UNLOAD: switching to ACE %d for retract' % source['ace_index'])
                                 self.ace._switch_ace_for_head_target(source['ace_index'])
 
                             unload_max = self.ace.unload_retry if self.ace is not None else 3
@@ -2154,13 +2154,13 @@ class FilamentFeed:
                         if self.ace is not None and self.ace.head_uses_ace(self.filament_ch[ch]):
                             head_idx = self.filament_ch[ch]
                             if not getattr(self.ace, '_last_unload_ok', True):
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: unload '
+                                logging.info('[ACE] FEED_AUTO UNLOAD: unload '
                                              'NOT verified (stuck) - keeping '
                                              'head_source[%d] for the retry' % head_idx)
                             elif self.ace._head_source.get(head_idx) is not None:
                                 self.ace._head_source[head_idx] = None
                                 self.ace._save_head_source()
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: cleared head_source[%d]' % head_idx)
+                                logging.info('[ACE] FEED_AUTO UNLOAD: cleared head_source[%d]' % head_idx)
 
                             try:
                                 self.ace._push_slot_rfid_to_extruder(head_idx)
@@ -2265,7 +2265,7 @@ class FilamentFeed:
                             head_idx = self.filament_ch[ch]
                             source = self.ace._head_source.get(head_idx)
                             if source and source['ace_index'] != self.ace._active_device_index:
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: switching to ACE %d for retract' % source['ace_index'])
+                                logging.info('[ACE] FEED_AUTO UNLOAD: switching to ACE %d for retract' % source['ace_index'])
                                 self.ace._switch_ace_for_head_target(source['ace_index'])
 
                             unload_max = self.ace.unload_retry if self.ace is not None else 3
@@ -2436,13 +2436,13 @@ class FilamentFeed:
                         if self.ace is not None and self.ace.head_uses_ace(self.filament_ch[ch]):
                             head_idx = self.filament_ch[ch]
                             if not getattr(self.ace, '_last_unload_ok', True):
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: unload '
+                                logging.info('[ACE] FEED_AUTO UNLOAD: unload '
                                              'NOT verified (stuck) - keeping '
                                              'head_source[%d] for the retry' % head_idx)
                             elif self.ace._head_source.get(head_idx) is not None:
                                 self.ace._head_source[head_idx] = None
                                 self.ace._save_head_source()
-                                logging.info('[multiACE] FEED_AUTO UNLOAD: cleared head_source[%d]' % head_idx)
+                                logging.info('[ACE] FEED_AUTO UNLOAD: cleared head_source[%d]' % head_idx)
 
                             try:
                                 self.ace._push_slot_rfid_to_extruder(head_idx)
@@ -3105,7 +3105,7 @@ class FilamentFeed:
     def cmd_FEED_RUNOUT_EVENT_HANDLE(self, gcmd):
 
         if self.ace is not None and getattr(self.ace, '_swap_in_progress', False):
-            logging.info("[multiACE] FEED_RUNOUT_EVENT_HANDLE: blocking during swap")
+            logging.info("[ACE] FEED_RUNOUT_EVENT_HANDLE: blocking during swap")
             return
         channel = gcmd.get_int('CHANNEL')
         if channel < 0 or channel >= FEED_CHANNEL_NUMS:

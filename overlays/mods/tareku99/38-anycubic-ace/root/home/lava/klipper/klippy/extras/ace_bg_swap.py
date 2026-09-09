@@ -74,7 +74,7 @@ class AceBgSwap:
                     except (TypeError, ValueError):
                         pass
                 self.enabled_heads = restored
-                logging.info('[multiACE] [bg-unload] enabled heads restored '
+                logging.info('[ACE] [bg-unload] enabled heads restored '
                              'from ace__bg_heads: %s'
                              % (sorted(restored) or 'NONE'))
         self.version = BG_SWAP_VERSION
@@ -107,7 +107,7 @@ class AceBgSwap:
         }
 
     cmd_ACE_BG_SET_HEAD_help = (
-        '[multiACE] Declare a head bg-swap capable (= its dock is OPEN below,'
+        '[ACE] Declare a head bg-swap capable (= its dock is OPEN below,'
         ' the cold-pull purges through it). ACE_BG_SET_HEAD HEAD=n ENABLE=0|1'
         ' - persisted (ace__bg_heads), overrides the [ace_bg_swap] heads'
         ' config default.')
@@ -134,7 +134,7 @@ class AceBgSwap:
         return head in self._busy
 
     def _say(self, msg):
-        logging.info('[multiACE] [bg-unload] %s' % msg)
+        logging.info('[ACE] [bg-unload] %s' % msg)
         try:
             self.gcode.respond_raw('// [bg-unload] %s' % msg)
         except Exception:
@@ -476,7 +476,7 @@ class AceBgSwap:
                 det = sensor.get_status(0).get('filament_detected')
             except Exception:
                 pass
-            logging.info('[multiACE] [bg-gpio] head %d %s: '
+            logging.info('[ACE] [bg-gpio] head %d %s: '
                          'runout_buttun_state=%s filament_detected=%s'
                          % (head, where, raw, det))
         except Exception:
@@ -567,7 +567,7 @@ class AceBgSwap:
                'runs %.2fs%s' % (name, dist, speed, start - est, end - start,
                                  ' (motor enabled)' if enabled_now else ''))
         gcmd.respond_info(msg)
-        logging.info('[multiACE] %s (start=%.3f end=%.3f print_time=%.3f)'
+        logging.info('[ACE] %s (start=%.3f end=%.3f print_time=%.3f)'
                      % (msg, start, end, toolhead.print_time))
 
     cmd_ACE_BG_UNLOAD_help = (
@@ -859,7 +859,7 @@ class AceBgSwap:
             self._say('head %d: FAILED after retract (%s) - treat the '
                       'head as unloaded, check the slot'
                       % (self._dh(head), reason))
-        logging.exception('[multiACE] [bg-unload] head %d failed' % head)
+        logging.exception('[ACE] [bg-unload] head %d failed' % head)
 
     def _unload_core(self, head, ace, toolhead, ext, heater, pheaters,
                      ace_idx, slot, temp, soft, retract_done):
@@ -1150,7 +1150,7 @@ class AceBgSwap:
                 pass
             self._say('head %d: LOAD FAILED (%s) - the arrival swap loads '
                       'inline' % (self._dh(head), reason))
-            logging.exception('[multiACE] [bg-load] head %d failed' % head)
+            logging.exception('[ACE] [bg-load] head %d failed' % head)
         finally:
             self._busy.discard(head)
 
