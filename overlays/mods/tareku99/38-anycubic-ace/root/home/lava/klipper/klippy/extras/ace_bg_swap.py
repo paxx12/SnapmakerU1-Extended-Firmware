@@ -573,7 +573,7 @@ class AceBgSwap:
     cmd_ACE_BG_UNLOAD_help = (
         '[EXPERIMENTAL] Unload a PARKED ACE head in the background (heat + '
         'cold-pull via bg moves + ACE retract) while printing. '
-        'ACE_BG_UNLOAD HEAD=0-3 [TEMP=<feed temp>]. Requires head mode, 1:1 '
+        'ACE_BG_UNLOAD HEAD=0-3 [TEMP=<feed temp>]. Requires hybrid mode, 1:1 '
         'wiring, an OPEN dock below the head (purges ~60mm!), and the head '
         'must stay docked for the whole ~3min sequence.')
 
@@ -605,8 +605,8 @@ class AceBgSwap:
                            'serialized (shared move queue), one at a time'
                            % ', '.join(str(self._dh(h))
                                        for h in sorted(self._busy)))
-        if getattr(ace, '_ace_mode', 'multi') != 'head':
-            return _refuse('v0 requires head mode (1:1 ACE per head)')
+        if getattr(ace, '_ace_mode', 'all_heads') != 'hybrid':
+            return _refuse('v0 requires hybrid mode (1:1 ACE per head)')
         if not ace.head_uses_ace(head):
             return _refuse('head %d is not ACE-driven' % self._dh(head))
         if getattr(ace, '_swap_in_progress', False):
@@ -709,8 +709,8 @@ class AceBgSwap:
                            'serialized (shared move queue), one at a time'
                            % ', '.join(str(self._dh(h))
                                        for h in sorted(self._busy)))
-        if getattr(ace, '_ace_mode', 'multi') != 'head':
-            return _refuse('requires head mode (1:1 ACE per head)')
+        if getattr(ace, '_ace_mode', 'all_heads') != 'hybrid':
+            return _refuse('requires hybrid mode (1:1 ACE per head)')
         if not ace.head_uses_ace(head):
             return _refuse('head %d is not ACE-driven' % self._dh(head))
         if getattr(ace, '_swap_in_progress', False):

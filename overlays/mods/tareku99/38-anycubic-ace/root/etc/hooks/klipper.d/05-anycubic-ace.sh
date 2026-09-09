@@ -9,20 +9,16 @@
 # or incomplete ACE installation must not prevent stock Klipper from starting.
 
 if [ "$1" = "start" ]; then
-    ACE_STATE="/home/lava/printer_data/config/extended/ace/ace_vars.cfg"
     ACE_CFG="/home/lava/printer_data/config/extended/klipper/ace.cfg"
     ACE_SWITCH="/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh"
     ACE_EXTRAS="/home/lava/klipper/klippy/extras"
     ACE_KINEMATICS="/home/lava/klipper/klippy/kinematics"
 
-    # The mode file is a Klipper save_variables file, e.g.
-    #   ace__mode = 'all_heads'
-    ACE_MODE=""
-    if [ -r "$ACE_STATE" ]; then
-        ACE_MODE="$(sed -n "s/^ace__mode[[:space:]]*=[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" "$ACE_STATE" 2>/dev/null | head -n 1)"
-    fi
-
-    if [ -f "$ACE_CFG" ] && { [ "$ACE_MODE" = "all_heads" ] || [ "$ACE_MODE" = "hybrid" ]; } \
+    # ace.cfg is the enable/disable switch.  The ACE module validates the
+    # persisted topology and falls back to all_heads for unsupported values;
+    # a stale save_variables value must never prevent the ACE runtime from
+    # being restored before Klipper imports it.
+    if [ -f "$ACE_CFG" ] \
         && [ -f "$ACE_SWITCH" ] \
         && [ -f "$ACE_EXTRAS/filament_feed_ace.py" ] \
         && [ -f "$ACE_KINEMATICS/extruder_ace.py" ] \

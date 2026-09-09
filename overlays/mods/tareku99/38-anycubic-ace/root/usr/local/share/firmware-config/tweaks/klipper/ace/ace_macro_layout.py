@@ -120,11 +120,11 @@ GROUPS = (
 ACE_MACRO_NAMES = tuple(macro for group in GROUPS for macro in group["macros"])
 ACE_MACRO_KEYS = {name.lower() for name in ACE_MACRO_NAMES}
 
-# These names belonged to the pre-ACE macro panel.  They are removed when the
-# layout is applied so an existing frontend database does not show duplicate
-# controls beside the canonical ACE names.  This is deliberately limited to
-# ACE-owned names; unrelated user macros and groups are preserved.
-LEGACY_ACE_MACRO_NAMES = (
+# These names belonged to an earlier ACE macro panel.  They are removed when
+# the layout is applied so an existing frontend database does not show
+# duplicate controls beside the canonical ACE names.  This is deliberately
+# limited to ACE-owned names; unrelated user macros and groups are preserved.
+STALE_ACE_MACRO_NAMES = (
     "ACEA__SWITCH_0",
     "ACEA__SWITCH_1",
     "ACEA__SWITCH_2",
@@ -154,13 +154,13 @@ LEGACY_ACE_MACRO_NAMES = (
     "ACEH__UPDATE_CHECK",
     "ACEH__UPDATE_APPLY",
 )
-LEGACY_ACE_MACRO_KEYS = {name.lower() for name in LEGACY_ACE_MACRO_NAMES}
+STALE_ACE_MACRO_KEYS = {name.lower() for name in STALE_ACE_MACRO_NAMES}
 
 # These macros remain available to Klipper because the topology and recovery
 # code uses them internally, but they are not user-facing controls.
 INTERNAL_ACE_MACRO_NAMES = ("SET_ACE_MODE", "INNER_RESUME")
 INTERNAL_ACE_MACRO_KEYS = {name.lower() for name in INTERNAL_ACE_MACRO_NAMES}
-HIDDEN_ACE_MACRO_KEYS = LEGACY_ACE_MACRO_KEYS | INTERNAL_ACE_MACRO_KEYS
+HIDDEN_ACE_MACRO_KEYS = STALE_ACE_MACRO_KEYS | INTERNAL_ACE_MACRO_KEYS
 
 
 def _dict(value):
@@ -252,7 +252,7 @@ def merge_fluidd_macros(current):
         if not (
             isinstance(item, dict)
             and isinstance(item.get("name"), str)
-            and item["name"].lower() in LEGACY_ACE_MACRO_KEYS
+            and item["name"].lower() in STALE_ACE_MACRO_KEYS
         )
     ]
     for item in stored:
@@ -339,7 +339,7 @@ def merge_mainsail_group(current, group):
             # It will be rebuilt in its canonical group below.
             continue
         elif macro["name"].lower() in HIDDEN_ACE_MACRO_KEYS:
-            # Remove legacy and internal ACE controls instead of carrying them
+            # Remove stale and internal ACE controls instead of carrying them
             # forward as clickable extras.
             continue
         else:
@@ -411,7 +411,7 @@ def merge_mainsail_namespace(current):
         for name in hidden_macros
         if not (
             isinstance(name, str)
-            and name.lower() in LEGACY_ACE_MACRO_KEYS
+            and name.lower() in STALE_ACE_MACRO_KEYS
         )
     ]
     hidden_macros.extend(INTERNAL_ACE_MACRO_NAMES)

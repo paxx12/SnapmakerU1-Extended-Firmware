@@ -238,7 +238,7 @@ class Ace:
         for i in range(4):
             self.head_manual[i] = config.getboolean('head_manual_%d' % i, False)
 
-        self.HEAD_MODE_ACE = 0
+        self.HYBRID_ACE_INDEX = 0
         self._extruder_handler_registered = False
         cfg_ace_head = config.getint('ace_head', 3, minval=0, maxval=3)
         self._ace_head = cfg_ace_head
@@ -1596,7 +1596,7 @@ class Ace:
         """
         if any(self._head_source.get(h) is not None for h in range(4)):
             return
-        head_mode = getattr(self, '_ace_mode', 'all_heads') == 'hybrid'
+        hybrid_mode = getattr(self, '_ace_mode', 'all_heads') == 'hybrid'
         active_idx = self._active_device_index
         lines = []
         for head in range(4):
@@ -1604,7 +1604,7 @@ class Ace:
                 continue
             ace_idx = active_idx
             slot_idx = head
-            if head_mode:
+            if hybrid_mode:
                 ace_idx = self.head_ace_for(head)
                 _s = self._first_loaded_slot_for_ace(ace_idx)
                 if _s is not None:
@@ -1643,8 +1643,8 @@ class Ace:
         try:
             self.gcode.run_script_from_command('\n'.join(lines))
             logging.info(
-                '[ACE] PTC sync -> per-head (all heads empty, head_mode=%s)'
-                % head_mode)
+                '[ACE] PTC sync -> per-head (all heads empty, hybrid_mode=%s)'
+                % hybrid_mode)
         except Exception as e:
             logging.info('[ACE] PTC sync failed: %s' % e)
 
@@ -6101,7 +6101,7 @@ class Ace:
             return self._active_device_index
         self._set_active_idx(target)
         logging.info(
-            '[ACE] head %d -> active ACE %d (head-mode per-head wiring)'
+            '[ACE] head %d -> active ACE %d (hybrid per-head wiring)'
             % (head, target))
         return target
 
@@ -6333,10 +6333,10 @@ class Ace:
                         pass
             return
         if getattr(self, '_ace_mode', 'all_heads') == 'hybrid':
-            self.head_ace[self._ace_head] = self.HEAD_MODE_ACE
+            self.head_ace[self._ace_head] = self.HYBRID_ACE_INDEX
             logging.info(
                 '[ACE] Initialized hybrid head %d -> ACE %d'
-                % (self._ace_head, self.HEAD_MODE_ACE))
+                % (self._ace_head, self.HYBRID_ACE_INDEX))
 
     def _save_head_ace(self):
         save_data = {str(h): int(self.head_ace[h]) for h in range(4)}
@@ -9053,7 +9053,7 @@ class Ace:
             raise gcmd.error(
                 '[ACE] Invalid topology: %s. Use all_heads or hybrid.' % mode)
 
-        legacy_head = (gcmd.get_int('HEAD', None, minval=0, maxval=3)
+        hybrid_head = (gcmd.get_int('HEAD', None, minval=0, maxval=3)
                        if mode == 'hybrid' else None)
 
         current = self._ace_mode
@@ -9063,8 +9063,8 @@ class Ace:
 
         self._ace_mode = mode
         if mode == 'hybrid':
-            if legacy_head is not None:
-                self._ace_head = legacy_head
+            if hybrid_head is not None:
+                self._ace_head = hybrid_head
             for h in range(4):
                 self.head_feeder[h] = (h != self._ace_head)
                 if self.head_is_feeder(h) and not self.head_is_manual(h):
@@ -9333,7 +9333,7 @@ class Ace:
     cmd_ACE_LOG_help = '[ACE] Emit MSG to klippy.log (diagnostic tracepoint for macros).'
     def cmd_ACE_LOG(self, gcmd):
         msg = gcmd.get('MSG', '')
-        logging.info('[mace_log] %s', msg)
+        logging.info('[ace_log] %s', msg)
 
     cmd_ACE_FA_TEST_help = (
         '[ACE] Stress-test FA stop+start across slots without a print. '

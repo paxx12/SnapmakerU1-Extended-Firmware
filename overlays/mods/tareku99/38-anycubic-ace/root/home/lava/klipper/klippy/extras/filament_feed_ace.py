@@ -267,7 +267,7 @@ class FeedPort:
                 ace_idx = src['ace_index']
             else:
                 try:
-                    if (getattr(self.ace, '_ace_mode', 'multi') == 'head'
+                    if (getattr(self.ace, '_ace_mode', 'all_heads') == 'hybrid'
                             and self.ace.head_uses_ace(self.index)):
                         ace_idx = self.ace.head_ace_for(self.index)
                 except Exception:
@@ -2622,8 +2622,22 @@ class FilamentFeed:
         finally:
             self.channel_active = None
 
+    def _ace_controls_channel(self, channel):
+        """Return whether ACE owns the toolhead behind a feed channel.
+
+        In all_heads mode every non-manual head is ACE-controlled.  In hybrid
+        mode only the heads explicitly wired to ACE are; stock-feeder heads
+        must continue through the normal U1 error and gating paths.
+        """
+        if self.ace is None:
+            return False
+        try:
+            return bool(self.ace.head_uses_ace(self.filament_ch[channel]))
+        except Exception:
+            return False
+
     def _emit_feed_pause(self, channel, key):
-        if self.ace is None or getattr(self.ace, '_ace_mode', '') != 'multi':
+        if not self._ace_controls_channel(channel):
             return None
         head = self.filament_ch[channel]
         hd = self.ace._disp(head)
@@ -2637,11 +2651,11 @@ class FilamentFeed:
         """(detail, steps) for a failed LOAD, classified the way the swap path
         classifies it: no transport vs no flow vs a dead ACE-side feed.
 
-        (None, None) = cannot classify (no ace object, not multi, no
-        head_source, or an ace.py without the helper); the caller then keeps
-        the flat 'Load jam' message.
+        (None, None) = cannot classify (no ACE object, a stock-feeder head,
+        no head_source, or an ace.py without the helper); the caller then
+        keeps the flat 'Load jam' message.
         """
-        if self.ace is None or getattr(self.ace, '_ace_mode', '') != 'multi':
+        if not self._ace_controls_channel(channel):
             return None, None
         detail_fn = getattr(self.ace, '_load_slip_details', None)
         if detail_fn is None:
@@ -2865,7 +2879,7 @@ class FilamentFeed:
 
             if self.config['auto_mode'][channel] == False:
 
-                if self.ace is not None and getattr(self.ace, '_ace_mode', '') == 'multi':
+                if self._ace_controls_channel(channel):
                     logging.info("[feed] FEED_AUTO LOAD: ACE bypass auto_mode gate (channel[%d] auto_mode=False ignored)", channel)
                 else:
                     logging.info("[feed] FEED_AUTO LOAD skipped: channel[%d] auto_mode=False", channel)
@@ -2873,7 +2887,7 @@ class FilamentFeed:
 
             if self.runout_sensor[channel] is None or self.runout_sensor[channel].get_status(0)['enabled'] == False:
 
-                if self.ace is not None and getattr(self.ace, '_ace_mode', '') == 'multi':
+                if self._ace_controls_channel(channel):
                     logging.info("[feed] FEED_AUTO LOAD: ACE bypass runout_sensor gate (channel[%d] sensor None or disabled)", channel)
                 else:
                     logging.info("[feed] FEED_AUTO LOAD skipped: channel[%d] runout_sensor disabled or None", channel)
