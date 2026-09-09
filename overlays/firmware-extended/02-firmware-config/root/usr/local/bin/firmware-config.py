@@ -13,7 +13,7 @@ import time
 import fcntl
 import yaml
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 def deep_merge(base, override):
     """Deep merge override into base, modifying base in place."""
@@ -660,6 +660,11 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
         upload_path = cfg.get('upload_path', '/tmp/upload_file')
         shell_template = cfg.get('shell')
         stop_token = cfg.get('stop_token')
+        # Optional expected SHA-256 (query string). When the browser uploads a
+        # release build it just checked (the offline flow), it passes the hash so
+        # the device verifies the file before flashing. Keep only hex — argv-safe.
+        sha256 = re.sub(r'[^0-9a-fA-F]', '',
+                        (parse_qs(urlparse(self.path).query).get('sha256', [''])[0]))
 
         stream_started = False
         file_path = None
@@ -680,11 +685,13 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             self._write_stream_chunk(f"=== Upgrade Started ===\n")
             self._write_stream_chunk(f"File: {file_path}\n")
             self._write_stream_chunk(f"Size: {file_size} bytes\n")
+            if sha256:
+                self._write_stream_chunk(f"Expected SHA-256: {sha256}\n")
             self._write_stream_chunk(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             self._write_stream_chunk(f"{'=' * 40}\n\n")
 
             try:
-                rc, stopped = self._stream_command(shell_to_cmd(shell_template, file_path), stop_token=stop_token)
+                rc, stopped = self._stream_command(shell_to_cmd(shell_template, file_path, sha256), stop_token=stop_token)
                 self._write_stream_chunk(f"\n{'=' * 40}\n")
                 if rc == 0 or stopped:
                     self._write_stream_chunk("SUCCESS: Completed successfully.\n")

@@ -122,6 +122,32 @@ upgrade_upload:
       esac
     }
 
+    # Verify the uploaded image against the SHA-256 the browser carried over from
+    # the update check (passed as $2), before unpacking or flashing. This is the
+    # offline path: the browser downloaded the .bin and the user uploaded it here.
+    # Must run before unpack_firmware (which rewrites a .zip into its .bin). No
+    # checksum ($2 empty, e.g. a manual/custom upload) -> warn and proceed.
+    expected_sha=$(printf '%s' "$2" | tr 'A-F' 'a-f')
+    if [ -n "$expected_sha" ]; then
+      echo "Verifying SHA-256..."
+      actual_sha=$(sha256sum "$1" 2>/dev/null | awk '{print $1}' | tr 'A-F' 'a-f')
+      if [ -z "$actual_sha" ]; then
+        echo "ERROR: could not compute SHA-256 of the uploaded file."
+        rm -f "$1"
+        exit 1
+      fi
+      if [ "$expected_sha" != "$actual_sha" ]; then
+        echo "ERROR: SHA-256 mismatch - refusing to flash."
+        echo "  expected: $expected_sha"
+        echo "  actual:   $actual_sha"
+        rm -f "$1"
+        exit 1
+      fi
+      echo "SHA-256 verified OK."
+    else
+      echo "WARNING: no checksum provided - integrity not verified (manual upload)."
+    fi
+
     unpack_firmware "$1"
 
     size=$(stat -c%s "$1" 2>/dev/null || wc -c < "$1")
