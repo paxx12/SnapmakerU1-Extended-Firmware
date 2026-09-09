@@ -13,7 +13,7 @@ import time
 import fcntl
 import yaml
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 def deep_merge(base, override):
     """Deep merge override into base, modifying base in place."""
@@ -59,6 +59,7 @@ def shell_to_cmd(shell, *args):
         cmd.extend(args)
     return cmd
 
+
 class FirmwareConfigHandler(SimpleHTTPRequestHandler):
     html_dir = None
     functions = {'settings': {}, 'links': {}, 'actions': {}, 'quick_actions': {}, 'status': {}, 'upgrade_url': {}, 'upgrade_upload': {}}
@@ -81,6 +82,8 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             self.handle_get_actions('quick_actions')
         elif path == "/api/actions":
             self.handle_get_actions('actions')
+        elif path == "/api/upgrade/deviceinfo":
+            self.handle_deviceinfo()
         else:
             super().do_GET()
 
@@ -215,6 +218,23 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             log(f"Action error: {e}")
             self.send_error(500, str(e))
+
+    def handle_deviceinfo(self):
+        # Facts the browser needs to check for updates but can't read itself (no
+        # filesystem access): the build profile (extended | extended-afc) selects
+        # the release asset, and the current version drives the "is it newer"
+        # comparison the browser does against the Cloudflare resolver's response.
+        def _read(path):
+            try:
+                with open(path) as f:
+                    return f.read().strip()
+            except Exception:
+                return ""
+        self.send_json({
+            "fullversion": _read("/etc/FULLVERSION"),
+            "build_version": _read("/etc/BUILD_VERSION"),
+            "build_profile": _read("/etc/BUILD_PROFILE") or "extended",
+        })
 
     def send_json(self, data):
         response = json.dumps(data, indent=2).encode()
@@ -591,6 +611,10 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             try:
                 data = json.loads(body)
                 url = data.get('url', '').strip()
+                # Optional expected SHA-256 (the release asset's published digest).
+                # When present, the flash shell verifies the download against it
+                # before flashing. Keep only hex so it's safe to pass as an argv word.
+                sha256 = re.sub(r'[^0-9a-fA-F]', '', (data.get('sha256') or ''))
             except json.JSONDecodeError:
                 self.send_error(400, "Invalid JSON")
                 return
@@ -604,10 +628,12 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             stream_started = True
             self._write_stream_chunk(f"=== Upgrade Started ===\n")
             self._write_stream_chunk(f"URL: {url}\n")
+            if sha256:
+                self._write_stream_chunk(f"Expected SHA-256: {sha256}\n")
             self._write_stream_chunk(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             self._write_stream_chunk(f"{'=' * 40}\n\n")
 
-            rc, stopped = self._stream_command(shell_to_cmd(shell_template, url), stop_token=stop_token)
+            rc, stopped = self._stream_command(shell_to_cmd(shell_template, url, sha256), stop_token=stop_token)
             self._write_stream_chunk(f"\n{'=' * 40}\n")
             if rc == 0 or stopped:
                 self._write_stream_chunk("SUCCESS: Completed successfully.\n")
@@ -634,6 +660,11 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
         upload_path = cfg.get('upload_path', '/tmp/upload_file')
         shell_template = cfg.get('shell')
         stop_token = cfg.get('stop_token')
+        # Optional expected SHA-256 (query string). When the browser uploads a
+        # release build it just checked (the offline flow), it passes the hash so
+        # the device verifies the file before flashing. Keep only hex — argv-safe.
+        sha256 = re.sub(r'[^0-9a-fA-F]', '',
+                        (parse_qs(urlparse(self.path).query).get('sha256', [''])[0]))
 
         stream_started = False
         file_path = None
@@ -654,11 +685,13 @@ class FirmwareConfigHandler(SimpleHTTPRequestHandler):
             self._write_stream_chunk(f"=== Upgrade Started ===\n")
             self._write_stream_chunk(f"File: {file_path}\n")
             self._write_stream_chunk(f"Size: {file_size} bytes\n")
+            if sha256:
+                self._write_stream_chunk(f"Expected SHA-256: {sha256}\n")
             self._write_stream_chunk(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
             self._write_stream_chunk(f"{'=' * 40}\n\n")
 
             try:
-                rc, stopped = self._stream_command(shell_to_cmd(shell_template, file_path), stop_token=stop_token)
+                rc, stopped = self._stream_command(shell_to_cmd(shell_template, file_path, sha256), stop_token=stop_token)
                 self._write_stream_chunk(f"\n{'=' * 40}\n")
                 if rc == 0 or stopped:
                     self._write_stream_chunk("SUCCESS: Completed successfully.\n")

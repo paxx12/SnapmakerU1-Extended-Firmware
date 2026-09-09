@@ -135,6 +135,15 @@
         <div class="card" id="upgrade-card">
             <div class="card-header"><span class="card-title">Firmware Upgrade</span></div>
             <div class="input-row">
+                <select class="input" id="channel-select" style="flex:0 0 auto;max-width:200px;">
+                    <option value="stable">Stable</option>
+                    <option value="testing">Testing (pre-releases)</option>
+                    <option value="develop">Develop (bleeding edge)</option>
+                </select>
+                <button class="btn" id="check-update-btn" onclick="checkLatest()">Check for latest</button>
+            </div>
+            <div id="update-status" style="font-size:13px;margin:2px 0 8px;color:var(--text-secondary,#888);"></div>
+            <div class="input-row">
                 <input type="text" class="input" id="url-input" placeholder="Enter firmware URL" oninput="validateURL()">
                 <button class="btn btn-primary" id="download-btn" disabled onclick="downloadUpgrade()">Download & Upgrade</button>
             </div>
@@ -362,6 +371,114 @@
         // URL & File Handling
         // ========================================
 
+        // Remembers the URL + SHA-256 from the last "Check for latest" so the flash
+        // request can carry the expected checksum. Bound to the exact URL string: if
+        // the user edits the field after checking, the stale hash is not sent.
+        let _latestCheck = null;
+
+        // #559's Cloudflare resolver. stable/testing are served from the production
+        // deployment; develop from its preview host (mirrors the lmd imposter's
+        // per-channel host split). The check runs in the browser, not on the device,
+        // so a printer with no internet can still be told an update exists.
+        const UPGRADE_HOSTS = {
+            stable:  'https://snapmakeru1-extended-firmware.pages.dev',
+            testing: 'https://snapmakeru1-extended-firmware.pages.dev',
+            develop: 'https://develop.snapmakeru1-extended-firmware.pages.dev',
+        };
+
+        // Monotonic paxx build number: "1.6.0-paxx12-22" -> 22 (also with a trailing
+        // -<hash>). Rolling develop tags ("…-paxx12-develop-<hash>") have no build
+        // number and return -1. Mirrors the device build_version convention.
+        function buildNumber(v) {
+            const m = v && v.match(/paxx\d*-(\d+)(?:$|[^\d])/);
+            return m ? parseInt(m[1], 10) : -1;
+        }
+
+        // True when `latest` is worth offering over `current`. Exact match -> no.
+        // Two numbered builds -> only if strictly newer (never a downgrade). If
+        // either side can't be ranked (develop, or unknown) but they differ -> offer.
+        function updateAvailable(current, latest) {
+            if (!current || !latest) return true;
+            if (current === latest) return false;
+            const c = buildNumber(current), l = buildNumber(latest);
+            if (c >= 0 && l >= 0) return l > c;
+            return true;
+        }
+
+        async function checkLatest() {
+            const btn = $('check-update-btn'), status = $('update-status');
+            const channel = $('channel-select').value;
+            btn.disabled = true;
+            _latestCheck = null;
+            status.textContent = `Checking for the latest ${channel} release…`;
+            try {
+                // Device facts (same-origin) — the browser can't read /etc: it needs
+                // the build profile for the query and the current version to compare.
+                // Compare against build_version: it carries the paxx version on both
+                // pre- and post-#705 builds (fullversion is the stock version pre-#705).
+                let dev = {};
+                try { dev = await (await apiFetch('api/upgrade/deviceinfo')).json(); } catch (_) {}
+                const profile = dev.build_profile || 'extended';
+                const current = dev.build_version || dev.fullversion || '';
+
+                // Cross-origin, unauthenticated — plain fetch, not apiFetch.
+                const host = UPGRADE_HOSTS[channel] || UPGRADE_HOSTS.stable;
+                const q = `?channel=${channel}&build_profile=${encodeURIComponent(profile)}`
+                        + `&fullversion=${encodeURIComponent(dev.fullversion || '')}`
+                        + `&build_version=${encodeURIComponent(dev.build_version || '')}`;
+                const resp = await fetch(host + '/api/device/firmware/latest' + q, { cache: 'no-store' });
+                const payload = await resp.json().catch(() => null);
+
+                if (!resp.ok || !payload || payload.code !== 200 || !payload.data) {
+                    status.textContent = (resp.status === 404)
+                        ? `No ${channel} build has been published on this channel yet.`
+                        : `Could not check for updates: ${(payload && payload.msg) || 'HTTP ' + resp.status}.`;
+                    return;
+                }
+
+                const data = payload.data;
+                const sizeMb = data.size ? Math.round(data.size / 1048576) : null;
+                const addNotes = () => {
+                    const notes = data.release_notes &&
+                        (data.release_notes['en-GB'] || Object.values(data.release_notes)[0]);
+                    if (!Array.isArray(notes) || !notes.length) return;
+                    const wrap = document.createElement('div');
+                    wrap.style.cssText = 'margin-top:6px;';
+                    wrap.appendChild(document.createTextNode('Release notes:'));
+                    const ul = document.createElement('ul');
+                    ul.style.cssText = 'margin:4px 0 0;padding-left:18px;';
+                    notes.slice(0, 8).forEach(line => {
+                        const li = document.createElement('li');
+                        li.textContent = line;
+                        ul.appendChild(li);
+                    });
+                    wrap.appendChild(ul);
+                    status.appendChild(wrap);
+                };
+
+                if (!updateAvailable(current, data.version)) {
+                    status.textContent = current
+                        ? `You're up to date — running ${current}; latest ${channel} is ${data.version}.`
+                        : `Latest ${channel} is ${data.version}.`;
+                    addNotes();
+                    return;
+                }
+
+                $('url-input').value = data.url;
+                _latestCheck = { url: data.url, sha256: data.sha256 || '' };
+                validateURL();
+                status.textContent = `Update available — latest ${channel}: ${data.version}`
+                    + (sizeMb ? ` (${sizeMb} MB)` : '')
+                    + (current ? `, you have ${current}` : '')
+                    + '. URL filled below.';
+                addNotes();
+            } catch (e) {
+                status.textContent = 'Check failed: ' + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
         function validateURL() {
             const url = $('url-input').value.trim();
             try {
@@ -550,10 +667,17 @@
             $('action-log').classList.add('visible');
 
             try {
+                // Include the expected SHA-256 only when it belongs to this exact
+                // URL (from a fresh "Check for latest"). A hand-pasted URL sends no
+                // hash and the device flashes with a "not verified" warning instead.
+                const body = { url };
+                if (_latestCheck && _latestCheck.url === url && _latestCheck.sha256) {
+                    body.sha256 = _latestCheck.sha256;
+                }
                 const resp = await apiFetch('api/upgrade/url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify(body)
                 });
                 await streamResponse(resp);
             } catch (e) {
@@ -595,7 +719,12 @@
             let lastIdx = 0;
             const startTime = performance.now();
 
-            xhr.open('POST', 'api/upgrade/upload');
+            // Offline flow: if the user checked for an update and is uploading that
+            // release build, carry its sha256 so the device verifies before flashing.
+            // A manual/custom upload (no prior check) sends none and is size-checked only.
+            const shaQ = (_latestCheck && _latestCheck.sha256)
+                ? ('?sha256=' + encodeURIComponent(_latestCheck.sha256)) : '';
+            xhr.open('POST', 'api/upgrade/upload' + shaQ);
             const jwt = getJWT();
             if (jwt) xhr.setRequestHeader('Authorization', `Bearer ${jwt}`);
 
