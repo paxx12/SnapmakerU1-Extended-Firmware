@@ -414,15 +414,18 @@
             try {
                 // Device facts (same-origin) — the browser can't read /etc: it needs
                 // the build profile for the query and the current version to compare.
+                // Compare against build_version: it carries the paxx version on both
+                // pre- and post-#705 builds (fullversion is the stock version pre-#705).
                 let dev = {};
                 try { dev = await (await apiFetch('api/upgrade/deviceinfo')).json(); } catch (_) {}
                 const profile = dev.build_profile || 'extended';
-                const current = dev.fullversion || '';
+                const current = dev.build_version || dev.fullversion || '';
 
                 // Cross-origin, unauthenticated — plain fetch, not apiFetch.
                 const host = UPGRADE_HOSTS[channel] || UPGRADE_HOSTS.stable;
                 const q = `?channel=${channel}&build_profile=${encodeURIComponent(profile)}`
-                        + `&fullversion=${encodeURIComponent(current)}`;
+                        + `&fullversion=${encodeURIComponent(dev.fullversion || '')}`
+                        + `&build_version=${encodeURIComponent(dev.build_version || '')}`;
                 const resp = await fetch(host + '/api/device/firmware/latest' + q, { cache: 'no-store' });
                 const payload = await resp.json().catch(() => null);
 
