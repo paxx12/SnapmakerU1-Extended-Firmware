@@ -1,0 +1,77 @@
+settings:
+  snapmaker_components:
+    items:
+      anycubic_ace_experimental:
+        label: Anycubic ACE (experimental)
+        description: Optional ACE Pro / ACE 2 Pro integration for one to four units.
+        get_cmd:
+          - bash
+          - -c
+          - test -f /oem/printer_data/config/extended/klipper/ace.cfg && echo "enabled" || echo "disabled"
+        options:
+          enabled:
+            label: Enabled
+            confirm: |
+              Enable the experimental Anycubic ACE path?
+
+              The ACE model and protocol are detected over USB. Review
+              ace.cfg, set ace_device_count, and tune the load values before
+              loading filament. Klipper will restart.
+            cmd:
+              - bash
+              - -ec
+              - |
+                ace_found=0
+                for ace_device in /dev/serial/by-id/usb-ANYCUBIC* /dev/serial/by-id/usb-1a86_USB_Single_Serial_* /dev/serial/by-id/usb-1a86_USB_Serial*; do
+                  if [ -e "$ace_device" ]; then
+                    ace_found=1
+                    break
+                  fi
+                done
+                if [ "$ace_found" -ne 1 ]; then
+                  echo "ERROR: No compatible ACE serial device detected."
+                  exit 1
+                fi
+                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh
+                if [ ! -f "$ace_mode" ]; then
+                  echo "ERROR: ACE runtime files are missing from this firmware."
+                  exit 1
+                fi
+                bash "$ace_mode" ace
+                mkdir -p /oem/printer_data/config/extended/klipper
+                ln -sf /usr/local/share/firmware-config/tweaks/klipper/ace.cfg /oem/printer_data/config/extended/klipper/ace.cfg
+                ace_macro_layout=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_macro_layout.py
+                if [ -f "$ace_macro_layout" ]; then
+                  python3 "$ace_macro_layout" apply --best-effort
+                else
+                  echo "WARNING: ACE macro layout helper is not installed."
+                fi
+                echo "Experimental ACE integration enabled. Review ace.cfg and restart Klipper..."
+                /etc/init.d/S60klipper restart
+          disabled:
+            label: Disabled
+            cmd:
+              - bash
+              - -ec
+              - |
+                ace_mode=/usr/local/share/firmware-config/tweaks/klipper/ace/ace_mode_switch.sh
+                if [ -f "$ace_mode" ]; then
+                  bash "$ace_mode" stock
+                fi
+                rm -f /oem/printer_data/config/extended/klipper/ace.cfg
+                echo "Experimental ACE integration disabled. Restoring stock U1 behavior and restarting Klipper..."
+                /etc/init.d/S60klipper restart
+        default: disabled
+
+actions:
+  troubleshooting:
+    items:
+      anycubic-ace-experimental-refresh:
+        label: Refresh experimental ACE connection
+        description: Refresh the ACE device list without changing configuration.
+        cmd:
+          - bash
+          - -ec
+          - |
+            curl -sS -X POST -H 'Content-Type: application/json' -d '{"script":"ACE_LIST"}' http://127.0.0.1:7125/printer/gcode/script
+        message: "Refreshing the experimental ACE device list..."

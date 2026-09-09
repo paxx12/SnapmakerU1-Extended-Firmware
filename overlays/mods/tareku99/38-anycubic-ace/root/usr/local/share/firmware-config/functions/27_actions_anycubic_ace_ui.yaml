@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-PackageHomePage: https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware
+# SPDX-FileCopyrightText: Copyright (c) 2026 @paxx12
+
+actions:
+  troubleshooting:
+    items:
+      anycubic-ace-macro-layout:
+        label: Apply ACE macro layout
+        description: Organize ACE macros in both Fluidd and Mainsail without changing printer settings.
+        cmd:
+          - python3
+          - /usr/local/share/firmware-config/tweaks/klipper/ace/ace_macro_layout.py
+          - apply
+        message: "Applying the ACE macro layout to Fluidd and Mainsail..."

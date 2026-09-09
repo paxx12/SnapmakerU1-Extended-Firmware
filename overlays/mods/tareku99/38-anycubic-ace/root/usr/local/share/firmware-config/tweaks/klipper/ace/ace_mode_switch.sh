@@ -1,0 +1,102 @@
+#!/bin/bash
+set -e
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOME_DIR="/home/lava"
+EXTRAS_DIR="${HOME_DIR}/klipper/klippy/extras"
+KINEMATICS_DIR="${HOME_DIR}/klipper/klippy/kinematics"
+STATE_DIR="${HOME_DIR}/printer_data/config/extended/ace"
+BUNDLE_DIR="/usr/local/share/firmware-config/tweaks/klipper/ace"
+SEED_DIR="$BUNDLE_DIR"
+VARS_FILE="${STATE_DIR}/ace_vars.cfg"
+LOGDIR="${HOME_DIR}/printer_data/logs"
+LOGFILE="${LOGDIR}/ace_mode_switch.log"
+mkdir -p "$LOGDIR" 2>/dev/null || true
+if [ -e "$LOGFILE" ] && [ ! -w "$LOGFILE" ]; then
+    rm -f "$LOGFILE" 2>/dev/null || true
+fi
+touch "$LOGFILE" 2>/dev/null || true
+chmod 0666 "$LOGFILE" 2>/dev/null || true
+MODE="$1"
+log() {
+    msg="$(date '+%Y-%m-%d %H:%M:%S') [ACE] $1"
+    printf '%s\n' "$msg"
+    printf '%s\n' "$msg" >> "$LOGFILE" 2>/dev/null || true
+}
+if [ "$MODE" != "ace" ] && [ "$MODE" != "stock" ]; then
+    echo "Usage: $0 [ace|stock]"
+    exit 1
+fi
+if [ ! -f "$SEED_DIR/ace_vars.cfg" ]; then
+    SEED_DIR="$SCRIPT_DIR"
+fi
+mkdir -p "$STATE_DIR/i18n"
+# Firmware Config invokes this script as root, but Klipper runs as lava and
+# must be able to update save_variables state during normal operation.
+chown lava:lava "$STATE_DIR" "$STATE_DIR/i18n" 2>/dev/null || true
+if [ ! -f "$VARS_FILE" ]; then
+    cp "$SEED_DIR/ace_vars.cfg" "$VARS_FILE"
+fi
+if [ ! -f "$STATE_DIR/i18n/en.json" ]; then
+    cp "$SEED_DIR/i18n/en.json" "$STATE_DIR/i18n/en.json"
+fi
+chown lava:lava "$VARS_FILE" "$STATE_DIR/i18n/en.json" 2>/dev/null || true
+chmod 0664 "$VARS_FILE" 2>/dev/null || true
+if [ "$SCRIPT_DIR" != "$STATE_DIR" ]; then
+    cp "$SCRIPT_DIR/ace_mode_switch.sh" "$STATE_DIR/ace_mode_switch.sh"
+    chmod 0755 "$STATE_DIR/ace_mode_switch.sh"
+fi
+log "=== Mode switch to: $MODE ==="
+log "EXTRAS_DIR=$EXTRAS_DIR"
+log "KINEMATICS_DIR=$KINEMATICS_DIR"
+if [ ! -f "$EXTRAS_DIR/filament_feed_ace.py" ]; then
+    log "ERROR: filament_feed_ace.py not found in $EXTRAS_DIR! Aborting."
+    exit 1
+fi
+if [ ! -f "$KINEMATICS_DIR/extruder_ace.py" ]; then
+    log "ERROR: extruder_ace.py not found in $KINEMATICS_DIR! Aborting."
+    exit 1
+fi
+if [ ! -f "$EXTRAS_DIR/filament_switch_sensor_ace.py" ]; then
+    log "ERROR: filament_switch_sensor_ace.py not found in $EXTRAS_DIR! Aborting."
+    exit 1
+fi
+if [ ! -f "$EXTRAS_DIR/filament_feed_stock.py" ]; then
+    log "First run: backing up stock filament_feed.py"
+    cp "$EXTRAS_DIR/filament_feed.py" "$EXTRAS_DIR/filament_feed_stock.py"
+fi
+if [ ! -f "$KINEMATICS_DIR/extruder_stock.py" ]; then
+    log "First run: backing up stock extruder.py"
+    cp "$KINEMATICS_DIR/extruder.py" "$KINEMATICS_DIR/extruder_stock.py"
+fi
+if [ ! -f "$EXTRAS_DIR/filament_switch_sensor_stock.py" ]; then
+    log "First run: backing up stock filament_switch_sensor.py"
+    cp "$EXTRAS_DIR/filament_switch_sensor.py" "$EXTRAS_DIR/filament_switch_sensor_stock.py"
+fi
+copy_or_die() {
+    local src="$1"
+    local dst="$2"
+    local err
+    if ! err=$(cp "$src" "$dst" 2>&1); then
+        log "ERROR: cp '$src' -> '$dst' failed: ${err:-cp failed}"
+        exit 1
+    fi
+}
+if [ "$MODE" = "ace" ]; then
+    log "Activating ACE mode..."
+    copy_or_die "$EXTRAS_DIR/filament_feed_ace.py" "$EXTRAS_DIR/filament_feed.py"
+    copy_or_die "$KINEMATICS_DIR/extruder_ace.py" "$KINEMATICS_DIR/extruder.py"
+    copy_or_die "$EXTRAS_DIR/filament_switch_sensor_ace.py" "$EXTRAS_DIR/filament_switch_sensor.py"
+    log "ACE files activated"
+elif [ "$MODE" = "stock" ]; then
+    log "Restoring stock U1 runtime files..."
+    copy_or_die "$EXTRAS_DIR/filament_feed_stock.py" "$EXTRAS_DIR/filament_feed.py"
+    copy_or_die "$KINEMATICS_DIR/extruder_stock.py" "$KINEMATICS_DIR/extruder.py"
+    copy_or_die "$EXTRAS_DIR/filament_switch_sensor_stock.py" "$EXTRAS_DIR/filament_switch_sensor.py"
+    log "Stock files restored"
+fi
+find "$EXTRAS_DIR/__pycache__" -name "filament_feed*" -delete 2>/dev/null || true
+find "$EXTRAS_DIR/__pycache__" -name "filament_switch_sensor*" -delete 2>/dev/null || true
+find "$KINEMATICS_DIR/__pycache__" -name "extruder*" -delete 2>/dev/null || true
+log "Python cache cleared"
+log "Files swapped. Manual reboot required!"
+log "=== Mode switch complete ==="
