@@ -16,11 +16,6 @@ section 1, then in section 3 set Filament Detection to OpenRFID and leave Spoolm
 Integration off. Then go straight to
 [section 5](#5-writing-tags-without-spoolman).
 
-Factory tags on Snapmaker, Anycubic and QIDI spools are read directly, nothing to
-write. For Bambu, Creality and Elegoo, the app can read the factory tag and copy
-it onto a blank tag, which the printer then reads without any extra setup. See
-[RFID Format & Reader Design](design/rfid.md).
-
 ## Contents
 
 - [1. Extended firmware](#1-extended-firmware)
@@ -34,9 +29,10 @@ it onto a blank tag, which the printer then reads without any extra setup. See
 
 Grab the firmware from the
 [Releases page](https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware/releases).
-Look for the release with the green **Latest** badge, not whatever sits at the
-top of the page, that one's usually a pre-release. Open **Assets** and download
-the file ending in `_upgrade.bin`, around 250 MB. Ignore the source code files.
+Open **Assets** and download the file ending in `_upgrade.bin`, around 250 MB.
+Ignore the source code files.
+
+***For this guide you will need v1.6.0 or later.***
 
 ![GitHub release assets](screenshots/github-releases.png)
 
@@ -82,7 +78,7 @@ page won't load, Advanced Mode isn't on yet, go back to section 1.
 
 ![Finding the printer's IP address](screenshots/printer-ip.png)
 
-Go to **Settings** > **Snapmaker Components**.
+In Firmware-config go to **Settings** > **Snapmaker Components**.
 
 ![Snapmaker Components settings](screenshots/snapmaker-components.png)
 
@@ -108,14 +104,15 @@ needed.
 
 ## 4. Writing tags with the app
 
-Buy some **NTAG215** or **NTAG216** tags. The SnapSpeed spool that came with the U1
-already has a Snapmaker tag on it, so you can check the reading and mapping
-workflow before yours arrive.
+Buy some **NTAG215** or **NTAG216** tags.
 
-The steps below use
+***The SnapSpeed spool that came with the U1 already has a Snapmaker tag on it, so
+you can check the reading and mapping workflow before yours arrive.***
+
+The steps below use my own app
 [SpoolPainter](https://play.google.com/store/apps/details?id=com.spoolpainter.app).
 
-Other community apps do the same job, they're listed on the
+Other community apps do a similar job, they're listed on the
 [community apps page](spoolman.md#apps).
 
 ### Point the app at Spoolman
@@ -131,8 +128,8 @@ The spool is created in Spoolman and the tag is written in one go.
 
 ### Tag a spool that's already in Spoolman
 
-1. Open the spool picker and type into the search box. Material, brand, colour or
-   the Spoolman ID all work.
+1. Open the spool picker and type into the search box. Material, brand and colour
+   all work.
 2. Pick the spool, then hold your tag against the phone.
 
 | Settings | New spool | Search |
@@ -142,11 +139,10 @@ The spool is created in Spoolman and the tag is written in one go.
 ### Put a tag on each side
 
 The reader sits inside the printer housing, so a tag only gets read if it's facing
-it. With one tag that means always loading the spool the same way round, so use
-two. After the first write the app offers to pair another.
+it. After the first write the app offers to pair another.
 
-Tags can be reused, nothing to unmap first. If the tag already belongs to another
-spool, the app asks when you write it and moves it over for you.
+*Tags can be reused, nothing to unmap first. If the tag already belongs to another
+spool, the app asks when you write it and moves it over for you.*
 
 ### Vendor tags
 
@@ -179,6 +175,5 @@ in by hand.
 ![Filament Manager](screenshots/filament-manager.png)
 
 **Read spool tags** re-reads all four channels, handy after you've swapped a spool
-and want to check the tag took. If Spoolman is connected there's also a button on
-each card to pick a spool by hand, which is the way to do it if you haven't got
-your phone nearby.
+and want to check the tag took. If Spoolman is connected each card also gets a
+**⊕ Spool** button to pick one by hand.
