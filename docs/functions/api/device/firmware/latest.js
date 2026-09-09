@@ -5,6 +5,7 @@
 import {
   CACHE_SECONDS,
   NEGATIVE_CACHE_SECONDS,
+  fetchAssetJson,
   findAsset,
   findRelease,
 } from "../../../_lib/github-releases.js";
@@ -21,6 +22,24 @@ function jsonResponse(body, status = 200) {
     headers: {
       "content-type": "application/json",
       "cache-control": `public, max-age=${maxAge}`,
+      // The firmware-config web page fetches this cross-origin from the printer,
+      // so the browser needs CORS to read the body. Safe to be permissive: this
+      // is a public, read-only lookup of published release metadata.
+      "access-control-allow-origin": "*",
+    },
+  });
+}
+
+// CORS preflight. A plain GET with no custom headers won't trigger one, but a
+// stricter client (or one that adds headers) will — answer it cheaply.
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET, OPTIONS",
+      "access-control-allow-headers": "*",
+      "access-control-max-age": "86400",
     },
   });
 }
@@ -89,6 +108,13 @@ export async function onRequestGet(context) {
 
   let newVersion = (release.name || release.tag_name).replace(/^(?:Rolling:\s*)?v/, "");
 
+  // Inline the descriptor so the browser gets the checksum + release notes in
+  // this one CORS-enabled call — it can't fetch `note` itself (GitHub asset
+  // downloads carry no CORS header). `note` is kept unchanged for the native
+  // `unisrv` path; the extra fields are additive, so any client that ignores
+  // unknown keys (unisrv included) is unaffected. Falls back to note-only.
+  const descriptor = await fetchAssetJson(descAsset);
+
   const body = {
     code: 200,
     msg: "success",
@@ -101,6 +127,12 @@ export async function onRequestGet(context) {
       version: newVersion,
       createDate: toApiTimestamp(release.created_at),
       modifiedDate: toApiTimestamp(release.published_at || release.created_at),
+      ...(descriptor && {
+        md5: descriptor.md5,
+        sha256: descriptor.sha256,
+        size: descriptor.size,
+        release_notes: descriptor.release_notes,
+      }),
     },
   };
 

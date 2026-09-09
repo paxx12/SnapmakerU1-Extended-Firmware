@@ -64,3 +64,20 @@ export async function getReleaseById(id, env) {
 export function findAsset(release, prefix, suffix) {
   return release.assets.find((asset) => asset.name.startsWith(prefix) && asset.name.endsWith(suffix));
 }
+
+// Fetches and parses a small JSON release asset (the `_upgrade_desc.json`
+// descriptor). Public assets need no auth. The browser can't fetch this itself —
+// GitHub asset downloads send no CORS header — which is why the Worker inlines
+// the descriptor into the `latest` response. Returns null on any failure so the
+// endpoint degrades gracefully to the `note` URL alone instead of erroring.
+export async function fetchAssetJson(asset) {
+  try {
+    const res = await fetch(asset.browser_download_url, {
+      headers: { "User-Agent": "snapmakeru1-extended-firmware-worker" },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_) {
+    return null;
+  }
+}
