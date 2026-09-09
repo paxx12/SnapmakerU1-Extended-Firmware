@@ -18,10 +18,13 @@ After flashing the image:
 4. Under **Settings > Snapmaker Components**, enable **Anycubic ACE
    (experimental)**.
 
+Treat the first run as a clean test installation. The ACE configuration,
+persistent state, and frontend layout are created for this implementation.
+
 Firmware Config switches the ACE Klipper modules into place, installs the ACE
 include, and restarts Klipper. Disabling the setting restores the stock U1
-modules before restarting. The stock path therefore remains available as the
-fallback while this integration is being validated.
+modules before restarting. The stock path remains available whenever ACE is
+disabled.
 
 Enabling ACE also applies the ACE macro layout to both supported web
 frontends. Fluidd receives ACE categories, while Mainsail receives ACE macro

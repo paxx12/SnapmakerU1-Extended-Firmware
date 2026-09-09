@@ -99,7 +99,7 @@
       "retract_length": "Retract length (mm)",
       "seat_overshoot": "Seat press length (mm, 0 = off)",
       "swap_retract_length": "Swap retract length (mm)",
-      "swap_retract_length_hint": "Toolhead → Y-splitter distance. Empty = default 900. 0 = legacy full retract.",
+      "swap_retract_length_hint": "Toolhead → Y-splitter distance. Empty = default 900. 0 = full retract.",
       "debug_logs": "Debug logs",
       "per_ace": "Per-ACE overrides",
       "dryer_temp_override": "Dryer temp override",

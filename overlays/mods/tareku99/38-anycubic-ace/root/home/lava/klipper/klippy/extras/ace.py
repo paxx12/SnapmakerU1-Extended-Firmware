@@ -174,12 +174,6 @@ class Ace:
 
         self.ace_device_count = config.getint('ace_device_count', 1, minval=1, maxval=8)
 
-        cfg_print_mode = config.get('print_mode', None)
-        if cfg_print_mode is not None:
-            logging.info(
-                '[ACE] print_mode=%s ignored (obsolete in v0.82+)'
-                % cfg_print_mode)
-
         self.feed_speed = config.getint('feed_speed', 50)
         self.retract_speed = config.getint('retract_speed', 50)
         self.retract_length = config.getint('retract_length', 100)
@@ -214,7 +208,6 @@ class Ace:
                 raise config.error(
                     "wiggle_scheme: invalid char %r (only 'E' and 'A' allowed)" % c)
 
-        config.getint('extrusion_stock_retry', 5, minval=1, maxval=50)
         self.unload_retry = config.getint('unload_retry', 3, minval=1, maxval=10)
         self.unload_gpio = config.getboolean('unload_gpio', True)
 
@@ -337,10 +330,6 @@ class Ace:
             logging.info('[ACE] V2 extra USB IDs (opt-in): %s' % (
                 ', '.join('%s:%s' % p for p in self._v2_extra_usb_ids)))
 
-        self._v2_print_assist_mode = config.getchoice(
-            'v2_print_assist_mode',
-            {'constant': 'constant', 'tracked': 'tracked'},
-            'constant')
         self._v2_constant_assist_speed = config.getint(
             'v2_constant_assist_speed', 0, minval=0, maxval=50)
         self._v2_assist_confirm_time = config.getfloat(
@@ -890,86 +879,6 @@ class Ace:
         except (TypeError, ValueError):
             return idx
 
-    _WEB_PIDFILE = '/tmp/ace_web_klipper.pid'
-
-    def _stop_old_web(self):
-        """Kill a stale ACE web instance (from a previous Klipper run
-        or from the init.d script). Called on every klippy:ready so that
-        backend code updates pick up after a Klipper restart."""
-        import signal
-        try:
-            with open(self._WEB_PIDFILE, 'r') as f:
-                old_pid = int((f.read() or '0').strip())
-        except (FileNotFoundError, ValueError, OSError):
-            old_pid = 0
-        if old_pid > 0:
-            try:
-                os.kill(old_pid, signal.SIGTERM)
-            except ProcessLookupError:
-                old_pid = 0
-            except OSError:
-                old_pid = 0
-        if old_pid > 0:
-
-            for _ in range(40):
-                try:
-                    os.kill(old_pid, 0)
-                except ProcessLookupError:
-                    logging.info('[ACE] web stopped old pid %d', old_pid)
-                    break
-                time.sleep(0.05)
-            else:
-                try:
-                    os.kill(old_pid, signal.SIGKILL)
-                    logging.info('[ACE] web SIGKILLd old pid %d', old_pid)
-                except OSError:
-                    pass
-
-        self._free_web_port()
-
-    def _free_web_port(self):
-        """Ensure port self._web_port is free. Tries fuser first, then
-        falls back to pkill matching the uvicorn cmdline - fuser is absent
-        on some firmware builds (e.g. 1.4), which previously left a stale
-        uvicorn holding the port so every respawn failed to bind. Silent if
-        the port is already free."""
-        import socket, subprocess
-        port_spec = '%d/tcp' % self._web_port
-
-        def _port_busy():
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.2)
-            try:
-                return s.connect_ex(('127.0.0.1', self._web_port)) == 0
-            finally:
-                s.close()
-
-        def _evict(sig):
-            for cmd in (['fuser', '-k', '-%s' % sig, port_spec],
-                        ['pkill', '-%s' % sig, '-f', 'uvicorn.*main:app']):
-                try:
-                    subprocess.run(
-                        cmd, stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL, timeout=3, check=False)
-                except (FileNotFoundError, subprocess.TimeoutExpired):
-                    continue
-                except Exception:
-                    continue
-
-        for _ in range(2):
-            if not _port_busy():
-                return
-            _evict('TERM')
-            logging.info('[ACE] web port %d held by other process, '
-                         'evicted (TERM)', self._web_port)
-            time.sleep(0.5)
-
-        if _port_busy():
-            _evict('KILL')
-            logging.info('[ACE] web port %d still held, sent KILL',
-                         self._web_port)
-            time.sleep(0.3)
-
     _WEB_INITD = '/etc/init.d/S98ace-web'
 
     def _web_port_busy(self):
@@ -982,49 +891,6 @@ class Ace:
             return False
         finally:
             s.close()
-
-    def _kill_own_klippy_web(self):
-        """Kill ONLY a web head this Klipper instance spawned itself in a
-        previous (older) version - tracked by _WEB_PIDFILE. That process
-        is owned by lava and therefore killable by us. We must never
-        touch a web head started by the S98 init daemon at boot (runs as
-        root, different/no pidfile) - that one is the correct standalone
-        instance and lava can't kill it anyway. Returns True if we killed
-        our own old child."""
-        import signal
-        try:
-            with open(self._WEB_PIDFILE, 'r') as f:
-                pid = int((f.read() or '0').strip())
-        except (FileNotFoundError, ValueError, OSError):
-            return False
-        if pid <= 0:
-            return False
-        killed = False
-        try:
-            os.kill(pid, signal.SIGTERM)
-            killed = True
-        except ProcessLookupError:
-            pass
-        except OSError:
-            return False
-        if killed:
-            for _ in range(40):
-                try:
-                    os.kill(pid, 0)
-                except ProcessLookupError:
-                    break
-                time.sleep(0.05)
-            else:
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except OSError:
-                    pass
-            logging.info('[ACE] web: stopped own old klippy-child pid %d', pid)
-        try:
-            os.unlink(self._WEB_PIDFILE)
-        except OSError:
-            pass
-        return killed
 
     def _spawn_ace_web(self):
         """
@@ -1046,9 +912,6 @@ class Ace:
             rcS S?? scan), so nothing is listening -> we start S98 as lava.
             The web runs as lava; that is sufficient for the optional
             standalone service.
-          - upgrade from an older ace.py that spawned a Klipper-child
-            uvicorn: that child (ours, lava-owned, tracked by _WEB_PIDFILE)
-            may still hold 7126. We kill only that one, then start S98.
         """
         if not self._enable_web:
             return
@@ -1062,17 +925,11 @@ class Ace:
                          self._WEB_INITD)
             return
         if self._web_port_busy():
-            if self._kill_own_klippy_web():
-                for _ in range(20):
-                    if not self._web_port_busy():
-                        break
-                    time.sleep(0.1)
-            if self._web_port_busy():
-                logging.info('[ACE] web already running on :%d '
-                             '(standalone daemon) - leaving it untouched',
-                             self._web_port)
-                self.log_always(self._t('msg.web_running'))
-                return
+            logging.info('[ACE] web already running on :%d '
+                         '(standalone daemon) - leaving it untouched',
+                         self._web_port)
+            self.log_always(self._t('msg.web_running'))
+            return
         import subprocess
         try:
             subprocess.run(['sh', self._WEB_INITD, 'start'],
@@ -2260,7 +2117,7 @@ class Ace:
         swap path and by the direct feed path in filament_feed_ace, so both
         word the same failure identically.
 
-        The old single 'Load slip ... unload, reload, RESUME' message hid two
+        A single generic 'Load slip ... unload, reload, RESUME' message hid two
         unrelated failures: sensor clear = the filament NEVER REACHED the
         toolhead (no transport - spool/bowden/ACE problem; unload+reload is
         the right recovery) vs sensor present = the filament arrived and was
@@ -3913,10 +3770,6 @@ class Ace:
     def _make_v2_velocity_tick_for(self, idx):
 
         state = self._v2_velocity_state.setdefault(idx, {
-            'last_quantum': None,
-            'last_direction': None,
-            'last_change_time': 0.0,
-            'last_log_time': 0.0,
             'last_armed_slot': None,
 
             'last_arm_time': 0.0,
@@ -4053,9 +3906,6 @@ class Ace:
                                     idx, last_idx, 'slot-disarmed:%s' % new_state)
 
                     state['last_armed_slot'] = None
-                    state['last_quantum'] = None
-                    state['last_direction'] = None
-
                 if (target_slot is not None
                         and active_head is not None
                         and self.head_uses_ace(active_head)
@@ -4109,21 +3959,8 @@ class Ace:
                 direction = 'fwd'
             else:
                 direction = 'fwd' if v >= 0 else 'rev'
-            quantum = self._v2_quantize_velocity(v, direction)
 
-            quantum_changed = (state['last_quantum'] != quantum)
-            direction_changed = (state['last_direction'] != direction
-                                 and quantum > 0)
-            if quantum_changed or direction_changed:
-                state['last_quantum'] = quantum
-                state['last_direction'] = direction
-                state['last_change_time'] = eventtime
-                self._fa_log.info(
-                    '[v2-vel] ace=%d slot=%d %s vel=%+.2f q=%d dir=%s' % (
-                        idx, armed_slot, armed_status, v, quantum, direction))
-
-            if (self._v2_print_assist_mode == 'constant'
-                    and armed_status in ('assisting', 'rollback_assisting')):
+            if armed_status in ('assisting', 'rollback_assisting'):
                 cdisp = state.setdefault('cdispatch', {
                     'mode': 2,
                     'cand_dir': 'fwd',
@@ -4157,10 +3994,7 @@ class Ace:
                         self._v2_dispatch_mode_switch(
                             idx, armed_slot, want_mode,
                             state.setdefault('dispatch', {
-                                'last_speed': None, 'last_mode': 2,
-                                'candidate_speed': quantum,
-                                'candidate_dir': direction,
-                                'candidate_since': eventtime}),
+                                'last_speed': None, 'last_mode': 2}),
                             held, current_v=v)
                     else:
                         self._fa_log.info(
@@ -4169,70 +4003,6 @@ class Ace:
                             'not in unload)'
                             % (idx, armed_slot, direction, held, want_mode))
                 return eventtime + 0.1
-
-            HYSTERESIS_S = 0.1
-            if armed_status in ('assisting', 'rollback_assisting'):
-                disp = state.setdefault('dispatch', {
-                    'last_speed': None,
-                    'last_mode': 2,
-                    'candidate_speed': quantum,
-                    'candidate_dir': direction,
-                    'candidate_since': eventtime,
-                })
-                target_mode = 2 if direction == 'fwd' else 3
-                if (disp['candidate_speed'] != quantum
-                        or disp['candidate_dir'] != direction):
-                    disp['candidate_speed'] = quantum
-                    disp['candidate_dir'] = direction
-                    disp['candidate_since'] = eventtime
-                sustained = eventtime - disp['candidate_since']
-                if sustained >= HYSTERESIS_S:
-                    speed_changed = disp['last_speed'] != quantum
-                    mode_changed = disp['last_mode'] != target_mode
-                    if mode_changed:
-
-                        if getattr(self, '_v2_active_rev_assist', False):
-                            self._v2_dispatch_mode_switch(
-                                idx, armed_slot, target_mode,
-                                disp, sustained, current_v=v)
-                        else:
-                            disp['last_mode'] = target_mode
-                            self._fa_log.info(
-                                '[v2-vel] ace=%d slot=%d direction change '
-                                '(%s) - not in unload, V2 stays in '
-                                'mode=%d (no dispatch)'
-                                % (idx, armed_slot,
-                                   'fwd' if target_mode == 2 else 'rev',
-                                   disp['last_mode']))
-                    elif speed_changed:
-
-                        disp['last_speed'] = quantum
-
-                        def _spd_cb(self, response, _q=quantum,
-                                    _s=armed_slot, _i=idx):
-                            code = response.get('code', -1) if response else -1
-                            msg = response.get('msg', '?') if response else 'no-response'
-                            if code != 0:
-                                self._fa_log.info(
-                                    '[v2-vel] ace=%d UPDATE_SPEED slot=%d '
-                                    'speed=%d -> code=%d msg=%s' % (
-                                        _i, _s, _q, code, msg))
-
-                        self._fa_log.info(
-                            '[v2-vel] ace=%d slot=%d UPDATE_SPEED -> %d '
-                            '(sustained %.2fs)' % (
-                                idx, armed_slot, quantum, sustained))
-                        try:
-                            self.send_request_to(idx, {
-                                'method': 'update_feeding_speed',
-                                'params': {'index': armed_slot, 'speed': quantum},
-                            }, _spd_cb)
-                        except Exception as e:
-                            self._fa_log.info(
-                                '[v2-vel] UPDATE_SPEED enqueue failed: %s' % e)
-                    else:
-
-                        disp['last_speed'] = quantum
 
             return eventtime + 0.1
 
@@ -5229,9 +4999,8 @@ class Ace:
     def _ptc_spool_id_for(self, head):
         """The spool id currently configured on a head, 0 if none.
 
-        Stock 1.5.2 only. Returns 0 on anything older (no such field), on a
-        head without one, or if print_task_config cannot be read - so a
-        machine that never sees a spool id behaves exactly as before.
+        The field is optional in printer state. Return 0 when it is absent,
+        the head has no binding, or print_task_config cannot be read.
         """
         try:
             ptc = self.printer.lookup_object('print_task_config', None)
@@ -7811,10 +7580,6 @@ class Ace:
         head = gcmd.get_int('HEAD')
         ace_index = gcmd.get_int('ACE')
         slot = gcmd.get_int('SLOT', head)
-        if gcmd.get_int('SKIP_POS_RESTORE', 0):
-            logging.info('[ACE] Swap: SKIP_POS_RESTORE=1 ignored '
-                         '(deprecated, stale processed gcode) - doing the '
-                         'full pos-restore')
         anti_ooze = gcmd.get_float(
             'ANTI_OOZE', float(self.swap_anti_ooze_retract),
             minval=0., maxval=50.)

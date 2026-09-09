@@ -14,10 +14,10 @@ if [ "$1" = "start" ]; then
     ACE_EXTRAS="/home/lava/klipper/klippy/extras"
     ACE_KINEMATICS="/home/lava/klipper/klippy/kinematics"
 
-    # ace.cfg is the enable/disable switch.  The ACE module validates the
-    # persisted topology and falls back to all_heads for unsupported values;
-    # a stale save_variables value must never prevent the ACE runtime from
-    # being restored before Klipper imports it.
+    # ace.cfg is the enable/disable switch. The ACE module validates the
+    # persisted topology and uses all_heads for unsupported values; the
+    # saved topology must never prevent the ACE runtime from being restored
+    # before Klipper imports it.
     if [ -f "$ACE_CFG" ] \
         && [ -f "$ACE_SWITCH" ] \
         && [ -f "$ACE_EXTRAS/filament_feed_ace.py" ] \

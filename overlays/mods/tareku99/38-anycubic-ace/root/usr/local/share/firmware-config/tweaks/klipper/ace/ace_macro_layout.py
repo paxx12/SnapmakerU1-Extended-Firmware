@@ -120,47 +120,10 @@ GROUPS = (
 ACE_MACRO_NAMES = tuple(macro for group in GROUPS for macro in group["macros"])
 ACE_MACRO_KEYS = {name.lower() for name in ACE_MACRO_NAMES}
 
-# These names belonged to an earlier ACE macro panel.  They are removed when
-# the layout is applied so an existing frontend database does not show
-# duplicate controls beside the canonical ACE names.  This is deliberately
-# limited to ACE-owned names; unrelated user macros and groups are preserved.
-STALE_ACE_MACRO_NAMES = (
-    "ACEA__SWITCH_0",
-    "ACEA__SWITCH_1",
-    "ACEA__SWITCH_2",
-    "ACEA__SWITCH_3",
-    "ACEB__LOAD_0",
-    "ACEB__LOAD_1",
-    "ACEB__LOAD_2",
-    "ACEB__LOAD_3",
-    "ACEC__UNLOAD_ALL",
-    "ACEC__UNLOAD_T0",
-    "ACEC__UNLOAD_T1",
-    "ACEC__UNLOAD_T2",
-    "ACEC__UNLOAD_T3",
-    "ACEC__LOAD_T0",
-    "ACEC__LOAD_T1",
-    "ACEC__LOAD_T2",
-    "ACEC__LOAD_T3",
-    "ACED__DRY_START_0",
-    "ACED__DRY_START_1",
-    "ACED__DRY_START_2",
-    "ACED__DRY_START_3",
-    "ACED__DRY_STOP",
-    "ACEF__MODE_NORMAL",
-    "ACEF__MODE_MULTI",
-    "ACEG__STATUS",
-    "ACEG__LIST",
-    "ACEH__UPDATE_CHECK",
-    "ACEH__UPDATE_APPLY",
-)
-STALE_ACE_MACRO_KEYS = {name.lower() for name in STALE_ACE_MACRO_NAMES}
-
 # These macros remain available to Klipper because the topology and recovery
 # code uses them internally, but they are not user-facing controls.
 INTERNAL_ACE_MACRO_NAMES = ("SET_ACE_MODE", "INNER_RESUME")
 INTERNAL_ACE_MACRO_KEYS = {name.lower() for name in INTERNAL_ACE_MACRO_NAMES}
-HIDDEN_ACE_MACRO_KEYS = STALE_ACE_MACRO_KEYS | INTERNAL_ACE_MACRO_KEYS
 
 
 def _dict(value):
@@ -246,15 +209,7 @@ def merge_fluidd_macros(current):
     """Return a Fluidd macro state with ACE categories assigned."""
     state = copy.deepcopy(_dict(current))
     categories = _list(state.get("categories"))
-    stored = [
-        item
-        for item in _list(state.get("stored"))
-        if not (
-            isinstance(item, dict)
-            and isinstance(item.get("name"), str)
-            and item["name"].lower() in STALE_ACE_MACRO_KEYS
-        )
-    ]
+    stored = _list(state.get("stored"))
     for item in stored:
         if (
             isinstance(item, dict)
@@ -294,7 +249,7 @@ def merge_fluidd_macros(current):
                 stored_by_name[name.lower()] = existing
             existing["name"] = name
             # ACE controls should be usable after the feature is enabled.  A
-            # prior stale Fluidd record can have visible=false even though
+            # pre-existing Fluidd record can have visible=false even though
             # the macro exists; category assignment alone would leave it
             # missing from the dashboard.
             existing["visible"] = True
@@ -325,11 +280,11 @@ def merge_mainsail_group(current, group):
     existing.setdefault("showInPrinting", group["show_in_printing"])
     existing.setdefault("showInPause", group["show_in_pause"])
 
-    old_macros = _list(existing.get("macros"))
+    existing_macros = _list(existing.get("macros"))
     ace_by_name = {}
     extras = []
     target_names = {name.lower() for name in group["macros"]}
-    for macro in old_macros:
+    for macro in existing_macros:
         if not isinstance(macro, dict) or not isinstance(macro.get("name"), str):
             extras.append(macro)
         elif macro["name"].lower() in target_names:
@@ -338,9 +293,8 @@ def merge_mainsail_group(current, group):
             # This is an ACE macro belonging to another ACE-owned group.
             # It will be rebuilt in its canonical group below.
             continue
-        elif macro["name"].lower() in HIDDEN_ACE_MACRO_KEYS:
-            # Remove stale and internal ACE controls instead of carrying them
-            # forward as clickable extras.
+        elif macro["name"].lower() in INTERNAL_ACE_MACRO_KEYS:
+            # Keep internal ACE controls out of clickable frontend groups.
             continue
         else:
             extras.append(macro)
@@ -402,18 +356,10 @@ def merge_mainsail_namespace(current):
             if not (
                 isinstance(macro, dict)
                 and isinstance(macro.get("name"), str)
-                and macro["name"].lower() in HIDDEN_ACE_MACRO_KEYS
+                and macro["name"].lower() in INTERNAL_ACE_MACRO_KEYS
             )
         ]
     hidden_macros = _list(macros_state.get("hiddenMacros"))
-    hidden_macros = [
-        name
-        for name in hidden_macros
-        if not (
-            isinstance(name, str)
-            and name.lower() in STALE_ACE_MACRO_KEYS
-        )
-    ]
     hidden_macros.extend(INTERNAL_ACE_MACRO_NAMES)
     macros_state["hiddenMacros"] = list(dict.fromkeys(hidden_macros))
     # Attach newly-created containers before the loop.  Without this, an

@@ -237,8 +237,7 @@ Stock operation is not an ACE mode. Disable ACE in Firmware Config to restore
 the stock U1 feeder modules. The internal ACE topologies are `all_heads` and
 the advanced `hybrid` wiring mode; neither is exposed as a normal macro button.
 Those are the only accepted topology values. If `ace__mode` contains an
-unsupported value, the ACE runtime ignores it and starts in `all_heads`; this
-is a safe default, not a compatibility migration.
+unsupported value, the ACE runtime ignores it and starts in `all_heads`.
 
 The ACE setting also organizes the convenience macros in the web interface:
 Fluidd receives `ACE | ...` categories, and Mainsail receives matching macro

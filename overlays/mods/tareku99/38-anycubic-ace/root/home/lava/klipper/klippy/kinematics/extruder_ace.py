@@ -37,13 +37,10 @@ class ExtruderSwitchRecorder:
         config_dir = self.printer.get_snapmaker_config_dir("persistent")
         self.file_path = os.path.join(config_dir, EXTRUDER_SWITCH_RECORDER)
 
-        self.old_file_path = os.path.join(self.printer.get_snapmaker_config_dir(), EXTRUDER_SWITCH_RECORDER)
         self.save_interval = config.getfloat('save_interval', 60.0)
         self.individual_maintenance_threshold = config.getint('individual_maintenance_threshold', 25100)
         self.total_maintenance_threshold = config.getint('total_maintenance_threshold', 100000)
         self.maintenance_exception_raised = False
-
-        self._migrate_data_if_needed()
 
         self.data = self._load_data()
         self.allow_save = False
@@ -89,17 +86,6 @@ class ExtruderSwitchRecorder:
             logging.info(f"[ExtruderSwitchRecorder] {warning_message}")
 
         return maintenance_needed
-
-    def _migrate_data_if_needed(self):
-        """Migrate data from old location to new location if needed"""
-
-        if not os.path.exists(self.file_path) and os.path.exists(self.old_file_path):
-            try:
-                import shutil
-                shutil.copy2(self.old_file_path, self.file_path)
-                logging.info(f"[ExtruderSwitchRecorder] Migrated data from {self.old_file_path} to {self.file_path}")
-            except Exception as e:
-                logging.warning(f"[ExtruderSwitchRecorder] Failed to migrate data: {e}")
 
     def _load_data(self):
         try:

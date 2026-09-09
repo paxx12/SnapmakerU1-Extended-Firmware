@@ -22,7 +22,7 @@ class AceMacroLayoutTests(unittest.TestCase):
             "stored": [
                 {"name": "PRINT_START", "visible": False, "categoryId": "user"},
                 {"name": "ACE_STATUS", "visible": False, "color": "#123456"},
-                {"name": "ACEA__Switch_0", "visible": True},
+                {"name": "MY_CUSTOM_MACRO", "visible": True},
                 {"name": "SET_ACE_MODE", "visible": True},
             ],
             "categories": [{"id": "user", "name": "My Macros"}],
@@ -36,7 +36,7 @@ class AceMacroLayoutTests(unittest.TestCase):
         self.assertTrue(stored["ace_status"]["visible"])
         self.assertEqual(stored["ace_status"]["color"], "#123456")
         self.assertEqual(stored["ace_status"]["categoryId"], "ace-status")
-        self.assertNotIn("acea__switch_0", stored)
+        self.assertTrue(stored["my_custom_macro"]["visible"])
         self.assertFalse(stored["set_ace_mode"]["visible"])
         self.assertEqual(updated["expanded"], [3])
         self.assertEqual(
@@ -50,7 +50,7 @@ class AceMacroLayoutTests(unittest.TestCase):
         current = {
             "macros": {
                 "mode": "simple",
-                "hiddenMacros": ["PRINT_START", "ACEH__Update_Apply"],
+                "hiddenMacros": ["PRINT_START", "MY_HIDDEN_MACRO"],
                 "macrogroups": {
                     status_id: {
                         "name": "ACE | Status",
@@ -76,7 +76,7 @@ class AceMacroLayoutTests(unittest.TestCase):
                         "name": "User Group",
                         "macros": [
                             {"pos": 1, "name": "ACE_AUTOLOAD_1"},
-                            {"pos": 2, "name": "ACEH__Update_Apply"},
+                            {"pos": 2, "name": "MY_CUSTOM_MACRO"},
                         ],
                     },
                 },
@@ -92,7 +92,10 @@ class AceMacroLayoutTests(unittest.TestCase):
         hidden = {name.lower() for name in macros["hiddenMacros"]}
         groups = macros["macrogroups"]
 
-        self.assertEqual(hidden, {"print_start", "set_ace_mode", "inner_resume"})
+        self.assertEqual(
+            hidden,
+            {"print_start", "my_hidden_macro", "set_ace_mode", "inner_resume"},
+        )
         self.assertEqual(macros["mode"], "simple")
         self.assertEqual(groups[status_id]["color"], "custom")
         self.assertEqual(groups[status_id]["colorCustom"], "#123456")
@@ -100,8 +103,10 @@ class AceMacroLayoutTests(unittest.TestCase):
             [macro["name"] for macro in groups[status_id]["macros"]],
             ["ACE_STATUS", "ACE_LIST_DEVICES", "MY_CUSTOM_MACRO"],
         )
-        self.assertEqual(groups["user-group"]["macros"][0]["name"], "ACE_AUTOLOAD_1")
-        self.assertEqual(len(groups["user-group"]["macros"]), 1)
+        self.assertEqual(
+            [macro["name"] for macro in groups["user-group"]["macros"]],
+            ["ACE_AUTOLOAD_1", "MY_CUSTOM_MACRO"],
+        )
 
         for group in MODULE.GROUPS:
             self.assertIn(group["mainsail_id"], groups)
