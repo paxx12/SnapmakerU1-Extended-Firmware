@@ -135,9 +135,11 @@
         <div class="card" id="upgrade-card">
             <div class="card-header"><span class="card-title">Firmware Upgrade</span></div>
             <div class="input-row">
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;">
-                    <input type="checkbox" id="prerelease-check"> Include pre-releases
-                </label>
+                <select class="input" id="channel-select" style="flex:0 0 auto;max-width:200px;">
+                    <option value="stable">Stable</option>
+                    <option value="testing">Testing (pre-releases)</option>
+                    <option value="develop">Develop (bleeding edge)</option>
+                </select>
                 <button class="btn" id="check-update-btn" onclick="checkLatest()">Check for latest</button>
             </div>
             <div id="update-status" style="font-size:13px;margin:2px 0 8px;color:var(--text-secondary,#888);"></div>
@@ -374,42 +376,97 @@
         // the user edits the field after checking, the stale hash is not sent.
         let _latestCheck = null;
 
+        // #559's Cloudflare resolver. stable/testing are served from the production
+        // deployment; develop from its preview host (mirrors the lmd imposter's
+        // per-channel host split). The check runs in the browser, not on the device,
+        // so a printer with no internet can still be told an update exists.
+        const UPGRADE_HOSTS = {
+            stable:  'https://snapmakeru1-extended-firmware.pages.dev',
+            testing: 'https://snapmakeru1-extended-firmware.pages.dev',
+            develop: 'https://develop.snapmakeru1-extended-firmware.pages.dev',
+        };
+
+        // Monotonic paxx build number: "1.6.0-paxx12-22" -> 22 (also with a trailing
+        // -<hash>). Rolling develop tags ("…-paxx12-develop-<hash>") have no build
+        // number and return -1. Mirrors the device build_version convention.
+        function buildNumber(v) {
+            const m = v && v.match(/paxx\d*-(\d+)(?:$|[^\d])/);
+            return m ? parseInt(m[1], 10) : -1;
+        }
+
+        // True when `latest` is worth offering over `current`. Exact match -> no.
+        // Two numbered builds -> only if strictly newer (never a downgrade). If
+        // either side can't be ranked (develop, or unknown) but they differ -> offer.
+        function updateAvailable(current, latest) {
+            if (!current || !latest) return true;
+            if (current === latest) return false;
+            const c = buildNumber(current), l = buildNumber(latest);
+            if (c >= 0 && l >= 0) return l > c;
+            return true;
+        }
+
         async function checkLatest() {
             const btn = $('check-update-btn'), status = $('update-status');
-            const prerelease = $('prerelease-check').checked ? '1' : '0';
+            const channel = $('channel-select').value;
             btn.disabled = true;
-            status.textContent = 'Checking GitHub for the latest release…';
+            _latestCheck = null;
+            status.textContent = `Checking for the latest ${channel} release…`;
             try {
-                const resp = await apiFetch('api/upgrade/latest?prerelease=' + prerelease);
-                const data = await resp.json();
-                if (!data.ok) {
-                    status.textContent = 'Could not find a release: ' + (data.error || 'unknown error');
+                // Device facts (same-origin) — the browser can't read /etc: it needs
+                // the build profile for the query and the current version to compare.
+                let dev = {};
+                try { dev = await (await apiFetch('api/upgrade/deviceinfo')).json(); } catch (_) {}
+                const profile = dev.build_profile || 'extended';
+                const current = dev.fullversion || '';
+
+                // Cross-origin, unauthenticated — plain fetch, not apiFetch.
+                const host = UPGRADE_HOSTS[channel] || UPGRADE_HOSTS.stable;
+                const q = `?channel=${channel}&build_profile=${encodeURIComponent(profile)}`
+                        + `&fullversion=${encodeURIComponent(current)}`;
+                const resp = await fetch(host + '/api/device/firmware/latest' + q, { cache: 'no-store' });
+                const payload = await resp.json().catch(() => null);
+
+                if (!resp.ok || !payload || payload.code !== 200 || !payload.data) {
+                    status.textContent = (resp.status === 404)
+                        ? `No ${channel} build has been published on this channel yet.`
+                        : `Could not check for updates: ${(payload && payload.msg) || 'HTTP ' + resp.status}.`;
                     return;
                 }
-                const kind = data.prerelease ? 'pre-release' : 'stable';
+
+                const data = payload.data;
+                const sizeMb = data.size ? Math.round(data.size / 1048576) : null;
                 const addNotes = () => {
-                    if (!data.release_url) return;
-                    const a = document.createElement('a');
-                    a.href = data.release_url;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    a.textContent = ' Read the release notes ↗';
-                    status.appendChild(a);
+                    const notes = data.release_notes &&
+                        (data.release_notes['en-GB'] || Object.values(data.release_notes)[0]);
+                    if (!Array.isArray(notes) || !notes.length) return;
+                    const wrap = document.createElement('div');
+                    wrap.style.cssText = 'margin-top:6px;';
+                    wrap.appendChild(document.createTextNode('Release notes:'));
+                    const ul = document.createElement('ul');
+                    ul.style.cssText = 'margin:4px 0 0;padding-left:18px;';
+                    notes.slice(0, 8).forEach(line => {
+                        const li = document.createElement('li');
+                        li.textContent = line;
+                        ul.appendChild(li);
+                    });
+                    wrap.appendChild(ul);
+                    status.appendChild(wrap);
                 };
-                if (!data.update_available) {
-                    // Already on the latest of this channel (or ahead of it, e.g. on a
-                    // newer pre-release than the latest stable) — do not fill the URL.
-                    status.textContent = data.current_version
-                        ? `You're up to date — running ${data.current_version}; latest ${kind} is ${data.version}.`
-                        : `Latest ${kind} is ${data.version}.`;
+
+                if (!updateAvailable(current, data.version)) {
+                    status.textContent = current
+                        ? `You're up to date — running ${current}; latest ${channel} is ${data.version}.`
+                        : `Latest ${channel} is ${data.version}.`;
                     addNotes();
                     return;
                 }
+
                 $('url-input').value = data.url;
                 _latestCheck = { url: data.url, sha256: data.sha256 || '' };
                 validateURL();
-                status.textContent = `Update available — latest ${kind}: ${data.version} (${data.size_mb} MB)`
-                    + (data.current_version ? `, you have ${data.current_version}` : '')
+                status.textContent = `Update available — latest ${channel}: ${data.version}`
+                    + (sizeMb ? ` (${sizeMb} MB)` : '')
+                    + (current ? `, you have ${current}` : '')
                     + '. URL filled below.';
                 addNotes();
             } catch (e) {
