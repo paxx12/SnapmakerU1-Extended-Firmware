@@ -1,6 +1,8 @@
-# Adapted from decay71/multiACE (GPLv3), pinned by this mod to commit
-# c9c22e391cee89bc7d7894ce4a25876a59565cbc. The firmware overlay adds no
-# optional web service; Firmware Config controls module activation.
+# Initial protocol/runtime baseline: decay71/multiACE (GPLv3), pinned to
+# c9c22e391cee89bc7d7894ce4a25876a59565cbc. This is provenance only; the
+# integration is maintained independently as Paxx ACE in this project.
+# The firmware overlay adds no optional web service; Firmware Config controls
+# module activation.
 import logging
 import logging.handlers
 import json
@@ -18,13 +20,6 @@ from .ace_protocol_v2 import AceProtocolV2
 
 KNOWN_PROTOCOLS = (AceProtocolV1, AceProtocolV2)
 
-ACE_VERSION = "0.99.6.2b"
-ACE_CODENAME = "Paxx ACE"
-
-ACE_API_VERSION = 1
-
-# Local bundle identifiers for the pinned source revision used by this mod.
-ACE_BUILD_TAG = "c9c22e39"
 
 def _load_i18n_catalog(i18n_dir, lang):
     """Read <i18n_dir>/<lang>.json overlaid on en.json. Returns a dict
@@ -1212,18 +1207,6 @@ class Ace:
                         handler.doRollover()
                     except Exception:
                         pass
-
-        try:
-            ace_mtime = os.path.getmtime(os.path.abspath(__file__))
-            from datetime import datetime
-            ace_timestamp = datetime.fromtimestamp(ace_mtime).strftime('%Y-%m-%d %H:%M:%S')
-        except Exception:
-            ace_timestamp = 'unknown'
-        self.log_always(self._t('msg.version_line',
-            version=ACE_VERSION, codename=ACE_CODENAME,
-            build=ACE_BUILD_TAG, ts=ace_timestamp))
-        logging.info('[ACE] Version %s (%s) build=%s file=%s' % (
-            ACE_VERSION, ACE_CODENAME, ACE_BUILD_TAG, ace_timestamp))
 
         try:
             _bg = self.printer.lookup_object('ace_bg_swap', None)
@@ -8108,16 +8091,6 @@ class Ace:
     cmd_ACE_HEAD_STATUS_help = '[ACE] Show active ACE, detected devices, and head-to-ACE/slot mapping'
     def cmd_ACE_HEAD_STATUS(self, gcmd):
 
-        try:
-            ace_mtime = os.path.getmtime(os.path.abspath(__file__))
-            from datetime import datetime
-            ts = datetime.fromtimestamp(ace_mtime).strftime('%Y-%m-%d %H:%M:%S')
-        except Exception:
-            ts = 'unknown'
-        self.log_always(self._t('msg.version_file',
-            version=ACE_VERSION, codename=ACE_CODENAME,
-            build=ACE_BUILD_TAG, ts=ts))
-
         _bg = self.printer.lookup_object('ace_bg_swap', None)
         if _bg is not None:
             _bg_heads = sorted(getattr(_bg, 'enabled_heads', []) or [])
@@ -9431,7 +9404,6 @@ class Ace:
             })
         ace_heads_now = [h for h in range(4) if self.head_uses_ace(h)]
         return {
-            'api_version': ACE_API_VERSION,
             'status': self._info['status'],
             'temp': self._info['temp'],
             'dryer_status': self._info['dryer_status'],

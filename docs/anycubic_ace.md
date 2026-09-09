@@ -18,13 +18,20 @@ multi-color print. Additional hardware combinations remain experimental.
 
 ## Provenance and attribution
 
-This ACE runtime contains code derived from
-[decay71/multiACE](https://github.com/decay71/multiACE), pinned for this draft
-to commit
+The initial ACE protocol/runtime baseline was taken from
+[decay71/multiACE](https://github.com/decay71/multiACE), pinned to commit
 [c9c22e391cee89bc7d7894ce4a25876a59565cbc](https://github.com/decay71/multiACE/tree/c9c22e391cee89bc7d7894ce4a25876a59565cbc).
 The source is GPLv3, and the derived source file retains its attribution.
-The surrounding activation, configuration, macro layout, and U1 integration
-are maintained as the Paxx ACE implementation in this firmware project.
+This commit identifies the starting source snapshot only; it is not the
+version of Paxx ACE. From the split commit
+`5baed629d0f74dd7c657f4786c0fc03c667933b8` onward, the activation,
+configuration, macro layout, and U1 integration are maintained independently
+as Paxx ACE in this firmware project. Paxx ACE does not follow MultiACE release
+numbering or promise compatibility with MultiACE installations or state.
+
+The runtime status reports live ACE hardware and integration state only. It
+does not maintain or display a separate ACE release number; the surrounding
+Extended Firmware status is the source of truth for the installed build.
 
 The following projects and contributors informed the surrounding research and
 hardware work:
